@@ -62,8 +62,8 @@ public class Vision extends SubsystemBase {
         frontCamera = new PhotonCamera("Front"); // Left
         backCamera = new PhotonCamera("Back"); // Right
         
-        // Configure pose estimators with the 2025 field layout
-        AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
+        // Configure pose estimators with the current field layout
+        AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
         // Initialize data
         this.tX = 0;
