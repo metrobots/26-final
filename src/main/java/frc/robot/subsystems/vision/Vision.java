@@ -58,12 +58,6 @@ public class Vision extends SubsystemBase {
          // Configure pose estimators with the current field layout
         AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
-        // Initialize data
-        this.tX = 0;
-        this.tY = 0;
-        this.tV = false;
-        this.targetPose3d = new Pose3d();
-        
         // Create pose estimators
         leftPoseEstimator = new PhotonPoseEstimator(
             tagLayout, 
