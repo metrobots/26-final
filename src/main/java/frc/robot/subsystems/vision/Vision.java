@@ -23,46 +23,39 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 import java.util.Optional;
 
 public class Vision extends SubsystemBase {
-    // Cameras
-    private final PhotonCamera frontCamera;
-    private final PhotonCamera backCamera;
-    private final String limelightName = Constants.AutoConstants.limelightName;
-
-    // Limelight data
-    private Pose3d targetPose3d;
-    private double tX;
-    private double tY;
-    private boolean tV;
+    //Cameras
+    private PhotonCamera leftCamera; // Left Camera
+    private PhotonCamera rightCamera; // Right Camera
     
     // Pose estimators
-    private final PhotonPoseEstimator frontPoseEstimator;
-    private final PhotonPoseEstimator backPoseEstimator;
+    private final PhotonPoseEstimator leftPoseEstimator;
+    private final PhotonPoseEstimator rightPoseEstimator;
     
     // Field visualization
     private final Field2d field2d = Constants.AutoConstants.field2d;
     
     // Camera to robot transform
-    private final Transform3d frontRobotToCamera = new Transform3d(
+    private final Transform3d leftRobotToCamera = new Transform3d(
         0.0, 0.0, 0.5,  // x, y, z in meters (camera position relative to robot center)
         new Rotation3d(0, 0, Math.toRadians(45)) // rotation (45 degrees outwards)
     );
     
-    private final Transform3d backRobotToCamera = new Transform3d(
+    private final Transform3d rightRobotToCamera = new Transform3d(
         -0.5, 0.0, 0.5,  // x, y, z in meters (camera position relative to robot center)
         new Rotation3d(0, 0, Math.toRadians(-45)) // rotation (-45 degrees outwards (left))
     );
     
+
     // Last estimated poses
-    private Optional<EstimatedRobotPose> lastFrontEstimatedPose = Optional.empty();
-    private Optional<EstimatedRobotPose> lastBackEstimatedPose = Optional.empty();
-    private Optional<Pose2d> lastLimelightPose = Optional.empty();
-    
-    public Vision() {
-        // Initialize cameras
-        frontCamera = new PhotonCamera("Front"); // Left
-        backCamera = new PhotonCamera("Back"); // Right
-        
-        // Configure pose estimators with the current field layout
+    private Optional<EstimatedRobotPose> lastLeftEstimatedPose = Optional.empty();
+    private Optional<EstimatedRobotPose> lastRightEstimatedPose = Optional.empty();
+
+    public Vision () {
+        // Camera Definitions
+        leftCamera = new PhotonCamera("front"); // Left Camera
+        rightCamera = new PhotonCamera("back"); // Right Camera
+
+         // Configure pose estimators with the current field layout
         AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
         // Initialize data
@@ -72,54 +65,46 @@ public class Vision extends SubsystemBase {
         this.targetPose3d = new Pose3d();
         
         // Create pose estimators
-        frontPoseEstimator = new PhotonPoseEstimator(
+        leftPoseEstimator = new PhotonPoseEstimator(
             tagLayout, 
             PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-            frontRobotToCamera
+            leftRobotToCamera
         );
         
-        backPoseEstimator = new PhotonPoseEstimator(
+        rightPoseEstimator = new PhotonPoseEstimator(
             tagLayout,
             PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-            backRobotToCamera
+            rightRobotToCamera
         );
         
-        // Set fallback strategy for single tag poses
-        frontPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
-        backPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
-        
-        // // Put field visualization on dashboard
-        // SmartDashboard.putData("Field", field2d);
+        //  Set fallback strategy for single tag poses
+        leftPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
+        rightPoseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
     }
-    
-    @Override
+
+     @Override
     public void periodic() {
-        // Update pose estimations from both cameras and the backup pose estimation from the limelight
+        // Update pose estimations from both cameras
         updatePoseEstimates();
-        updateLimelightPose();
-        
-        // Update the targeting data
-        updateLimelightData();
         
         // Visualize latest vision measurements
         updateFieldVisualization();
     }
 
-
-        /**
+          /**
      * Returns the yaw (horizontal angle) to the best visible AprilTag target
-     * from either the front or back camera, adjusted to robot-relative coordinates.
+     * from either the left or right camera, adjusted to robot-relative coordinates.
      *
      * @return Optional<Double> containing yaw in degrees, or empty if no target seen
      */
     public Optional<Double> getBestTargetYawFromCameras() {
-        PhotonPipelineResult frontResult = frontCamera.getLatestResult();
-        PhotonPipelineResult backResult = backCamera.getLatestResult();
+        PhotonPipelineResult leftResult = leftCamera.getLatestResult();
+        PhotonPipelineResult rightResult = rightCamera.getLatestResult();
 
-        boolean hasFrontTargets = frontResult.hasTargets();
-        boolean hasBackTargets = backResult.hasTargets();
+        boolean hasLeftTargets = leftResult.hasTargets();
+        boolean hasRightTargets = rightResult.hasTargets();
 
-        if (!hasFrontTargets && !hasBackTargets) {
+        if (!hasLeftTargets && !hasRightTargets) {
             return Optional.empty();
         }
 
@@ -127,26 +112,26 @@ public class Vision extends SubsystemBase {
         double adjustedYaw;
 
         // Prefer the camera with the better (lower ambiguity) target
-        if (hasFrontTargets && hasBackTargets) {
-            PhotonTrackedTarget frontTarget = frontResult.getBestTarget();
-            PhotonTrackedTarget backTarget = backResult.getBestTarget();
+        if (hasLeftTargets && hasRightTargets) {
+            PhotonTrackedTarget leftTarget = leftResult.getBestTarget();
+            PhotonTrackedTarget rightTarget = rightResult.getBestTarget();
 
-            double frontAmbiguity = frontTarget.getPoseAmbiguity();
-            double backAmbiguity = backTarget.getPoseAmbiguity();
+            double leftAmbiguity = leftTarget.getPoseAmbiguity();
+            double rightAmbiguity = rightTarget.getPoseAmbiguity();
 
-            if (frontAmbiguity <= backAmbiguity) {
-                bestTarget = frontTarget;
-                adjustedYaw = bestTarget.getYaw() + 45.0; // Front camera is mounted at -45, so +45 to convert to robot frame
+            if (leftAmbiguity <= rightAmbiguity) {
+                bestTarget = leftTarget;
+                adjustedYaw = bestTarget.getYaw() + 45.0; // Left camera is mounted at -45, so +45 to convert to robot frame
             } else {
-                bestTarget = backTarget;
-                adjustedYaw = bestTarget.getYaw() - 45.0; // Back camera is mounted at +45, so -45 to convert to robot frame
+                bestTarget = rightTarget;
+                adjustedYaw = bestTarget.getYaw() - 45.0; // Right camera is mounted at +45, so -45 to convert to robot frame
             }
-        } else if (hasFrontTargets) {
-            bestTarget = frontResult.getBestTarget();
-            adjustedYaw = bestTarget.getYaw() + 45.0; // front is at -45 degrees
+        } else if (hasLeftTargets) {
+            bestTarget = leftResult.getBestTarget();
+            adjustedYaw = bestTarget.getYaw() + 45.0; // Left is at -45 degrees
         } else {
-            bestTarget = backResult.getBestTarget();
-            adjustedYaw = bestTarget.getYaw() - 45.0; // back is at +45 degrees
+            bestTarget = rightResult.getBestTarget();
+            adjustedYaw = bestTarget.getYaw() - 45.0; // Right is at +45 degrees
         }
 
         return Optional.of(adjustedYaw);
@@ -154,19 +139,19 @@ public class Vision extends SubsystemBase {
 
     
     /**
-     * Get the latest estimated robot pose from the front camera
+     * Get the latest estimated robot pose from the left camera
      * @return Optional containing the estimated pose if available
      */
-    public Optional<EstimatedRobotPose> getFrontCameraEstimatedPose() {
-        return lastFrontEstimatedPose;
+    public Optional<EstimatedRobotPose> getLeftCameraEstimatedPose() {
+        return lastLeftEstimatedPose;
     }
     
     /**
-     * Get the latest estimated robot pose from the back camera
+     * Get the latest estimated robot pose from the right camera
      * @return Optional containing the estimated pose if available
      */
-    public Optional<EstimatedRobotPose> getBackCameraEstimatedPose() {
-        return lastBackEstimatedPose;
+    public Optional<EstimatedRobotPose> getRightCameraEstimatedPose() {
+        return lastRightEstimatedPose;
     }
     
     /**
@@ -175,49 +160,49 @@ public class Vision extends SubsystemBase {
      * @return Optional containing the best estimated pose if available
      */
     public Optional<EstimatedRobotPose> getBestEstimatedPose() {
-        boolean hasFront = lastFrontEstimatedPose.isPresent();
-        boolean hasBack = lastBackEstimatedPose.isPresent();
+        boolean hasRight = lastRightEstimatedPose.isPresent();
+        boolean hasLeft = lastLeftEstimatedPose.isPresent();
         
-        if (!hasFront && !hasBack) {
+        if (!hasLeft && !hasRight) {
             return Optional.empty();
-        } else if (hasFront && !hasBack) {
-            return lastFrontEstimatedPose;
-        } else if (!hasFront && hasBack) {
-            return lastBackEstimatedPose;
+        } else if (hasLeft && !hasRight) {
+            return lastLeftEstimatedPose;
+        } else if (!hasLeft && hasRight) {
+            return lastRightEstimatedPose;
         }
         
         // We have both poses - determine which is better
         
         // Get the results
-        EstimatedRobotPose frontPose = lastFrontEstimatedPose.get();
-        EstimatedRobotPose backPose = lastBackEstimatedPose.get();
+        EstimatedRobotPose leftPose = lastLeftEstimatedPose.get();
+        EstimatedRobotPose rightPose = lastRightEstimatedPose.get();
         
         // Check if either has multiple targets (prefer multi-tag)
-        boolean frontHasMulti = frontPose.targetsUsed.size() > 1;
-        boolean backHasMulti = backPose.targetsUsed.size() > 1;
+        boolean leftHasMulti = leftPose.targetsUsed.size() > 1;
+        boolean rightHasMulti = rightPose.targetsUsed.size() > 1;
         
-        if (frontHasMulti && !backHasMulti) {
-            return lastFrontEstimatedPose;
-        } else if (!frontHasMulti && backHasMulti) {
-            return lastBackEstimatedPose;
-        } else if (frontHasMulti && backHasMulti) {
+        if (leftHasMulti && !rightHasMulti) {
+            return lastLeftEstimatedPose;
+        } else if (!leftHasMulti && rightHasMulti) {
+            return lastRightEstimatedPose;
+        } else if (rightHasMulti && leftHasMulti) {
             // Both have multiple targets - use the one with more targets
-            if (frontPose.targetsUsed.size() > backPose.targetsUsed.size()) {
-                return lastFrontEstimatedPose;
+            if (leftPose.targetsUsed.size() > rightPose.targetsUsed.size()) {
+                return lastLeftEstimatedPose;
             } else {
-                return lastBackEstimatedPose;
+                return lastRightEstimatedPose;
             }
         }
         
         // Both are single-tag - use the one with lowest ambiguity
-        double frontAmbiguity = frontPose.targetsUsed.get(0).getPoseAmbiguity();
-        double backAmbiguity = backPose.targetsUsed.get(0).getPoseAmbiguity();
+        double leftAmbiguity = leftPose.targetsUsed.get(0).getPoseAmbiguity();
+        double rightAmbiguity = rightPose.targetsUsed.get(0).getPoseAmbiguity();
         
         // Lower ambiguity is better
-        if (frontAmbiguity < backAmbiguity) {
-            return lastFrontEstimatedPose;
+        if (leftAmbiguity < rightAmbiguity) {
+            return lastLeftEstimatedPose;
         } else {
-            return lastBackEstimatedPose;
+            return lastRightEstimatedPose;
         }
     }
     
@@ -226,84 +211,38 @@ public class Vision extends SubsystemBase {
      */
     private void updatePoseEstimates() {
         // Get poses from both cameras
-        lastFrontEstimatedPose = frontPoseEstimator.update(frontCamera.getLatestResult());
-        lastBackEstimatedPose = backPoseEstimator.update(backCamera.getLatestResult());
+        lastLeftEstimatedPose = leftPoseEstimator.update(leftCamera.getLatestResult());
+        lastRightEstimatedPose = rightPoseEstimator.update(rightCamera.getLatestResult());
         
         // Log raw target data for debugging
         logRawTargetData();
     }
-
-    /**
-     * Updates the robot pose estimation from the Limelight
-     */
-    private void updateLimelightPose() {
-        // Check if Limelight has valid targets
-        if (LimelightLib.getTV(limelightName)) {
-            // Get the robot pose from Limelight (in field space)
-            double[] botpose = LimelightLib.getBotPose_wpiBlue(limelightName);
-            
-            if (botpose.length >= 6) {
-                // Extract the pose components
-                double x = botpose[0];
-                double y = botpose[1];
-                // double z = botpose[2];
-                // double roll = botpose[3];
-                // double pitch = botpose[4];
-                double yaw = botpose[5];
-                
-                // Create the pose objects
-                Pose2d pose2d = new Pose2d(x, y, Rotation2d.fromDegrees(yaw));
-                
-                // Update the last pose and latency
-                lastLimelightPose = Optional.of(pose2d);
-                
-                // Visualize the limelight pose
-                field2d.getObject("Limelight Estimate").setPose(pose2d);
-                
-                // Log data
-                // SmartDashboard.putNumber("Limelight Pose X", x);
-                // SmartDashboard.putNumber("Limelight Pose Y", y);
-                // SmartDashboard.putNumber("Limelight Pose Yaw", yaw);
-            } else {
-                lastLimelightPose = Optional.empty();
-            }
-        } else {
-            lastLimelightPose = Optional.empty();
-        }
-    }
     
-    /**
-     * Get the latest estimated robot pose from the Limelight
-     * @return Optional containing the estimated pose if available
-     */
-    public Optional<Pose2d> getLimelightEstimatedPose() {
-        return lastLimelightPose;
-    }
 
     /**
      * Log raw target data from cameras for debugging
      */
     private void logRawTargetData() {
-        // Front camera
-        PhotonPipelineResult frontResult = frontCamera.getLatestResult();
-        if (frontResult.hasTargets()) {
-            SmartDashboard.putNumber("Front camera targets", frontResult.getTargets().size());
-            PhotonTrackedTarget bestTarget = frontResult.getBestTarget();
-            SmartDashboard.putNumber("Front best target ID", bestTarget.getFiducialId());
-            SmartDashboard.putNumber("Front best target ambiguity", bestTarget.getPoseAmbiguity());
+        // Left camera
+        PhotonPipelineResult leftResult = leftCamera.getLatestResult();
+        if (leftResult.hasTargets()) {
+            SmartDashboard.putNumber("Left camera targets", leftResult.getTargets().size());
+            PhotonTrackedTarget bestTarget = leftResult.getBestTarget();
+            SmartDashboard.putNumber("Left best target ID", bestTarget.getFiducialId());
+            SmartDashboard.putNumber("Left best target ambiguity", bestTarget.getPoseAmbiguity());
         } else {
-            SmartDashboard.putNumber("Front camera targets", 0);
+            SmartDashboard.putNumber("Left camera targets", 0);
         }
         
-        // Back camera
-        PhotonPipelineResult backResult = backCamera.getLatestResult();
-        if (backResult.hasTargets()) {
-            SmartDashboard.putNumber("Back camera targets", backResult.getTargets().size());
-            PhotonTrackedTarget bestTarget = backResult.getBestTarget();
-            SmartDashboard.putNumber("Back best target ID", bestTarget.getFiducialId());
-            SmartDashboard.putNumber("Back best target ambiguity", bestTarget.getPoseAmbiguity());
+        // Right camera
+        PhotonPipelineResult rightResult = rightCamera.getLatestResult();
+        if (rightResult.hasTargets()) {
+            SmartDashboard.putNumber("Right camera targets", rightResult.getTargets().size());
+            PhotonTrackedTarget bestTarget = rightResult.getBestTarget();
+            SmartDashboard.putNumber("Right best target ID", bestTarget.getFiducialId());
+            SmartDashboard.putNumber("Right best target ambiguity", bestTarget.getPoseAmbiguity());
         } else {
-            SmartDashboard.putNumber("Back camera targets", 0);
+            SmartDashboard.putNumber("Right camera targets", 0);
         }
     }
     
@@ -311,18 +250,18 @@ public class Vision extends SubsystemBase {
      * Update field visualization for debugging
      */
     private void updateFieldVisualization() {
-        // Visualize front camera estimate
-        if (lastFrontEstimatedPose.isPresent()) {
-            Pose3d pose3d = lastFrontEstimatedPose.get().estimatedPose;
+        // Visualize left camera estimate
+        if (lastLeftEstimatedPose.isPresent()) {
+            Pose3d pose3d = lastLeftEstimatedPose.get().estimatedPose;
             Pose2d pose2d = new Pose2d(pose3d.getX(), pose3d.getY(), pose3d.getRotation().toRotation2d());
-            field2d.getObject("Front Camera Estimate").setPose(pose2d);
+            field2d.getObject("Left Camera Estimate").setPose(pose2d);
         }
         
-        // Visualize back camera estimate
-        if (lastBackEstimatedPose.isPresent()) {
-            Pose3d pose3d = lastBackEstimatedPose.get().estimatedPose;
+        // Visualize right camera estimate
+        if (lastRightEstimatedPose.isPresent()) {
+            Pose3d pose3d = lastRightEstimatedPose.get().estimatedPose;
             Pose2d pose2d = new Pose2d(pose3d.getX(), pose3d.getY(), pose3d.getRotation().toRotation2d());
-            field2d.getObject("Back Camera Estimate").setPose(pose2d);
+            field2d.getObject("Right Camera Estimate").setPose(pose2d);
         }
         
         // Visualize best estimate
@@ -332,28 +271,5 @@ public class Vision extends SubsystemBase {
             Pose2d pose2d = new Pose2d(pose3d.getX(), pose3d.getY(), pose3d.getRotation().toRotation2d());
             field2d.getObject("Best Vision Estimate").setPose(pose2d);
         }
-    }
-
-    public void updateLimelightData() {
-        tX = LimelightLib.getTX(limelightName);
-        tY = LimelightLib.getTY(limelightName);
-        tV = LimelightLib.getTV(limelightName);
-        targetPose3d = LimelightLib.getTargetPose3d_CameraSpace(limelightName);
-    }
-
-    public double getTX() {
-        return tX;
-    }
-
-    public double getTY() {
-        return tY;
-    }
-
-    public boolean getTV() {
-        return tV;
-    }
-
-    public Pose3d getPose() {
-        return targetPose3d;
-    }
+    }    
 }
