@@ -36,7 +36,7 @@ public class Vision extends SubsystemBase {
     
     // Camera to robot transform
     private final Transform3d leftRobotToCamera = new Transform3d(
-        0.0, 0.0, 0.5,  // x, y, z in meters (camera position relative to robot center)
+        0.0, 0.0, 0.5,  // x, y, z in meters (camera position relative to robot center). The actual distance left/right is 0.3302
         new Rotation3d(0, 0, Math.toRadians(45)) // rotation (45 degrees outwards)
     );
     
@@ -56,7 +56,7 @@ public class Vision extends SubsystemBase {
         rightCamera = new PhotonCamera("back"); // Right Camera
 
          // Configure pose estimators with the current field layout
-        AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+        AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
 
         // Create pose estimators
         leftPoseEstimator = new PhotonPoseEstimator(
