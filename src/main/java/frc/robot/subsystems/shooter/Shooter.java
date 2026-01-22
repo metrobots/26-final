@@ -7,6 +7,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import frc.robot.utils.Config;
 import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -23,4 +24,9 @@ import frc.robot.utils.Constants.DriveConstants;
 
 public class Shooter extends SubsystemBase {
     
+    // Define the spark flexes and NEO vortexes here
+    private SparkFlex shooterPivot = new SparkFlex(Constants.kShooterPivotCanId, MotorType.kBrushless);
+    private SparkFlex shooterDrive = new SparkFlex(Constants.kShooterDriveCanId, MotorType.kBrushless);
+    // Make methods to spin up the wheels given a direction and a speed
+    // Make method to pivot the shooter
 }
