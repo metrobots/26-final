@@ -13,6 +13,20 @@ public final class Constants {
 
   public static CommandXboxController primary = new CommandXboxController(OIConstants.kDriverControllerPort);
 
+  // INTAKE -
+  public static final int kIntakePivotCanId = 10;
+  public static final int kIntakeDriveCanId = 10;
+
+  // SHOOTER -
+  public static final int kShooterPivotCanId = 10;
+  public static final int kShooterDriveCanId = 10;
+
+  // INDEXER -
+  public static final int kIndexerCanId = 10;
+
+  // CLIMB -
+  public static final int kClimbCanId = 10;
+
   public static final class DriveConstants {
     // Be careful, these are the max allowed speeds, not the max capable
     public static final double kMaxSpeedMetersPerSecond = 5.1;
@@ -33,30 +47,32 @@ public final class Constants {
         new Translation2d(kWheelBase / 2, kTrackWidth / 2)     
     );
 
-    // SparkMax CAN IDs
+    // Drivetrain CAN IDs
 
     // Driving
     public static final int kFrontLeftDrivingCanId = 8;
     public static final int kRearLeftDrivingCanId = 5;
     public static final int kFrontRightDrivingCanId = 12;
     public static final int kRearRightDrivingCanId = 7;
-
     // Turning
     public static final int kFrontLeftTurningCanId = 3;
     public static final int kRearLeftTurningCanId = 6;
     public static final int kFrontRightTurningCanId = 4;
     public static final int kRearRightTurningCanId = 11;
-
-    // Encoders - 1 (2.88), 0 (5.14), 2 (2.8), 3 (5.7)
+    // Encoders
     public static final int kFrontLeftEncoder = 2; 
     public static final int kFrontRightEncoder = 3;
     public static final int kRearLeftEncoder = 0; 
     public static final int kRearRightEncoder = 1;
-
+    // Encoder offsets
     public static final double kFrontLeftEncoderOffset = 0;
     public static final double kFrontRightEncoderOffset = 2.766007945129726;
     public static final double kRearLeftEncoderOffset = 4.765345577948231;
     public static final double kRearRightEncoderOffset = 2.616756710656141;
+
+
+
+
   }
 
   public static final class ModuleConstants {
