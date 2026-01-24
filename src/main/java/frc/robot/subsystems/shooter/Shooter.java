@@ -22,5 +22,20 @@ import frc.robot.utils.Constants.AutoConstants;
 import frc.robot.utils.Constants.DriveConstants;
 
 public class Shooter extends SubsystemBase {
-    
+    // Motor Definitions
+    private final SparkMax flywheelSpark; // Runs Flywheel Motors
+    private final SparkMax aimSpark; // Motor for Aiming Mechanism
+
+    // Encoder Definitions
+    private final RelativeEncoder flywheelEncoder; // Gets Flywheel Velocity
+    private final AnalogEncoder aimEncoder; // Gets motor data to convert into shooter angle
+
+    public Shooter (int flywheelCANId, int aimCANId, int analogPort, double analogOffset) {
+        // Motor Definitions
+        flywheelSpark = new SparkMax (flywheelCANId, MotorType.kBrushless);
+        aimSpark = new SparkMax (aimCANId, MotorType.kBrushless);
+        // Encoder Definitions
+        flywheelEncoder = flywheelSpark.getEncoder();
+        aimEncoder = new AnalogEncoder(analogPort);
+    }
 }
