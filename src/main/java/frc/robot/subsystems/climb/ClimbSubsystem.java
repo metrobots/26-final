@@ -21,9 +21,8 @@ import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.AutoConstants;
 import frc.robot.utils.Constants.DriveConstants;
 
-public class Climb extends SubsystemBase {
-    
+public class ClimbSubsystem extends SubsystemBase {
     // Define motors and such for climb
     private SparkMax climbMotor = new SparkMax(Constants.kClimbCanId, MotorType.kBrushless);
-    // Make methods for moving the climb mech
+    // Make methods for moving the climb mechanism
 }
