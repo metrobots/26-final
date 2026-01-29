@@ -25,15 +25,18 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.AutoConstants;
 import frc.robot.utils.Constants.DriveConstants;
+import java.util.Optional;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class Shoot extends Command {
-  /** Creates a new Shoot. */
+public class ManualAim extends Command {
+  /** Creates a new ManualAim. */
 
   private Shooter shooter;
+  private double speed = 1;
 
-  public Shoot(Shooter importShooter) {
+  public ManualAim(Shooter importShooter, boolean goingUp) {
     shooter = importShooter; // Sets command to reference an outside shooting mechanism
+    if (!goingUp) {speed *= -1;} // Inverts speed if moving aim down
   }
 
   // Called when the command is initially scheduled.
@@ -43,14 +46,14 @@ public class Shoot extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    shooter.fire(1); // Bang bang bang
+    shooter.manualAim(speed); // Manually adjusts aim of the shooter
     return;
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    shooter.flywheelSpark.stopMotor(); // Stops the shooter
+    shooter.aimSpark.stopMotor(); // Stops the aiming motor
     return;
   }
 
