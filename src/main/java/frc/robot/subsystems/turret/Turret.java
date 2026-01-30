@@ -1,7 +1,6 @@
 package frc.robot.subsystems.turret;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DigitalInput;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
@@ -31,10 +30,6 @@ public class Turret extends SubsystemBase {
     private final AbsoluteEncoder hoodEncoder;
     private final RelativeEncoder turretEncoder;
     private final DigitalInput turretLimitSwitch;
-
-    // PID Controllers
-    private final PIDController flywheelPID = new PIDController(0.0005, 0, 0); // tune
-    private final PIDController aimPID = new PIDController(0.0001, 0, 0); // tune
 
     // Constants
     private final double maxHoodAngle = 90;
