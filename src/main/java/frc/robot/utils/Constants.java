@@ -18,14 +18,19 @@ public final class Constants {
   public static final int kIntakeDriveCanId = 10;
 
   // SHOOTER -
-  public static final int kShooterPivotCanId = 10;
-  public static final int kShooterDriveCanId = 10;
+  public static final int kTurretCanId = 10;
+  public static final int kFeedCanId = 10;
+  public static final int kHoodCanId = 10;
+  public static final int kFlywheel1CanId = 10;
+  public static final int kFlywheel2CanId = 10;
 
   // INDEXER -
   public static final int kIndexerCanId = 10;
 
   // CLIMB -
   public static final int kClimbCanId = 10;
+
+  public static final int kTurretLimitSwitchPort = 0;
 
   public static final class DriveConstants {
     // Be careful, these are the max allowed speeds, not the max capable
