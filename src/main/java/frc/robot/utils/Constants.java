@@ -55,15 +55,15 @@ public final class Constants {
     // Drivetrain CAN IDs
 
     // Driving
-    public static final int kFrontLeftDrivingCanId = 8;
-    public static final int kRearLeftDrivingCanId = 5;
-    public static final int kFrontRightDrivingCanId = 12;
-    public static final int kRearRightDrivingCanId = 7;
+    public static final int kFrontLeftDrivingCanId = 5;
+    public static final int kRearLeftDrivingCanId = 36;
+    public static final int kFrontRightDrivingCanId = 10;
+    public static final int kRearRightDrivingCanId = 6;
     // Turning
-    public static final int kFrontLeftTurningCanId = 3;
-    public static final int kRearLeftTurningCanId = 6;
-    public static final int kFrontRightTurningCanId = 4;
-    public static final int kRearRightTurningCanId = 11;
+    public static final int kFrontLeftTurningCanId = 9;
+    public static final int kRearLeftTurningCanId = 35;
+    public static final int kFrontRightTurningCanId = 8;
+    public static final int kRearRightTurningCanId = 12;
     // Encoders
     public static final int kFrontLeftEncoder = 2; 
     public static final int kFrontRightEncoder = 3;

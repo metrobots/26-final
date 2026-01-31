@@ -58,7 +58,17 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
     // Configure bindings for controller
+     m_drivetrain.setDefaultCommand( // IF THE DRIVETRAIN ISN'T DOING ANYTHING ELSE, DO THIS
+        new RunCommand(() -> {
+            m_drivetrain.drive(
+                MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband),
+                MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband),
+                -MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband),
+                true);
+        }, m_drivetrain)
+    );
   }
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
