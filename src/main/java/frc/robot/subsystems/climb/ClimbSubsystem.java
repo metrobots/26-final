@@ -7,6 +7,9 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.AbsoluteEncoder;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants;
 
@@ -21,6 +24,11 @@ public class ClimbSubsystem extends SubsystemBase {
             new TrapezoidProfile.Constraints(10, 20) // TODO: Figure out what these values should be.
     );
 
+    // The climb motor has a gear-reduction ratio of 64:1 and a 2 in. radius drum.
+    private final int radius = 2;
+    private final double circumference = 2 * Math.PI * radius;
+    private final double gearRatio = 64 / 1;
+
     public ClimbSubsystem() {
         pidController.reset(0);
         configureMotor();
@@ -28,12 +36,10 @@ public class ClimbSubsystem extends SubsystemBase {
 
     public void configureMotor() {
         AbsoluteEncoderConfig encoderConfig = new AbsoluteEncoderConfig();
-        // TODO: Calculate convertion factor.
-        encoderConfig.positionConversionFactor(1);
+        encoderConfig.positionConversionFactor(circumference / gearRatio);
         SparkMaxConfig motorConfig = new SparkMaxConfig();
         motorConfig.apply(encoderConfig);
-        climbMotor.configure(motorConfig, com.revrobotics.ResetMode.kResetSafeParameters,
-                com.revrobotics.PersistMode.kPersistParameters);
+        climbMotor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     /**
@@ -48,9 +54,7 @@ public class ClimbSubsystem extends SubsystemBase {
     }
 
     /**
-     * TODO: Figure out units.
-     * 
-     * @return The encoder value in UNITS.
+     * @return The height of climb value in inches.
      */
     public double getPosition() {
         return encoder.getPosition();
