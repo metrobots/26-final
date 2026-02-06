@@ -20,7 +20,7 @@ public class Climb extends Command {
     // Called when the command is initially scheduled.
     @Override
     public void initialize() {
-        climbSubsystem.driveMotor(0.5);
+        climbSubsystem.moveTowardsHeight(ClimbSubsystem.MOTOR_SPEED);
     }
 
     // Called every time the scheduler runs while the command is scheduled.
@@ -31,7 +31,7 @@ public class Climb extends Command {
     // Called once the command ends or is interrupted.
     @Override
     public void end(boolean interrupted) {
-        climbSubsystem.driveMotor(0);
+        climbSubsystem.moveTowardsHeight(0);
     }
 
     // Returns true when the command should end.
