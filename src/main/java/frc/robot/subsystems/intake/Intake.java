@@ -14,7 +14,7 @@ public class Intake extends SubsystemBase {
     private SparkMax intakeDrive = new SparkMax(Constants.kIntakeDriveCanId, MotorType.kBrushless);
     private SparkMax indexer = new SparkMax(Constants.kIndexerCanId, MotorType.kBrushless);
 
-    private AbsoluteEncoder pivotEncoder = intakePivot.getAbsoluteEncoder();
+    // private AbsoluteEncoder pivotEncoder = intakePivot.getAbsoluteEncoder();
 
     double kP = 0.000001;
     double kI = 0;
@@ -35,9 +35,9 @@ public class Intake extends SubsystemBase {
         intakeDrive.set(speed);
     }
 
-    public void pivotIntake(double setpoint) {
-        intakePivot.set(intakePID.calculate(pivotEncoder.getPosition(), setpoint));
-        intakePID.close();
-    }
+    // public void pivotIntake(double setpoint) {
+    //     intakePivot.set(intakePID.calculate(pivotEncoder.getPosition(), setpoint));
+    //     intakePID.close();
+    // }
     
 }

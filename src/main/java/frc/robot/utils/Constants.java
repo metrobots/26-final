@@ -58,7 +58,7 @@ public final class Constants {
 
 
     // by module 
-    public static final int kFrontLeftDrivingCanId = 40;
+    public static final int kFrontLeftDrivingCanId = 48;
     public static final int kFrontLeftTurningCanId = 41;
 
     public static final int kRearLeftDrivingCanId = 42;

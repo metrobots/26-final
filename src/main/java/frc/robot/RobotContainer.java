@@ -78,7 +78,7 @@ public class RobotContainer {
 
 
     primary.a().whileTrue(
-      new ManualPivotIntake(m_intake, 0.15)
+      new ManualPivotIntake(m_intake, -0.15)
     );
   }
 
