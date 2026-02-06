@@ -16,6 +16,7 @@ import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants;
+import frc.robot.utils.LimelightLib;
 
 public class Turret extends SubsystemBase {
     // Motors
@@ -41,6 +42,7 @@ public class Turret extends SubsystemBase {
     private final SparkMaxConfig hoodMotorConfig = new SparkMaxConfig();
     private final SparkMaxConfig flywheelMotorConfig = new SparkMaxConfig();
     private final SparkMaxConfig turretMotorConfig = new SparkMaxConfig();
+    private final SparkMaxConfig invertedFlywheelMotorConfig = new SparkMaxConfig();
 
     public Turret() {
         // Motor initialization
@@ -72,7 +74,7 @@ public class Turret extends SubsystemBase {
         hoodSpark.configure(hoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         // --- FLYWHEEL CONFIG ---
-        double flywheelFreeSpeedRPM = 5000.0; // replace with your motor free speed
+        double flywheelFreeSpeedRPM = 6784.0; // replace with your motor free speed
         double flywheelFreeSpeedRPS = flywheelFreeSpeedRPM / 60.0;
         double kV = flywheelNominalVoltage / flywheelFreeSpeedRPS;
 
@@ -88,8 +90,11 @@ public class Turret extends SubsystemBase {
                           .pid(0.0005, 0, 0)
                           .feedForward.kV(kV);
 
+        invertedFlywheelMotorConfig.apply(flywheelMotorConfig);
+        invertedFlywheelMotorConfig.inverted(true);
+
         flywheelSpark1.configure(flywheelMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        flywheelSpark2.configure(flywheelMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        flywheelSpark2.configure(invertedFlywheelMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         // --- TURRET CONFIG ---
         double turretPositionFactor = 1.0; // rotations per rotation (adjust with gear ratio)
@@ -189,5 +194,33 @@ public class Turret extends SubsystemBase {
         turretEncoder.setPosition(0);
         return true; // homing finished
     }
+    }
+
+    private static final double kTurretTxKp = 1.0;   // deg turret per deg tx (start at 1.0)
+    private static final double kTxDeadband = 0.5;   // degrees
+    
+    public void aimTurretWithTx() {
+        double tx = LimelightLib.getTX("limelight");
+
+        if (!LimelightLib.getTV("limelight")) {
+            return; // no target, hold position
+        }
+
+        if (Math.abs(tx) < kTxDeadband) {
+            return;
+        }
+
+        double currentAngle = turretEncoder.getPosition();
+        double targetAngle = currentAngle + (tx * kTurretTxKp);
+
+        targetAngle = MathUtil.clamp(
+            targetAngle,
+            -maxTurretAngle,
+            maxTurretAngle
+        );
+
+        turretSpark
+            .getClosedLoopController()
+            .setSetpoint(targetAngle, ControlType.kPosition);
     }
 }
