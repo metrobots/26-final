@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants;
 
 public class ClimbSubsystem extends SubsystemBase {
-    // Define motors and such for climb
+    // Define motors and controllers for climb.
     private final SparkMax climbMotor = new SparkMax(Constants.kClimbCanId, MotorType.kBrushless);
     private final AbsoluteEncoder encoder = climbMotor.getAbsoluteEncoder();
     private final ProfiledPIDController pidController = new ProfiledPIDController(
@@ -24,7 +24,7 @@ public class ClimbSubsystem extends SubsystemBase {
             new TrapezoidProfile.Constraints(10, 20) // TODO: Figure out what these values should be.
     );
 
-    // The climb motor has a gear-reduction ratio of 64:1 and a 2 in. radius drum.
+    // The climb motor has a gear-reduction ratio of 64:1 and a 2" radius drum.
     private final int radius = 2;
     private final double circumference = 2 * Math.PI * radius;
     private final double gearRatio = 64 / 1;
@@ -34,6 +34,9 @@ public class ClimbSubsystem extends SubsystemBase {
         configureMotor();
     }
 
+    /**
+     * Configures the position conversion factor for climb motor.
+     */
     public void configureMotor() {
         AbsoluteEncoderConfig encoderConfig = new AbsoluteEncoderConfig();
         encoderConfig.positionConversionFactor(circumference / gearRatio);
@@ -50,13 +53,13 @@ public class ClimbSubsystem extends SubsystemBase {
      * @param speed Speed of the motor (between -1.0 and 1.0).
      */
     public void driveMotor(double speed) {
-        climbMotor.set(pidController.calculate(getPosition(), speed));
+        climbMotor.set(pidController.calculate(getPositionInInches(), speed));
     }
 
     /**
      * @return The height of climb value in inches.
      */
-    public double getPosition() {
+    public double getPositionInInches() {
         return encoder.getPosition();
     }
 }
