@@ -27,6 +27,10 @@ public class Intake extends SubsystemBase {
         indexer.set(speed);
     }
 
+    public void manualPivot(double speed) {
+        intakePivot.set(speed);
+    }
+
     public void driveIntake(double speed) {
         intakeDrive.set(speed);
     }

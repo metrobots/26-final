@@ -8,6 +8,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.commands.ManualPivotIntake;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.commands.TestShooter;
 import frc.robot.utils.Constants;
@@ -21,10 +23,11 @@ import frc.robot.utils.Constants.OIConstants;
  */
 public class RobotContainer {
   // Auto SendableChooser
-  private final SendableChooser<Command> autoChooser;
+  // private final SendableChooser<Command> autoChooser;
   // Subsystem declarations
   final Drivetrain m_drivetrain;
-  final Turret m_turret;
+  // final Turret m_turret;
+  final Intake m_intake;
   
   // The driver's controller
   private final CommandXboxController primary = Constants.primary;
@@ -32,12 +35,13 @@ public class RobotContainer {
    public RobotContainer() {
 
     m_drivetrain = new Drivetrain();
-    m_turret = new Turret();
+    // m_turret = new Turret();
+    m_intake = new Intake();
     
     
     registerNamedCommands();
 
-    autoChooser = AutoBuilder.buildAutoChooser();
+    // autoChooser = AutoBuilder.buildAutoChooser();
 
     // Configure the button bindings
     configureButtonBindings();
@@ -52,7 +56,7 @@ public class RobotContainer {
         }, m_drivetrain)
     );
 
-    SmartDashboard.putData("Auto Chooser", autoChooser); // Put the auto chooser on the dashboard
+    // SmartDashboard.putData("Auto Chooser", autoChooser); // Put the auto chooser on the dashboard
   } 
 
 
@@ -74,7 +78,7 @@ public class RobotContainer {
 
 
     primary.a().whileTrue(
-      new TestShooter(m_turret)
+      new ManualPivotIntake(m_intake, 0.15)
     );
   }
 
@@ -84,6 +88,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return autoChooser.getSelected();
+    return null;
   }
 }
