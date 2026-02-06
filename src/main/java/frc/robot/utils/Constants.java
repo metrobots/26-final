@@ -13,22 +13,22 @@ public final class Constants {
 
   public static CommandXboxController primary = new CommandXboxController(OIConstants.kDriverControllerPort);
 
-  // INTAKE -
-  public static final int kIntakePivotCanId = 10;
-  public static final int kIntakeDriveCanId = 10;
+  // INTAKE - 
+  public static final int kIntakePivotCanId = 20;
+  public static final int kIntakeDriveCanId = 21;
 
-  // SHOOTER -
-  public static final int kTurretCanId = 10;
-  public static final int kFeedCanId = 10;
-  public static final int kHoodCanId = 10;
-  public static final int kFlywheel1CanId = 10;
-  public static final int kFlywheel2CanId = 10;
+  // SHOOTER - 
+  public static final int kTurretCanId = 30;
+  public static final int kFeedCanId = 31;
+  public static final int kHoodCanId = 32;
+  public static final int kFlywheel1CanId = 33;
+  public static final int kFlywheel2CanId = 34;
 
   // INDEXER -
-  public static final int kIndexerCanId = 10;
+  public static final int kIndexerCanId = 40;
 
   // CLIMB -
-  public static final int kClimbCanId = 10;
+  public static final int kClimbCanId = 50;
 
   public static final int kTurretLimitSwitchPort = 0;
 
