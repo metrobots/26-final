@@ -17,8 +17,10 @@ import com.revrobotics.RelativeEncoder;
 public class Module {
     private final SparkMax m_drivingSpark;
     private final SparkMax m_turningSpark;
+
     private final RelativeEncoder m_drivingEncoder;
     final RelativeEncoder m_turningEncoder;
+    
     public final AnalogEncoder m_turningAnalogEncoder;
     private final SparkClosedLoopController m_drivingClosedLoopController;
     private final SparkClosedLoopController m_turningClosedLoopController;
