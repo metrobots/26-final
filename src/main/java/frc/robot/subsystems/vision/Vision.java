@@ -38,8 +38,8 @@ public class Vision extends SubsystemBase {
     private Limelight3A limelight2;
 
     private Pose3d targetPose3d;
-    private Pose2d раньшеLimelightPose; // Past
-    private Pose2d сейчасLimelightPose; // Current
+    private Pose2d раньшеLimelightPose; // past limelight pose
+    private Pose2d сейчасLimelightPose; // current limelight pose
 
     private double tX;
     private double tY;
@@ -76,7 +76,7 @@ public class Vision extends SubsystemBase {
 
     public Vision () {
 
-        // Initializes data apparently
+        // initializes data apparently
         this.tX = 0;
         this.tY = 0;
         this.tV = false;
@@ -88,6 +88,7 @@ public class Vision extends SubsystemBase {
         limelight1 = new LimelightLib(); // Limelight 1
         limelight2 = new LimelightLib(); // Limelight 2
 
+        // pose creation of some sort.
         this.targetPose3d = new Pose3d();
         this.раньшеLimelightPose = new Pose2d();
         this.сейчасLimelightPose = new Pose2d();
@@ -303,14 +304,6 @@ public class Vision extends SubsystemBase {
             field2d.getObject("Best Vision Estimate").setPose(pose2d);
         }
     }
-    
-/*************************************************************************************************************** */
-
-    /*
-     * 1. Position relative to April Tag
-     * 2. April Tag Tracking
-     * 3. Fuel Tracking
-     */
 
     public void updateLimelightPose(Limelight3A limelight) {
 
@@ -333,101 +326,5 @@ public class Vision extends SubsystemBase {
         tV = LimelightLib.getTV(limelight);
         targetPose3d = LimelightLib.getTargetPose3d_CameraSpace();
         
-    }
-
-    @Override
-    public void init() {
-
-        limelight1 = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight1.setPollRateHz(100);
-        limelight1.start();
-
-        limelight2 = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight2.setPollRateHz(100);
-        limelight2.start();
-
-    }
-
-    LLResult result = limelight.getLatestResult();
-
-    @Override
-    public void getResult() {
-
-        if (result != null && result.isValid()) {
-
-            double tx = result.getTX();
-            double ty = result.getTY();
-            double ta = result.getTA();
-
-            telemetry.addData("Target X", tx);
-            telemetry.addData("Target Y", ty);
-            telemetry.addData("Target A", ta);
-        }
-
-        else {
-            
-            telemetry.addData("Limelight", "No Target");
-        }
-    }
-
-    //
-    public void ColorResult() {
-        
-        List<ColorResult> colorTargets = result.getColorResult();
-
-        for (ColorResult colorTarget : colorTargets) {
-
-            double x = detection.getTargetXDegrees();
-            double y = detection.getTargetYDegrees();
-            double area = detection.getTargetArea();
-
-            telemetry.addData("Color Target", "Takes Up " + area + "% of image.");
-        }
-    }
-    //
-    
-    @Override
-    public void ClassifierResults() {
-
-        List<ClassifierResults> classifications = result.getClassifierClassIndex();
-
-        for (ClassifierResults classification : classifications) {
-
-            String className = classification.getName();
-            double confidence = classification.getConfidence();
-
-            telemetry.addData("I see a", className + " (" + confidence + "%).");
-        }
-    }
-
-    @Override
-    public void DetectorResult() {
-
-        List<DetectorResult> detections = result.getDetectorResults();
-
-        for (DectorResult detection : detections) {
-
-            String className = classification.getName();
-            double x = detection.getTargetXDegrees();
-            double y = detection.getTargetYDegrees();
-
-            telemetry.addData(className, "at (" + x + ", " + y + ") degrees");
-        }
-    }
-
-    @Override
-    public void FiducialResult() {
-
-        List<FiducialResult> fiducials = result.getFiducialResults();
-
-        for (FiducialResult fiducial : fiducials) {
-
-            int id = fiducial.getFiducialId();
-            double x = detection.getTargetXDegrees();
-            double y = detection.getTargetYDegrees();
-            double StrafeDistance_3D = fiducial.getRobotPose_TargetSpace().getY();
-
-            telemetry.addData("Fiducial " + id, "is " + distance + " meters away");
-        }
     } 
 }
