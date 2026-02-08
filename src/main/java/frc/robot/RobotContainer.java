@@ -10,7 +10,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.ManualPivotIntake;
+import frc.robot.subsystems.intake.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.TurretHoodTable;
+import frc.robot.subsystems.turret.commands.AimTurret;
 import frc.robot.subsystems.turret.commands.TestShooter;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
@@ -26,8 +29,9 @@ public class RobotContainer {
   // private final SendableChooser<Command> autoChooser;
   // Subsystem declarations
   final Drivetrain m_drivetrain;
-  // final Turret m_turret;
+  final Turret m_turret;
   final Intake m_intake;
+  private final TurretHoodTable hoodTable = new TurretHoodTable();
   
   // The driver's controller
   private final CommandXboxController primary = Constants.primary;
@@ -35,7 +39,7 @@ public class RobotContainer {
    public RobotContainer() {
 
     m_drivetrain = new Drivetrain();
-    // m_turret = new Turret();
+    m_turret = new Turret();
     m_intake = new Intake();
     
     
@@ -56,6 +60,10 @@ public class RobotContainer {
         }, m_drivetrain)
     );
 
+    m_intake.setDefaultCommand(
+      new SpinIndexer(m_intake, 0.2)  
+    );
+
     // SmartDashboard.putData("Auto Chooser", autoChooser); // Put the auto chooser on the dashboard
   } 
 
@@ -66,20 +74,36 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
     // Configure bindings for controller
-     m_drivetrain.setDefaultCommand( // IF THE DRIVETRAIN ISN'T DOING ANYTHING ELSE, DO THIS
-        new RunCommand(() -> {
-            m_drivetrain.drive(
-                MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband),
-                MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband),
-                -MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband),
-                true);
-        }, m_drivetrain)
-    );
-
+    //  m_drivetrain.setDefaultCommand( // IF THE DRIVETRAIN ISN'T DOING ANYTHING ELSE, DO THIS
+    //     new RunCommand(() -> {
+    //         m_drivetrain.drive(
+    //             MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband),
+    //             MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband),
+    //             -MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband),
+    //             true);
+    //     }, m_drivetrain)
+    // );
 
     primary.a().whileTrue(
       new ManualPivotIntake(m_intake, -0.15)
     );
+
+    // y to align + range HUB
+    primary.y().toggleOnTrue(
+      new AimTurret(m_turret, hoodTable)
+    );
+
+    
+
+    // x to turtle (bring everything inside frame)
+
+    // RT to shoot
+    // RB to purge shooter
+
+    // LT to intake
+    // LB to purge intake
+
+    // d-pad to manual move turret + hood
   }
 
   /**

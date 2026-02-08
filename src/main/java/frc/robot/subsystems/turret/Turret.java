@@ -35,14 +35,21 @@ public class Turret extends SubsystemBase {
     // Constants
     private final double maxHoodAngle = 90;
     private final double minHoodAngle = 0;
-    private final double maxTurretAngle = 40; // max rotation each side
+    private final double maxTurretAngle = 40;
     private final double flywheelNominalVoltage = 12.0;
 
-    // Configurations
+    // Target flywheel RPM
+    private double targetFlywheelRPM = 0;
+
+    // Configs
     private final SparkMaxConfig hoodMotorConfig = new SparkMaxConfig();
     private final SparkMaxConfig flywheelMotorConfig = new SparkMaxConfig();
-    private final SparkMaxConfig turretMotorConfig = new SparkMaxConfig();
     private final SparkMaxConfig invertedFlywheelMotorConfig = new SparkMaxConfig();
+    private final SparkMaxConfig turretMotorConfig = new SparkMaxConfig();
+
+    // Turret PID constants for Limelight
+    private static final double kTurretTxKp = 1.0;
+    private static final double kTxDeadband = 0.5;
 
     public Turret() {
         // Motor initialization
@@ -54,41 +61,32 @@ public class Turret extends SubsystemBase {
 
         turretLimitSwitch = new DigitalInput(Constants.kTurretLimitSwitchPort);
 
-        // --- HOOD CONFIG ---
+        // ---------------- HOOD CONFIG ----------------
         double hoodFactor = 2 * Math.PI; // radians per rotation
-
-        hoodMotorConfig.idleMode(IdleMode.kBrake)
-                       .smartCurrentLimit(20);
-
+        hoodMotorConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
         hoodMotorConfig.absoluteEncoder
-                       .inverted(false)
-                       .positionConversionFactor(hoodFactor)
-                       .velocityConversionFactor(hoodFactor / 60.0)
-                       .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
-
+                .inverted(false)
+                .positionConversionFactor(hoodFactor)
+                .velocityConversionFactor(hoodFactor / 60.0)
+                .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
         hoodMotorConfig.closedLoop
-                       .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
-                       .pid(1, 0, 0) // tune PID
-                       .positionWrappingEnabled(false);
-
+                .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+                .pid(1, 0, 0)
+                .positionWrappingEnabled(false);
         hoodSpark.configure(hoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        // --- FLYWHEEL CONFIG ---
-        double flywheelFreeSpeedRPM = 6784.0; // replace with your motor free speed
-        double flywheelFreeSpeedRPS = flywheelFreeSpeedRPM / 60.0;
+        // ---------------- FLYWHEEL CONFIG ----------------
+        double flywheelFreeSpeedRPS = 6784.0 / 60.0; // RPM to RPS
         double kV = flywheelNominalVoltage / flywheelFreeSpeedRPS;
 
-        flywheelMotorConfig.idleMode(IdleMode.kCoast)
-                           .smartCurrentLimit(40);
-
+        flywheelMotorConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(40);
         flywheelMotorConfig.encoder
-                          .positionConversionFactor(1.0)
-                          .velocityConversionFactor(1.0 / 60.0);
-
+                .positionConversionFactor(1.0)
+                .velocityConversionFactor(1.0 / 60.0);
         flywheelMotorConfig.closedLoop
-                          .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                          .pid(0.0005, 0, 0)
-                          .feedForward.kV(kV);
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                .pid(0.0005, 0, 0)
+                .feedForward.kV(kV);
 
         invertedFlywheelMotorConfig.apply(flywheelMotorConfig);
         invertedFlywheelMotorConfig.inverted(true);
@@ -96,34 +94,26 @@ public class Turret extends SubsystemBase {
         flywheelSpark1.configure(flywheelMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         flywheelSpark2.configure(invertedFlywheelMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        // --- TURRET CONFIG ---
-        double turretPositionFactor = 1.0; // rotations per rotation (adjust with gear ratio)
-        double turretVelocityFactor = 1.0 / 60.0; // RPM to RPS
-
-        turretMotorConfig.idleMode(IdleMode.kBrake)
-                         .smartCurrentLimit(30);
-
+        // ---------------- TURRET CONFIG ----------------
+        turretMotorConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(30);
         turretMotorConfig.encoder
-                        .positionConversionFactor(turretPositionFactor)
-                        .velocityConversionFactor(turretVelocityFactor);
-
+                .positionConversionFactor(1.0)
+                .velocityConversionFactor(1.0 / 60.0);
         turretMotorConfig.closedLoop
-                        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                        .pid(0.5, 0, 0); // tune PID
-
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                .pid(0.5, 0, 0);
         turretSpark.configure(turretMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        // --- ENCODERS ---
+        // ---------------- ENCODERS ----------------
         flywheelEncoder = flywheelSpark1.getEncoder();
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
         turretEncoder = turretSpark.getEncoder();
     }
 
-    // --- HOOD CONTROL ---
+    // ---------------- HOOD ----------------
     public void manualHood(double input) {
-        // Scale and clamp voltage to respect min/max hood angle
-        double currentAngle = hoodEncoder.getPosition();
-        if ((input > 0 && currentAngle >= maxHoodAngle) || (input < 0 && currentAngle <= minHoodAngle)) {
+        double angle = hoodEncoder.getPosition();
+        if ((input > 0 && angle >= maxHoodAngle) || (input < 0 && angle <= minHoodAngle)) {
             hoodSpark.setVoltage(0);
         } else {
             hoodSpark.setVoltage(MathUtil.clamp(input, -1.0, 1.0) * flywheelNominalVoltage);
@@ -131,34 +121,49 @@ public class Turret extends SubsystemBase {
     }
 
     public void setHoodAngle(double setpoint) {
-        double clampedSetpoint = MathUtil.clamp(setpoint, minHoodAngle, maxHoodAngle);
-        hoodSpark.getClosedLoopController().setSetpoint(clampedSetpoint, ControlType.kPosition);
+        double clamped = MathUtil.clamp(setpoint, minHoodAngle, maxHoodAngle);
+        hoodSpark.getClosedLoopController().setSetpoint(clamped, ControlType.kPosition);
     }
 
-    // --- TURRET CONTROL ---
+    // ---------------- TURRET ----------------
     public void manualTurret(double input) {
-        double currentAngle = turretEncoder.getPosition();
+        double angle = turretEncoder.getPosition();
         double voltage = MathUtil.clamp(input, -1.0, 1.0) * flywheelNominalVoltage;
-
-        // Prevent movement past physical limits
-        if ((voltage > 0 && currentAngle >= maxTurretAngle) || 
-            (voltage < 0 && (currentAngle <= -maxTurretAngle || turretAtLimit()))) {
+        if ((voltage > 0 && angle >= maxTurretAngle) || (voltage < 0 && (angle <= -maxTurretAngle || turretAtLimit()))) {
             voltage = 0;
         }
-
         turretSpark.setVoltage(voltage);
     }
 
     public void setTurretAngle(double setpoint) {
-        double clampedSetpoint = MathUtil.clamp(setpoint, -maxTurretAngle, maxTurretAngle);
-        turretSpark.getClosedLoopController().setSetpoint(clampedSetpoint, ControlType.kPosition);
+        double clamped = MathUtil.clamp(setpoint, -maxTurretAngle, maxTurretAngle);
+        turretSpark.getClosedLoopController().setSetpoint(clamped, ControlType.kPosition);
+    }
+
+    public void aimTurretWithTx() {
+        double tx = LimelightLib.getTX("limelight");
+        if (!LimelightLib.getTV("limelight") || Math.abs(tx) < kTxDeadband) return;
+        double target = MathUtil.clamp(turretEncoder.getPosition() + tx * kTurretTxKp, -maxTurretAngle, maxTurretAngle);
+        turretSpark.getClosedLoopController().setSetpoint(target, ControlType.kPosition);
     }
 
     public boolean turretAtLimit() {
-        return !turretLimitSwitch.get(); // pressed = false
+        return !turretLimitSwitch.get();
     }
 
-    // --- FLYWHEEL CONTROL ---
+    public boolean homeTurret() {
+        final double homingSpeed = -0.2 * flywheelNominalVoltage;
+        if (!turretAtLimit()) {
+            turretSpark.setVoltage(homingSpeed);
+            return false;
+        } else {
+            turretSpark.setVoltage(0);
+            turretEncoder.setPosition(0);
+            return true;
+        }
+    }
+
+    // ---------------- FLYWHEEL ----------------
     public void manualFlywheels(double speed) {
         flywheelSpark1.setVoltage(speed * flywheelNominalVoltage);
         flywheelSpark2.setVoltage(speed * flywheelNominalVoltage);
@@ -170,57 +175,28 @@ public class Turret extends SubsystemBase {
         flywheelSpark2.getClosedLoopController().setSetpoint(targetRPS, ControlType.kVelocity);
     }
 
-    // --- FEED CONTROL ---
+    public void setTargetFlywheelRPM(double rpm) {
+        targetFlywheelRPM = rpm;
+    }
+
+    public double getTargetFlywheelRPM() {
+        return targetFlywheelRPM;
+    }
+
+    public double getFlywheelRPM() {
+        return flywheelEncoder.getVelocity() * 60; // RPS → RPM
+    }
+
+    public boolean isFlywheelAtTarget() {
+        return Math.abs(getFlywheelRPM() - targetFlywheelRPM) < 50; // RPM tolerance
+    }
+
+    // ---------------- FEED ----------------
     public void spinFeed(double speed) {
         feedSpark.setVoltage(speed * flywheelNominalVoltage);
     }
 
-    public double getTurretAngle() {
-        return turretEncoder.getPosition();
-    }
-
-    public double getHoodAngle() {
-        return hoodEncoder.getPosition();
-    }
-
-    public boolean  homeTurret() {
-    final double homingSpeed = -0.2 * flywheelNominalVoltage;
-
-    if (!turretAtLimit()) {
-        turretSpark.setVoltage(homingSpeed);
-        return false; // not done yet
-    } else {
-        turretSpark.setVoltage(0);
-        turretEncoder.setPosition(0);
-        return true; // homing finished
-    }
-    }
-
-    private static final double kTurretTxKp = 1.0;   // deg turret per deg tx (start at 1.0)
-    private static final double kTxDeadband = 0.5;   // degrees
-    
-    public void aimTurretWithTx() {
-        double tx = LimelightLib.getTX("limelight");
-
-        if (!LimelightLib.getTV("limelight")) {
-            return; // no target, hold position
-        }
-
-        if (Math.abs(tx) < kTxDeadband) {
-            return;
-        }
-
-        double currentAngle = turretEncoder.getPosition();
-        double targetAngle = currentAngle + (tx * kTurretTxKp);
-
-        targetAngle = MathUtil.clamp(
-            targetAngle,
-            -maxTurretAngle,
-            maxTurretAngle
-        );
-
-        turretSpark
-            .getClosedLoopController()
-            .setSetpoint(targetAngle, ControlType.kPosition);
-    }
+    // ---------------- ACCESSORS ----------------
+    public double getTurretAngle() { return turretEncoder.getPosition(); }
+    public double getHoodAngle() { return hoodEncoder.getPosition(); }
 }

@@ -3,7 +3,6 @@ package frc.robot.subsystems.intake;
 import edu.wpi.first.math.controller.PIDController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.AbsoluteEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants;
 
@@ -27,6 +26,10 @@ public class Intake extends SubsystemBase {
         indexer.set(speed);
     }
 
+    public void toAngle(double speed) {
+        
+    }
+
     public void manualPivot(double speed) {
         intakePivot.set(speed);
     }
@@ -35,9 +38,13 @@ public class Intake extends SubsystemBase {
         intakeDrive.set(speed);
     }
 
-    // public void pivotIntake(double setpoint) {
-    //     intakePivot.set(intakePID.calculate(pivotEncoder.getPosition(), setpoint));
-    //     intakePID.close();
-    // }
+    public void pivotIntake(double setpoint) {
+        intakePivot.set(intakePID.calculate(intakePivot.getEncoder().getPosition(), setpoint));
+        intakePID.close();
+    }
+
+    public void homeIntake() {
+        intakePivot.getEncoder().setPosition(0);
+    }
     
 }
