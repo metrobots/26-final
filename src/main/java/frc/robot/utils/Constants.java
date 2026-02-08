@@ -18,11 +18,11 @@ public final class Constants {
   public static final int kIntakeDriveCanId = 22;
 
   // SHOOTER - 
-  public static final int kTurretCanId = 30;
-  public static final int kFeedCanId = 31;
-  public static final int kHoodCanId = 32;
-  public static final int kFlywheel1CanId = 33;
-  public static final int kFlywheel2CanId = 34;
+  public static final int kTurretCanId = 3;
+  public static final int kFeedCanId = 7;
+  public static final int kHoodCanId = 5;
+  public static final int kFlywheel1CanId = 4;
+  public static final int kFlywheel2CanId = 6;
 
   // INDEXER -
   public static final int kIndexerCanId = 35;
@@ -31,6 +31,7 @@ public final class Constants {
   public static final int kClimbCanId = 50;
 
   public static final int kTurretLimitSwitchPort = 0;
+
 
   public static final class DriveConstants {
     // Be careful, these are the max allowed speeds, not the max capable
@@ -58,8 +59,8 @@ public final class Constants {
 
 
     // by module 
-    public static final int kFrontLeftDrivingCanId = 48;
-    public static final int kFrontLeftTurningCanId = 41;
+    public static final int kFrontLeftDrivingCanId = 49;
+    public static final int kFrontLeftTurningCanId = 48;
 
     public static final int kRearLeftDrivingCanId = 42;
     public static final int kRearLeftTurningCanId = 43;
@@ -77,10 +78,10 @@ public final class Constants {
     public static final int kRearLeftEncoder = 1; 
     public static final int kRearRightEncoder = 2;
     // Encoder offsets
-    public static final double kFrontLeftEncoderOffset = 0;
-    public static final double kFrontRightEncoderOffset = 0;
-    public static final double kRearLeftEncoderOffset = 0;
-    public static final double kRearRightEncoderOffset = 0;
+    public static final double kFrontLeftEncoderOffset = 6.0883963923748174;
+    public static final double kFrontRightEncoderOffset = 0.9453248064299455;
+    public static final double kRearLeftEncoderOffset = 5.155718208517749;
+    public static final double kRearRightEncoderOffset = 4.432023631580357;
 
 
 
