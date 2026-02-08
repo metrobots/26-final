@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants;
 import frc.robot.utils.LimelightLib;
+import frc.robot.utils.LimelightLib.PoseEstimate;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -19,6 +20,12 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.LLStatus;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+
+import java.util.List;
 import java.util.Optional;
 
 public class Vision extends SubsystemBase {
@@ -26,10 +33,27 @@ public class Vision extends SubsystemBase {
     private PhotonCamera leftCamera; // Left Camera
     private PhotonCamera rightCamera; // Right Camera
     
+    // Limelight Stuff
+    private Limelight3A limelight1;
+    private Limelight3A limelight2;
+
+    private Pose3d targetPose3d;
+    private Pose2d раньшеLimelightPose; // Past
+    private Pose2d сейчасLimelightPose; // Current
+
+    private double tX;
+    private double tY;
+    private boolean tV;
+
+
     // Pose estimators
     private final PhotonPoseEstimator leftPoseEstimator;
     private final PhotonPoseEstimator rightPoseEstimator;
-    
+        
+        /*
+         * Limelight position estimation?
+         */
+
     // Field visualization
     private final Field2d field2d = Constants.AutoConstants.field2d;
     
@@ -48,11 +72,25 @@ public class Vision extends SubsystemBase {
     // Last estimated poses
     private Optional<EstimatedRobotPose> lastLeftEstimatedPose = Optional.empty();
     private Optional<EstimatedRobotPose> lastRightEstimatedPose = Optional.empty();
+    private Optional<Pose2d> lastLimelightPose = Optional.empty();
 
     public Vision () {
+
+        // Initializes data apparently
+        this.tX = 0;
+        this.tY = 0;
+        this.tV = false;
+
         // Camera Definitions
         leftCamera = new PhotonCamera("front"); // Left Camera
         rightCamera = new PhotonCamera("back"); // Right Camera
+
+        limelight1 = new LimelightLib(); // Limelight 1
+        limelight2 = new LimelightLib(); // Limelight 2
+
+        this.targetPose3d = new Pose3d();
+        this.раньшеLimelightPose = new Pose2d();
+        this.сейчасLimelightPose = new Pose2d();
 
          // Configure pose estimators with the current field layout
         AprilTagFieldLayout tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
@@ -264,5 +302,132 @@ public class Vision extends SubsystemBase {
             Pose2d pose2d = new Pose2d(pose3d.getX(), pose3d.getY(), pose3d.getRotation().toRotation2d());
             field2d.getObject("Best Vision Estimate").setPose(pose2d);
         }
-    }    
+    }
+    
+/*************************************************************************************************************** */
+
+    /*
+     * 1. Position relative to April Tag
+     * 2. April Tag Tracking
+     * 3. Fuel Tracking
+     */
+
+    public void updateLimelightPose(Limelight3A limelight) {
+
+        // ...
+        if (LimelightLib.getTv(limelight)) {
+            
+            double[] botpose = LimelightLib.getBotPose(limelight);
+            
+            раньшеLimelightPose = сейчасLimelightPose;
+
+            сейчасLimelightPose = new Pose2d(botpose.getX() - 0, botpose.getY() - 0);
+            
+        }
+    }
+
+    public void updateLimelightData(Limelight3A limelight) {
+
+        tX = LimelightLib.getTX(limelight);
+        tY = LimelightLib.getTY(limelight);
+        tV = LimelightLib.getTV(limelight);
+        targetPose3d = LimelightLib.getTargetPose3d_CameraSpace();
+        
+    }
+
+    @Override
+    public void init() {
+
+        limelight1 = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight1.setPollRateHz(100);
+        limelight1.start();
+
+        limelight2 = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight2.setPollRateHz(100);
+        limelight2.start();
+
+    }
+
+    LLResult result = limelight.getLatestResult();
+
+    @Override
+    public void getResult() {
+
+        if (result != null && result.isValid()) {
+
+            double tx = result.getTX();
+            double ty = result.getTY();
+            double ta = result.getTA();
+
+            telemetry.addData("Target X", tx);
+            telemetry.addData("Target Y", ty);
+            telemetry.addData("Target A", ta);
+        }
+
+        else {
+            
+            telemetry.addData("Limelight", "No Target");
+        }
+    }
+
+    //
+    public void ColorResult() {
+        
+        List<ColorResult> colorTargets = result.getColorResult();
+
+        for (ColorResult colorTarget : colorTargets) {
+
+            double x = detection.getTargetXDegrees();
+            double y = detection.getTargetYDegrees();
+            double area = detection.getTargetArea();
+
+            telemetry.addData("Color Target", "Takes Up " + area + "% of image.");
+        }
+    }
+    //
+    
+    @Override
+    public void ClassifierResults() {
+
+        List<ClassifierResults> classifications = result.getClassifierClassIndex();
+
+        for (ClassifierResults classification : classifications) {
+
+            String className = classification.getName();
+            double confidence = classification.getConfidence();
+
+            telemetry.addData("I see a", className + " (" + confidence + "%).");
+        }
+    }
+
+    @Override
+    public void DetectorResult() {
+
+        List<DetectorResult> detections = result.getDetectorResults();
+
+        for (DectorResult detection : detections) {
+
+            String className = classification.getName();
+            double x = detection.getTargetXDegrees();
+            double y = detection.getTargetYDegrees();
+
+            telemetry.addData(className, "at (" + x + ", " + y + ") degrees");
+        }
+    }
+
+    @Override
+    public void FiducialResult() {
+
+        List<FiducialResult> fiducials = result.getFiducialResults();
+
+        for (FiducialResult fiducial : fiducials) {
+
+            int id = fiducial.getFiducialId();
+            double x = detection.getTargetXDegrees();
+            double y = detection.getTargetYDegrees();
+            double StrafeDistance_3D = fiducial.getRobotPose_TargetSpace().getY();
+
+            telemetry.addData("Fiducial " + id, "is " + distance + " meters away");
+        }
+    } 
 }
