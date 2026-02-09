@@ -26,8 +26,9 @@ public class Intake extends SubsystemBase {
         indexer.set(speed);
     }
 
-    public void toAngle(double speed) {
-        
+    public void toAngle(double setpoint) {
+        double speed = intakePID.calculate(intakePivot.getEncoder().getPosition(), setpoint);
+        intakePivot.set(speed);
     }
 
     public void manualPivot(double speed) {
