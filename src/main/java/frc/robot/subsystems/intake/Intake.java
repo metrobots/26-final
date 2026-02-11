@@ -3,7 +3,6 @@ package frc.robot.subsystems.intake;
 import edu.wpi.first.math.controller.PIDController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.AbsoluteEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants;
 
@@ -14,7 +13,7 @@ public class Intake extends SubsystemBase {
     private SparkMax intakeDrive = new SparkMax(Constants.kIntakeDriveCanId, MotorType.kBrushless);
     private SparkMax indexer = new SparkMax(Constants.kIndexerCanId, MotorType.kBrushless);
 
-    private AbsoluteEncoder pivotEncoder = intakePivot.getAbsoluteEncoder();
+    // private AbsoluteEncoder pivotEncoder = intakePivot.getAbsoluteEncoder();
 
     double kP = 0.000001;
     double kI = 0;
@@ -27,13 +26,26 @@ public class Intake extends SubsystemBase {
         indexer.set(speed);
     }
 
+    public void toAngle(double setpoint) {
+        double speed = intakePID.calculate(intakePivot.getEncoder().getPosition(), setpoint);
+        intakePivot.set(speed);
+    }
+
+    public void manualPivot(double speed) {
+        intakePivot.set(speed);
+    }
+
     public void driveIntake(double speed) {
         intakeDrive.set(speed);
     }
 
     public void pivotIntake(double setpoint) {
-        intakePivot.set(intakePID.calculate(pivotEncoder.getPosition(), setpoint));
+        intakePivot.set(intakePID.calculate(intakePivot.getEncoder().getPosition(), setpoint));
         intakePID.close();
+    }
+
+    public void homeIntake() {
+        intakePivot.getEncoder().setPosition(0);
     }
     
 }

@@ -13,24 +13,25 @@ public final class Constants {
 
   public static CommandXboxController primary = new CommandXboxController(OIConstants.kDriverControllerPort);
 
-  // INTAKE -
-  public static final int kIntakePivotCanId = 10;
-  public static final int kIntakeDriveCanId = 10;
+  // INTAKE - 
+  public static final int kIntakePivotCanId = 21;
+  public static final int kIntakeDriveCanId = 22;
 
-  // SHOOTER -
-  public static final int kTurretCanId = 10;
-  public static final int kFeedCanId = 10;
-  public static final int kHoodCanId = 10;
-  public static final int kFlywheel1CanId = 10;
-  public static final int kFlywheel2CanId = 10;
+  // SHOOTER - 
+  public static final int kTurretCanId = 3;
+  public static final int kFeedCanId = 7;
+  public static final int kHoodCanId = 5;
+  public static final int kFlywheel1CanId = 4;
+  public static final int kFlywheel2CanId = 6;
 
   // INDEXER -
-  public static final int kIndexerCanId = 10;
+  public static final int kIndexerCanId = 35;
 
   // CLIMB -
-  public static final int kClimbCanId = 10;
+  public static final int kClimbCanId = 50;
 
   public static final int kTurretLimitSwitchPort = 0;
+
 
   public static final class DriveConstants {
     // Be careful, these are the max allowed speeds, not the max capable
@@ -54,26 +55,33 @@ public final class Constants {
 
     // Drivetrain CAN IDs
 
-    // Driving
-    public static final int kFrontLeftDrivingCanId = 5;
-    public static final int kRearLeftDrivingCanId = 36;
-    public static final int kFrontRightDrivingCanId = 10;
-    public static final int kRearRightDrivingCanId = 6;
-    // Turning
-    public static final int kFrontLeftTurningCanId = 9;
-    public static final int kRearLeftTurningCanId = 35;
-    public static final int kFrontRightTurningCanId = 8;
-    public static final int kRearRightTurningCanId = 12;
+
+
+
+    // by module 
+    public static final int kFrontLeftDrivingCanId = 49;
+    public static final int kFrontLeftTurningCanId = 48;
+
+    public static final int kRearLeftDrivingCanId = 42;
+    public static final int kRearLeftTurningCanId = 43;
+
+
+    public static final int kFrontRightDrivingCanId = 44;
+    public static final int kFrontRightTurningCanId = 45;
+
+    public static final int kRearRightDrivingCanId = 46;
+    public static final int kRearRightTurningCanId = 47;
+
     // Encoders
-    public static final int kFrontLeftEncoder = 2; 
+    public static final int kFrontLeftEncoder = 0; 
     public static final int kFrontRightEncoder = 3;
-    public static final int kRearLeftEncoder = 0; 
-    public static final int kRearRightEncoder = 1;
+    public static final int kRearLeftEncoder = 1; 
+    public static final int kRearRightEncoder = 2;
     // Encoder offsets
-    public static final double kFrontLeftEncoderOffset = 0;
-    public static final double kFrontRightEncoderOffset = 2.766007945129726;
-    public static final double kRearLeftEncoderOffset = 4.765345577948231;
-    public static final double kRearRightEncoderOffset = 2.616756710656141;
+    public static final double kFrontLeftEncoderOffset = 6.0883963923748174;
+    public static final double kFrontRightEncoderOffset = 0.9453248064299455;
+    public static final double kRearLeftEncoderOffset = 5.155718208517749;
+    public static final double kRearRightEncoderOffset = 4.432023631580357;
 
 
 

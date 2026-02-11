@@ -27,20 +27,34 @@ public class Module {
     private SwerveModuleState m_desiredState = new SwerveModuleState(0.0, new Rotation2d());
 
     public Module(int drivingCANId, int turningCANId, int analogPort, double analogOffset) {
+
         m_drivingSpark = new SparkMax(drivingCANId, MotorType.kBrushless);
         m_turningSpark = new SparkMax(turningCANId, MotorType.kBrushless);
+
+
         m_drivingEncoder = m_drivingSpark.getEncoder();
+
         m_turningEncoder = m_turningSpark.getEncoder();
         m_turningAnalogEncoder = new AnalogEncoder(analogPort);
+
+
         m_drivingClosedLoopController = m_drivingSpark.getClosedLoopController();
         m_turningClosedLoopController = m_turningSpark.getClosedLoopController();
         m_analogEncoderOffset = analogOffset;
 
         // Apply configurations
-        m_drivingSpark.configure(Config.Module.drivingConfig, ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters);
-        m_turningSpark.configure(Config.Module.turningConfig, ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters);
+        m_drivingSpark.configure(
+            Config.Module.createDrivingConfig(),
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters
+        );
+
+        m_turningSpark.configure(
+            Config.Module.createTurningConfig(),
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters
+        );
+
                
         // Reset the encoders during initialization
         syncAndZeroEncoders();
