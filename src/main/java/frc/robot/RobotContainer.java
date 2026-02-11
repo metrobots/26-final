@@ -9,14 +9,21 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.commands.IntakeIn;
+import frc.robot.subsystems.intake.commands.IntakePurge;
 import frc.robot.subsystems.intake.commands.ManualPivotIntake;
 import frc.robot.subsystems.intake.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretHoodTable;
 import frc.robot.subsystems.turret.commands.AimTurret;
+import frc.robot.subsystems.turret.commands.ManualHood;
+import frc.robot.subsystems.turret.commands.ManualTurret;
+import frc.robot.subsystems.turret.commands.PurgeShooter;
+import frc.robot.subsystems.turret.commands.ShootTurret;
 import frc.robot.subsystems.turret.commands.TestShooter;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
+import frc.robot.utils.utilcommands.Turtle;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -95,15 +102,42 @@ public class RobotContainer {
 
     
 
-    // x to turtle (bring everything inside frame)
+    // // x to turtle (bring everything inside frame)
+    // primary.x().toggleOnTrue(
+    //   new Turtle(m_turret)
+    // );
 
     // RT to shoot
-    // RB to purge shooter
+    primary.rightTrigger().toggleOnTrue(
+      new ShootTurret(m_turret)
+    );
+    // // RB to purge shooter
+    // primary.rightBumper().toggleOnTrue(
+    //   new PurgeShooter(m_turret)
+    // );
 
     // LT to intake
+    primary.leftTrigger().toggleOnTrue(
+      new IntakeIn(m_intake, 1)
+    );
     // LB to purge intake
+    primary.leftBumper().toggleOnTrue(
+      new IntakePurge()
+    );
 
     // d-pad to manual move turret + hood
+    primary.povUp().toggleOnTrue(
+      new ManualHood(m_turret, 1)
+    );
+    primary.povDown().toggleOnTrue(
+      new ManualHood(m_turret, -1)
+    );
+    primary.povLeft().toggleOnTrue(
+      new ManualTurret(m_turret, -1)
+    );
+    primary.povRight().toggleOnTrue(
+      new ManualTurret (m_turret, 1)
+    );
   }
 
   /**
