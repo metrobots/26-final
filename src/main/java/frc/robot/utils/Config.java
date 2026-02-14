@@ -8,41 +8,64 @@ import frc.robot.utils.Constants.ModuleConstants;
 public final class Config {
 
   public static final class Module {
-    public static final SparkMaxConfig drivingConfig = new SparkMaxConfig();
-    public static final SparkMaxConfig turningConfig = new SparkMaxConfig();
 
+    private Module() {}
 
-    static {
-      // Use module constants to calculate conversion factors and feed forward gain.
-      double drivingFactor = ModuleConstants.kWheelDiameterMeters * Math.PI /
-        ModuleConstants.kDrivingMotorReduction;
-      double drivingVelocityFeedForward = 1 / ModuleConstants.kDriveWheelFreeSpeedRps;
+    /* =======================
+     * DRIVING CONFIG FACTORY
+     * ======================= */
+    public static SparkMaxConfig createDrivingConfig() {
+      double drivingFactor =
+          ModuleConstants.kWheelDiameterMeters * Math.PI /
+          ModuleConstants.kDrivingMotorReduction;
 
-      drivingConfig
+      double drivingVelocityFeedForward =
+          1.0 / ModuleConstants.kDriveWheelFreeSpeedRps;
+
+      SparkMaxConfig config = new SparkMaxConfig();
+
+      config
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(50);
-      drivingConfig.encoder
-        .positionConversionFactor(drivingFactor) // meters
-        .velocityConversionFactor(drivingFactor / 60.0); // meters per second
-      drivingConfig.closedLoop
-        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pid(0.04, 0, 0)
-        .velocityFF(drivingVelocityFeedForward)
-        .outputRange(-1, 1);
 
-      turningConfig
+      config.encoder
+        .positionConversionFactor(drivingFactor)           // meters
+        .velocityConversionFactor(drivingFactor / 60.0);   // meters/sec
+
+      config.closedLoop
+        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+        .pid(0.04, 0.0, 0.0)
+        .velocityFF(drivingVelocityFeedForward)
+        .outputRange(-1.0, 1.0);
+
+      return config;
+    }
+
+    /* =======================
+     * TURNING CONFIG FACTORY
+     * ======================= */
+    public static SparkMaxConfig createTurningConfig() {
+      SparkMaxConfig config = new SparkMaxConfig();
+
+      config
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(20)
         .inverted(true);
-      turningConfig.encoder
-        .positionConversionFactor(2 * Math.PI / ModuleConstants.kTurningMotorReduction) // rotations
-        .velocityConversionFactor(2 * Math.PI / (ModuleConstants.kTurningMotorReduction * 60.0)); // rotations per second
-      turningConfig.closedLoop
+
+      config.encoder
+        .positionConversionFactor(
+            2 * Math.PI / ModuleConstants.kTurningMotorReduction)
+        .velocityConversionFactor(
+            2 * Math.PI / (ModuleConstants.kTurningMotorReduction * 60.0));
+
+      config.closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pid(1, 0, 0.0)
-        .outputRange(-1, 1)
+        .pid(1.0, 0.0, 0.0)
+        .outputRange(-1.0, 1.0)
         .positionWrappingEnabled(true)
-        .positionWrappingInputRange(0, 2*Math.PI);
+        .positionWrappingInputRange(0.0, 2 * Math.PI);
+
+      return config;
     }
   }
 }

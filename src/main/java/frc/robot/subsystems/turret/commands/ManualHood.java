@@ -5,12 +5,19 @@
 package frc.robot.subsystems.turret.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.subsystems.turret.Turret;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class AutoTarget extends Command {
-  /** Creates a new AutoTarget. */
-  public AutoTarget() {
+public class ManualHood extends Command {
+  /** Creates a new ManualTurret. */
+
+  Turret turret;
+  double input;
+
+  public ManualHood(Turret turret, double input /*Negative value to change direction*/) {
     // Use addRequirements() here to declare subsystem dependencies.
+    turret = turret;
+    input = input;
   }
 
   // Called when the command is initially scheduled.
@@ -19,11 +26,15 @@ public class AutoTarget extends Command {
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
-  public void execute() {}
+  public void execute() {
+    turret.manualHood(input);
+  }
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+    turret.hoodSpark.stopMotor();
+  }
 
   // Returns true when the command should end.
   @Override
