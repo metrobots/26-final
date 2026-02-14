@@ -28,13 +28,24 @@ public class Turtle extends Command {
   @Override
   public void execute() {
     turret.manualFlywheels(speed);
+    Intake.pivotIntake(placeholder.empyy()); // I'm not sure what the actual setpoint value should be yet.
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
+
     turret.flywheelSpark1.stopMotor();
     turret.flywheelSpark2.stopMotor();
+
+    m_drivingSpark.stopMotor();
+    m_turningSpark.stopMotor();
+
+    climbMotor.stopMotor();
+
+    intakePivot.stopMotor();
+    intakeDrive.stopMoror();
+    indexer.stopMotor();
   }
 
   // Returns true when the command should end.

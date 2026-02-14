@@ -20,7 +20,8 @@ public class PurgeShooter extends Command {
     @Override
     public void execute() {
         // Continuously aim turret using tx
-        turret.aimTurretWithTx();
+        turret.setFlywheelRPM(placeholder.empty()); 
+        turret.setTargetFlywheelRPM(placeholder.empty());
     }
 
     @Override
