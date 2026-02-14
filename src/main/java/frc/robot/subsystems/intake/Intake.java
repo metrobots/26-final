@@ -21,6 +21,46 @@ public class Intake extends SubsystemBase {
 
     PIDController intakePID = new PIDController(kP, kI, kD);
 
+    // Spindexer States
+    public enum IndexerState {
+        ACTIVE,
+        ACTIVE_INTAKING,
+        INACTIVE,
+        MANUAL_SPIN,
+        ERROR
+    }
+
+    IndexerState currentState = IndexerState.ACTIVE;
+    
+    public void periodic () {
+        switch (currentState) {
+            case ACTIVE:
+                spinIndexer(0);
+            case ACTIVE_INTAKING:
+                spinIndexer(0.5);
+            case INACTIVE:
+                spinIndexer(0);
+            case MANUAL_SPIN:
+                spinIndexer(1);
+            case ERROR:
+                indexer.stopMotor();
+        }
+    }
+
+    public void setIndexerState (IndexerState requestedState) {
+        currentState = requestedState;
+        return;
+    }
+
+    public void indexer (boolean intaking) {
+        if (currentState == IndexerState.ACTIVE && intaking) {
+            setIndexerState (IndexerState.ACTIVE_INTAKING);
+        } else if (currentState == IndexerState.ACTIVE_INTAKING && !intaking) {
+            setIndexerState (IndexerState.ACTIVE);
+        }
+        return;
+    }
+
     // Define methods to move the motors forwards and backwards
     public void spinIndexer(double speed) {
         indexer.set(speed);
