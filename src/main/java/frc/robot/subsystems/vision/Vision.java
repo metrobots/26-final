@@ -76,10 +76,10 @@
 
 //     public Vision () {
 
-//         // Initializes data apparently
-//         this.tX = 0;
-//         this.tY = 0;
-//         this.tV = false;
+        // // Initializes data apparently
+        // this.tX = 0;
+        // this.tY = 0;
+        // this.tV = false;
 
 //         // Camera Definitions
 //         leftCamera = new PhotonCamera("front"); // Left Camera
@@ -295,22 +295,22 @@
 //             field2d.getObject("Right Camera Estimate").setPose(pose2d);
 //         }
         
-//         // Visualize best estimate
-//         Optional<EstimatedRobotPose> bestPose = getBestEstimatedPose();
-//         if (bestPose.isPresent()) {
-//             Pose3d pose3d = bestPose.get().estimatedPose;
-//             Pose2d pose2d = new Pose2d(pose3d.getX(), pose3d.getY(), pose3d.getRotation().toRotation2d());
-//             field2d.getObject("Best Vision Estimate").setPose(pose2d);
-//         }
-//     }
+        // Visualize best estimate
+        Optional<EstimatedRobotPose> bestPose = getBestEstimatedPose();
+        if (bestPose.isPresent()) {
+            Pose3d pose3d = bestPose.get().estimatedPose;
+            Pose2d pose2d = new Pose2d(pose3d.getX(), pose3d.getY(), pose3d.getRotation().toRotation2d());
+            field2d.getObject("Best Vision Estimate").setPose(pose2d);
+        }
+    }
     
-// /*************************************************************************************************************** */
+/*************************************************************************************************************** */
 
-//     /*
-//      * 1. Position relative to April Tag
-//      * 2. April Tag Tracking
-//      * 3. Fuel Tracking
-//      */
+    /*
+     * 1. Position relative to April Tag
+     * 2. April Tag Tracking
+     * 3. Fuel Tracking
+     */
 
 //     public void updateLimelightPose(Limelight3A limelight) {
 
@@ -333,101 +333,101 @@
 //         tV = LimelightLib.getTV(limelight);
 //         targetPose3d = LimelightLib.getTargetPose3d_CameraSpace();
         
-//     }
+    }
 
-//     @Override
-//     public void init() {
+    @Override
+    public void init() {
 
-//         limelight1 = hardwareMap.get(Limelight3A.class, "limelight");
-//         limelight1.setPollRateHz(100);
-//         limelight1.start();
+        limelight1 = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight1.setPollRateHz(100);
+        limelight1.start();
 
-//         limelight2 = hardwareMap.get(Limelight3A.class, "limelight");
-//         limelight2.setPollRateHz(100);
-//         limelight2.start();
+        limelight2 = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight2.setPollRateHz(100);
+        limelight2.start();
 
-//     }
+    }
 
-//     LLResult result = limelight.getLatestResult();
+    LLResult result = limelight.getLatestResult();
 
-//     @Override
-//     public void getResult() {
+    @Override
+    public void getResult() {
 
-//         if (result != null && result.isValid()) {
+        if (result != null && result.isValid()) {
 
-//             double tx = result.getTX();
-//             double ty = result.getTY();
-//             double ta = result.getTA();
+            double tx = result.getTX();
+            double ty = result.getTY();
+            double ta = result.getTA();
 
-//             telemetry.addData("Target X", tx);
-//             telemetry.addData("Target Y", ty);
-//             telemetry.addData("Target A", ta);
-//         }
+            telemetry.addData("Target X", tx);
+            telemetry.addData("Target Y", ty);
+            telemetry.addData("Target A", ta);
+        }
 
-//         else {
+        else {
             
-//             telemetry.addData("Limelight", "No Target");
-//         }
-//     }
+            telemetry.addData("Limelight", "No Target");
+        }
+    }
 
-//     //
-//     public void ColorResult() {
+    //
+    public void ColorResult() {
         
-//         List<ColorResult> colorTargets = result.getColorResult();
+        List<ColorResult> colorTargets = result.getColorResult();
 
-//         for (ColorResult colorTarget : colorTargets) {
+        for (ColorResult colorTarget : colorTargets) {
 
-//             double x = detection.getTargetXDegrees();
-//             double y = detection.getTargetYDegrees();
-//             double area = detection.getTargetArea();
+            double x = detection.getTargetXDegrees();
+            double y = detection.getTargetYDegrees();
+            double area = detection.getTargetArea();
 
-//             telemetry.addData("Color Target", "Takes Up " + area + "% of image.");
-//         }
-//     }
-//     //
+            telemetry.addData("Color Target", "Takes Up " + area + "% of image.");
+        }
+    }
+    //
     
-//     @Override
-//     public void ClassifierResults() {
+    @Override
+    public void ClassifierResults() {
 
-//         List<ClassifierResults> classifications = result.getClassifierClassIndex();
+        List<ClassifierResults> classifications = result.getClassifierClassIndex();
 
-//         for (ClassifierResults classification : classifications) {
+        for (ClassifierResults classification : classifications) {
 
-//             String className = classification.getName();
-//             double confidence = classification.getConfidence();
+            String className = classification.getName();
+            double confidence = classification.getConfidence();
 
-//             telemetry.addData("I see a", className + " (" + confidence + "%).");
-//         }
-//     }
+            telemetry.addData("I see a", className + " (" + confidence + "%).");
+        }
+    }
 
-//     @Override
-//     public void DetectorResult() {
+    @Override
+    public void DetectorResult() {
 
-//         List<DetectorResult> detections = result.getDetectorResults();
+        List<DetectorResult> detections = result.getDetectorResults();
 
-//         for (DectorResult detection : detections) {
+        for (DectorResult detection : detections) {
 
-//             String className = classification.getName();
-//             double x = detection.getTargetXDegrees();
-//             double y = detection.getTargetYDegrees();
+            String className = classification.getName();
+            double x = detection.getTargetXDegrees();
+            double y = detection.getTargetYDegrees();
 
-//             telemetry.addData(className, "at (" + x + ", " + y + ") degrees");
-//         }
-//     }
+            telemetry.addData(className, "at (" + x + ", " + y + ") degrees");
+        }
+    }
 
-//     @Override
-//     public void FiducialResult() {
+    @Override
+    public void FiducialResult() {
 
-//         List<FiducialResult> fiducials = result.getFiducialResults();
+        List<FiducialResult> fiducials = result.getFiducialResults();
 
-//         for (FiducialResult fiducial : fiducials) {
+        for (FiducialResult fiducial : fiducials) {
 
-//             int id = fiducial.getFiducialId();
-//             double x = detection.getTargetXDegrees();
-//             double y = detection.getTargetYDegrees();
-//             double StrafeDistance_3D = fiducial.getRobotPose_TargetSpace().getY();
+            int id = fiducial.getFiducialId();
+            double x = detection.getTargetXDegrees();
+            double y = detection.getTargetYDegrees();
+            double StrafeDistance_3D = fiducial.getRobotPose_TargetSpace().getY();
 
-//             telemetry.addData("Fiducial " + id, "is " + distance + " meters away");
-//         }
-//     } 
-// }
+            telemetry.addData("Fiducial " + id, "is " + distance + " meters away");
+        }
+    } 
+}
