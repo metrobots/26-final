@@ -9,7 +9,7 @@ public class ShootTurret extends Command {
 
     // Only start feeding when flywheel is within this RPM of target
     private static final double FEED_START_THRESHOLD_RPM = 50.0;
-    private static final double FEED_SPEED = 0.5;
+    private static final double FEED_SPEED = 0.3;
     private boolean feeding = false;
 
     public ShootTurret(Turret turret) {
