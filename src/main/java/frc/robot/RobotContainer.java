@@ -21,6 +21,7 @@ import frc.robot.subsystems.turret.commands.ManualTurret;
 import frc.robot.subsystems.turret.commands.PurgeShooter;
 import frc.robot.subsystems.turret.commands.ShootTurret;
 import frc.robot.subsystems.turret.commands.TestShooter;
+import frc.robot.subsystems.turret.commands.TurnTurret;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
 import frc.robot.utils.utilcommands.Turtle;
@@ -91,14 +92,19 @@ public class RobotContainer {
     //     }, m_drivetrain)
     // );
 
-    primary.a().whileTrue(
-      new ManualPivotIntake(m_intake, -0.15)
-    );
+    // primary.a().whileTrue(
+    //   new ManualPivotIntake(m_intake, -0.15)
+    // );
+
+
+    // test turret commands
+    primary.povLeft().whileTrue(new TurnTurret(0.1, m_turret));
+    primary.povRight().whileTrue(new TurnTurret(-0.1, m_turret));
 
     // y to align + range HUB
-    primary.y().toggleOnTrue(
-      new AimTurret(m_turret, hoodTable)
-    );
+    // primary.y().toggleOnTrue(
+    //   new AimTurret(m_turret, hoodTable)
+    // );
 
     
 
@@ -108,36 +114,36 @@ public class RobotContainer {
     // );
 
     // RT to shoot
-    primary.rightTrigger().toggleOnTrue(
-      new ShootTurret(m_turret)
-    );
+    // primary.rightTrigger().toggleOnTrue(
+    //   new ShootTurret(m_turret)
+    // );
     // // RB to purge shooter
     // primary.rightBumper().toggleOnTrue(
     //   new PurgeShooter(m_turret)
     // );
 
-    // LT to intake
-    primary.leftTrigger().toggleOnTrue(
-      new IntakeIn(m_intake, 1)
-    );
-    // LB to purge intake
-    primary.leftBumper().toggleOnTrue(
-      new IntakePurge()
-    );
+    // // LT to intake
+    // primary.leftTrigger().toggleOnTrue(
+    //   new IntakeIn(m_intake, 1)
+    // );
+    // // LB to purge intake
+    // primary.leftBumper().toggleOnTrue(
+    //   new IntakePurge()
+    // );
 
-    // d-pad to manual move turret + hood
-    primary.povUp().toggleOnTrue(
-      new ManualHood(m_turret, 1)
-    );
-    primary.povDown().toggleOnTrue(
-      new ManualHood(m_turret, -1)
-    );
-    primary.povLeft().toggleOnTrue(
-      new ManualTurret(m_turret, -1)
-    );
-    primary.povRight().toggleOnTrue(
-      new ManualTurret (m_turret, 1)
-    );
+    // // d-pad to manual move turret + hood
+    // primary.povUp().toggleOnTrue(
+    //   new ManualHood(m_turret, 1)
+    // );
+    // primary.povDown().toggleOnTrue(
+    //   new ManualHood(m_turret, -1)
+    // );
+    // primary.povLeft().toggleOnTrue(
+    //   new ManualTurret(m_turret, -1)
+    // );
+    // primary.povRight().toggleOnTrue(
+    //   new ManualTurret (m_turret, 1)
+    // );
   }
 
   /**
