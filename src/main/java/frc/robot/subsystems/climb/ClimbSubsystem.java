@@ -10,13 +10,22 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
+import frc.robot.subsystems.climb.commands.Climb;
+import frc.robot.subsystems.climb.commands.Declimb;
 import frc.robot.utils.Constants;
 
 /**
  * The climb subsystem consists of a single motor which lifts the climb
  * mechanism up and down. The mechanism will hook onto the tower bar and raise
  * the robot. The robot can only do L1 climb.
+ * 
+ * For the controller bindings, I think holding the climb button to ascend and releasing
+ * climb button to pull the robot up should work. I could also make it a more autonomous process
+ * only requiring a button press (see commented out getAutoClimbCommand()).
  */
 public class ClimbSubsystem extends SubsystemBase {
     // Define motors and controllers for climb.
@@ -96,4 +105,11 @@ public class ClimbSubsystem extends SubsystemBase {
     public void stopMotor() {
         climbMotor.stopMotor();
     }
+
+    // public Command getAutoClimbCommand() {
+    //     return Commands.sequence(
+    //             new Climb(this),
+    //             new WaitCommand(1),
+    //             new Declimb(this));
+    // }
 }
