@@ -38,8 +38,8 @@
 // //     private Limelight3A limelight2;
 
 // //     private Pose3d targetPose3d;
-// //     private Pose2d раньшеLimelightPose; // Past
-// //     private Pose2d сейчасLimelightPose; // Current
+// //     private Pose2d previousLimelightPose;
+// //     private Pose2d currentLimelightPose;
 
 // //     private double tX;
 // //     private double tY;
