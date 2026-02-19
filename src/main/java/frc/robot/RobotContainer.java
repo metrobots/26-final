@@ -18,7 +18,7 @@ import frc.robot.subsystems.turret.TurretHoodTable;
 import frc.robot.subsystems.turret.commands.AimTurret;
 import frc.robot.subsystems.turret.commands.ManualHood;
 import frc.robot.subsystems.turret.commands.ManualTurret;
-import frc.robot.subsystems.turret.commands.PurgeShooter;
+// import frc.robot.subsystems.turret.commands.PurgeShooter;
 import frc.robot.subsystems.turret.commands.ShootTurret;
 import frc.robot.subsystems.turret.commands.test.TurnTurret;
 import frc.robot.utils.Constants;

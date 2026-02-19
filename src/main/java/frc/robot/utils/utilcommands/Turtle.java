@@ -28,7 +28,7 @@ public class Turtle extends Command {
   @Override
   public void execute() {
     turret.manualFlywheels(speed);
-    Intake.pivotIntake(placeholder.empyy()); // I'm not sure what the actual setpoint value should be yet.
+    // Intake.pivotIntake(placeholder.empyy()); // I'm not sure what the actual setpoint value should be yet.
   }
 
   // Called once the command ends or is interrupted.
