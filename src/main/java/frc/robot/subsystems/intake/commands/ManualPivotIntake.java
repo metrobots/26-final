@@ -8,7 +8,7 @@ import frc.robot.subsystems.intake.Intake;
 public class ManualPivotIntake extends Command {
 
   private final Intake intake;
-  PIDController intakePID = new PIDController(0.01, 0, 0);
+  // PIDController intakePID = new PIDController(0.01, 0, 0);
 
   /**
    * @param intake Intake subsystem
@@ -30,7 +30,7 @@ public class ManualPivotIntake extends Command {
   @Override
   public void end(boolean interrupted) {
     intake.manualPivot(0.0);
-    intakePID.close();
+    // intakePID.close();
   }
 
   @Override
