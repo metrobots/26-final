@@ -1,13 +1,13 @@
 package frc.robot.subsystems.climb;
 
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import com.revrobotics.spark.FeedbackSensor;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -16,64 +16,82 @@ import frc.robot.utils.Constants;
 /**
  * The climb subsystem consists of a single motor which lifts the climb
  * mechanism up and down. The mechanism will hook onto the tower bar and raise
- * the robot.
+ * the robot. The robot can only do L1 climb.
  */
 public class ClimbSubsystem extends SubsystemBase {
     // Define motors and controllers for climb.
-    private final SparkMax climbMotor = new SparkMax(Constants.kClimbCanId, MotorType.kBrushless);
-    private final AbsoluteEncoder encoder = climbMotor.getAbsoluteEncoder();
-    // TODO: Move configs to here.
-    private final ProfiledPIDController pidController = new ProfiledPIDController(
-            1.0, // p
-            0.0, // i
-            0.0, // d
-            new TrapezoidProfile.Constraints(10, 20) // TODO: Figure out what these values should be.
-    );
+    private final SparkMax climbMotor;
+    private final RelativeEncoder encoder;
+    private final SparkClosedLoopController closedLoopController;
+    // TODO: Move to Config.java
+    private final SparkMaxConfig motorConfig = new SparkMaxConfig();
 
-    // The climb motor has a gear-reduction ratio of 64:1 and a 2" radius drum.
+    // 2" radius drum.
     private final int radius = 2;
     private final double circumference = 2 * Math.PI * radius;
-    private final double gearRatio = 64 / 1;
+    // Gear reduction of 64:1 (4:1 -> 4:1 -> 4:1)
+    private final double gearRatio = 64.0;
+    private final double positionConversionFactor = circumference / gearRatio;
 
-    // Going to move these to Constants.java once merged.
-    public static final double MOTOR_SPEED = 0.5;
+    // TODO: Move to Constants.java
+    /** The distance from the ground to the top of climb at rest. */
+    public static final float CLIMB_HEIGHT_OFFSET = -1;
+    /** The maximum distance from the ground to the top of climb. */
+    public static final float MAX_CLIMB_HEIGHT = -1;
 
     public ClimbSubsystem() {
-        pidController.reset(0);
-        configureMotor();
+        climbMotor = new SparkMax(Constants.kClimbCanId, MotorType.kBrushless);
+        encoder = climbMotor.getEncoder();
+        closedLoopController = climbMotor.getClosedLoopController();
+        configure();
+        encoder.setPosition(0);
     }
 
     /**
-     * Configures the position conversion factor for climb motor.
+     * Configures the motor and encoder.
      */
-    public void configureMotor() {
-        AbsoluteEncoderConfig encoderConfig = new AbsoluteEncoderConfig();
-        encoderConfig.positionConversionFactor(circumference / gearRatio);
-        SparkMaxConfig motorConfig = new SparkMaxConfig();
-        motorConfig.apply(encoderConfig);
-        motorConfig.inverted(true);
+    public void configure() {
+        motorConfig
+                // Inverted so + is up and - is down.
+                .inverted(true);
+        motorConfig.encoder
+                // Rotations to inches.
+                .positionConversionFactor(positionConversionFactor)
+                // Rotations per minute to inches / second
+                .velocityConversionFactor(positionConversionFactor / 60);
+        motorConfig.closedLoop
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                .p(0.5)
+                .i(0)
+                .d(0)
+                .outputRange(-1.0, 1.0);
         climbMotor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     /**
-     * Drives the climb motor towards a desired height.
-     * 
-     * @param desiredHeight The desired height (in inches) of the climb mechanism.
+     * @return The total extension relative to bottommost position in inches.
      */
-    public void moveTowardsHeight(double desiredHeight) {
-        double targetSpeed = pidController.calculate(getPositionInInches(), desiredHeight);
-        climbMotor.set(targetSpeed);
-    }
-
-    /**
-     * @return The height the bottom of the climb mechanism from its starting point.
-     */
-    public double getPositionInInches() {
+    public double getExtensionInInches() {
         return encoder.getPosition();
     }
 
     /**
-     * Sets the speed of the climb motor to 0.
+     * @return The distance from ground to the top of climb mechanism in inches.
+     */
+    public double getHeightInInches() {
+        return encoder.getPosition() + CLIMB_HEIGHT_OFFSET;
+    }
+
+    /**
+     * Sets the desired height (in inches) for the top of the climb mechanism. 
+     */
+    public void setDesiredHeight(double desiredHeight) {
+        closedLoopController.setSetpoint(desiredHeight, ControlType.kPosition);
+    }
+
+    /**
+     * Sets the motor speed to zero. Idle behavior should break, causing the climb mechanism to stay
+     * in place.
      */
     public void stopMotor() {
         climbMotor.stopMotor();

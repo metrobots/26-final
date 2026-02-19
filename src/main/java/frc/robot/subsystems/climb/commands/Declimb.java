@@ -11,7 +11,7 @@ import frc.robot.subsystems.climb.ClimbSubsystem;
 public class Declimb extends Command {
     private final ClimbSubsystem climbSubsystem;
 
-    /** Creates a new Declimb. */
+    /** Creates a new Declimb command. */
     public Declimb(ClimbSubsystem climbSubsystem) {
         this.climbSubsystem = climbSubsystem;
         addRequirements(climbSubsystem);
@@ -20,7 +20,7 @@ public class Declimb extends Command {
     // Called when the command is initially scheduled.
     @Override
     public void initialize() {
-        climbSubsystem.moveTowardsHeight(0);
+        climbSubsystem.setDesiredHeight(0);
     }
 
     // Called every time the scheduler runs while the command is scheduled.
@@ -37,6 +37,8 @@ public class Declimb extends Command {
     // Returns true when the command should end.
     @Override
     public boolean isFinished() {
-        return climbSubsystem.getPositionInInches() <= 0;
+        // Going to need to tune this. Probably going to require a threshold due to floating-point
+        // inaccuracy.
+        return climbSubsystem.getHeightInInches() <= 0;
     }
 }

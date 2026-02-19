@@ -11,7 +11,7 @@ import frc.robot.subsystems.climb.ClimbSubsystem;
 public class Climb extends Command {
     private final ClimbSubsystem climbSubsystem;
 
-    /** Creates a new ExampleCommand. */
+    /** Creates a new Climb command. */
     public Climb(ClimbSubsystem climbSubsystem) {
         this.climbSubsystem = climbSubsystem;
         addRequirements(climbSubsystem);
@@ -20,7 +20,8 @@ public class Climb extends Command {
     // Called when the command is initially scheduled.
     @Override
     public void initialize() {
-        climbSubsystem.moveTowardsHeight(ClimbSubsystem.MOTOR_SPEED);
+        // Sets the desired height to 30 inches. Going to need to tune this in the future.
+        climbSubsystem.setDesiredHeight(ClimbSubsystem.MAX_CLIMB_HEIGHT);
     }
 
     // Called every time the scheduler runs while the command is scheduled.
@@ -31,13 +32,14 @@ public class Climb extends Command {
     // Called once the command ends or is interrupted.
     @Override
     public void end(boolean interrupted) {
-        climbSubsystem.moveTowardsHeight(0);
+        climbSubsystem.stopMotor();
     }
 
     // Returns true when the command should end.
     @Override
     public boolean isFinished() {
-        // Climb is greater than 30 inches. This will need to be adjusted in the future.
-        return climbSubsystem.getPositionInInches() > 30;
+        // Going to need to tune this. Probably going to require a threshold due to floating-point
+        // inaccuracy.
+        return climbSubsystem.getHeightInInches() >= ClimbSubsystem.MAX_CLIMB_HEIGHT;
     }
 }
