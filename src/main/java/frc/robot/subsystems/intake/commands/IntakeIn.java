@@ -20,12 +20,12 @@ public class IntakeIn extends Command {
 
   @Override
   public void execute() {
-    intake.manualPivot(speed);
+    intake.driveIntake(speed);
   }
 
   @Override
   public void end(boolean interrupted) {
-    intake.manualPivot(0.0);
+    intake.driveIntake(0.0);
   }
 
   @Override

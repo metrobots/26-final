@@ -28,6 +28,7 @@ public class ManualHood extends Command {
   @Override
   public void execute() {
     turret.manualHood(input);
+    
   }
 
   // Called once the command ends or is interrupted.

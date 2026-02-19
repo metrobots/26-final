@@ -13,8 +13,6 @@ public class Intake extends SubsystemBase {
     private SparkMax intakeDrive = new SparkMax(Constants.kIntakeDriveCanId, MotorType.kBrushless);
     private SparkMax indexer = new SparkMax(Constants.kIndexerCanId, MotorType.kBrushless);
 
-    // private AbsoluteEncoder pivotEncoder = intakePivot.getAbsoluteEncoder();
-
     double kP = 0.000001;
     double kI = 0;
     double kD = 0;
@@ -59,6 +57,10 @@ public class Intake extends SubsystemBase {
             setIndexerState (IndexerState.ACTIVE);
         }
         return;
+    }
+
+    public double getEncoder() {
+        return intakePivot.getEncoder().getPosition();
     }
 
     // Define methods to move the motors forwards and backwards

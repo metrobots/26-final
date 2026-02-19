@@ -20,9 +20,8 @@ public final class Constants {
   // SHOOTER - 
   public static final int kTurretCanId = 3;
   public static final int kFeedCanId = 7;
-  public static final int kHoodCanId = 5;
-  public static final int kFlywheel1CanId = 4;
-  public static final int kFlywheel2CanId = 6;
+  public static final int kHoodCanId = 4;
+  public static final int kFlywheel1CanId = 27;
 
   // INDEXER -
   public static final int kIndexerCanId = 35;
@@ -73,9 +72,9 @@ public final class Constants {
     public static final int kRearRightTurningCanId = 47;
 
     // Encoders
-    public static final int kFrontLeftEncoder = 0; 
+    public static final int kFrontLeftEncoder = 1; 
     public static final int kFrontRightEncoder = 3;
-    public static final int kRearLeftEncoder = 1; 
+    public static final int kRearLeftEncoder = 0; 
     public static final int kRearRightEncoder = 2;
     // Encoder offsets
     public static final double kFrontLeftEncoderOffset = 6.0883963923748174;

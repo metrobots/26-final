@@ -34,7 +34,6 @@ public class Turtle extends Command {
   @Override
   public void end(boolean interrupted) {
     turret.flywheelSpark1.stopMotor();
-    turret.flywheelSpark2.stopMotor();
   }
 
   // Returns true when the command should end.

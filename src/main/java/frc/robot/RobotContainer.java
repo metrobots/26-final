@@ -20,7 +20,6 @@ import frc.robot.subsystems.turret.commands.ManualHood;
 import frc.robot.subsystems.turret.commands.ManualTurret;
 import frc.robot.subsystems.turret.commands.PurgeShooter;
 import frc.robot.subsystems.turret.commands.ShootTurret;
-import frc.robot.subsystems.turret.commands.TestShooter;
 import frc.robot.subsystems.turret.commands.test.TurnTurret;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
@@ -61,16 +60,16 @@ public class RobotContainer {
     m_drivetrain.setDefaultCommand( // IF THE DRIVETRAIN ISN'T DOING ANYTHING ELSE, DO THIS. 
         new RunCommand(() -> {
             m_drivetrain.drive(
-                (-MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband)) * 0.5,
-                (-MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband)) * 0.5,
+                (-MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband)),
+                (-MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband)),
                 (MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband)),
                 true);
         }, m_drivetrain)
     );
 
-    m_intake.setDefaultCommand(
-      new SpinIndexer(m_intake, 0.2)  
-    );
+    // m_intake.setDefaultCommand(
+    //   new SpinIndexer(m_intake, 0.2)  
+    // );
 
     // SmartDashboard.putData("Auto Chooser", autoChooser); // Put the auto chooser on the dashboard
   } 
@@ -92,14 +91,49 @@ public class RobotContainer {
     //     }, m_drivetrain)
     // );
 
-    // primary.a().whileTrue(
-    //   new ManualPivotIntake(m_intake, -0.15)
-    // );
+    primary.a().whileTrue(
+      new ManualPivotIntake(m_intake)
+    );
+
+    primary.leftTrigger().whileTrue(
+      new IntakeIn(m_intake, -1)
+    );
 
 
     // test turret commands
-    primary.povLeft().whileTrue(new TurnTurret(0.1, m_turret));
-    primary.povRight().whileTrue(new TurnTurret(-0.1, m_turret));
+    m_turret.setDefaultCommand(
+        m_turret.run(() -> {
+
+            // ===== Turret rotation =====
+            if (primary.povLeft().getAsBoolean()) {
+                m_turret.manualTurret(0.08);
+            } 
+            else if (primary.povRight().getAsBoolean()) {
+                m_turret.manualTurret(-0.08);
+            } 
+            else {
+                m_turret.manualTurret(0);
+            }
+
+            // ===== Hood control =====
+            if (primary.povUp().getAsBoolean()) {
+                m_turret.manualHood(-0.06);
+            } 
+            else if (primary.povDown().getAsBoolean()) {
+                m_turret.manualHood(0.06);
+            } 
+            else {
+                m_turret.manualHood(0);
+            }
+
+        })
+    );
+
+    primary.rightTrigger().whileTrue(
+      new ShootTurret(m_turret)
+    );
+
+
 
     // y to align + range HUB
     // primary.y().toggleOnTrue(
