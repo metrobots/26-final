@@ -47,6 +47,12 @@ public class Turret extends SubsystemBase {
     private final SparkMaxConfig invertedFlywheelMotorConfig = new SparkMaxConfig();
     private final SparkMaxConfig turretMotorConfig = new SparkMaxConfig();
 
+    // ---------------- FLYWHEEL CONSTANTS (used by commands) ----------------
+    public static final double kFlywheelTargetRPM = 2000.0;
+    public static final double kFlywheelAtSpeedThresholdRPM = 50.0;
+    public static final double kFlywheelKp = 0.001;
+    public static final double kFlywheelKv = 12.0 / (6784.0 / 60.0); // 12V / free speed RPS
+
     // Turret PID constants for Limelight
     private static final double kTurretTxKp = 1.0;
     private static final double kTxDeadband = 0.5;
@@ -82,8 +88,8 @@ public class Turret extends SubsystemBase {
                 .velocityConversionFactor(1.0 / 60.0);
         flywheelMotorConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(0.0005, 0, 0)
-                .feedForward.kV(kV);
+                .pid(kFlywheelKp, 0, 0)
+                .feedForward.kV(kFlywheelKv);
 
         invertedFlywheelMotorConfig.apply(flywheelMotorConfig);
         invertedFlywheelMotorConfig.inverted(true);
