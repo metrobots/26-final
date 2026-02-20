@@ -173,7 +173,7 @@ public class Turret extends SubsystemBase {
     // ---------------- FEED ----------------
     public void spinFeed(double speed) {
         feedSpark.set(speed);
-    } //test changes
+    } //checking w sync
 
     // ---------------- ACCESSORS ----------------
     public double getTurretAngle() { return turretEncoder.getPosition(); }
