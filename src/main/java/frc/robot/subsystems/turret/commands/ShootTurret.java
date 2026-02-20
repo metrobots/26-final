@@ -1,19 +1,13 @@
 package frc.robot.subsystems.turret.commands;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.turret.Turret;
 
 public class ShootTurret extends Command {
-
     private final Turret turret;
-
-    // Only start feeding when flywheel is within this RPM of target
-    private static final double FEED_START_THRESHOLD_RPM = 50.0;
-    private static final double FEED_SPEED = 1;
-    private boolean feeding = false;
+    private static final double TARGET_RPM = 2000.0;
+    private static final double FEED_SPEED = 1.0;
 
     public ShootTurret(Turret turret) {
         this.turret = turret;
@@ -22,36 +16,32 @@ public class ShootTurret extends Command {
 
     @Override
     public void initialize() {
-        feeding = false;
-        // // Start flywheel at the target set by AimTurret
-        // turret.setFlywheelRPM(turret.getTargetFlywheelRPM());
+        turret.setFlywheelRPM(TARGET_RPM);
     }
 
     @Override
     public void execute() {
+        turret.setFlywheelRPM(TARGET_RPM);
+
         double currentRPM = turret.getFlywheelRPM();
-        // double targetRPM = -2000;
-        // PIDController feedPID = new PIDController(0.5, 0.0, 0.0); // Tune these values
-        // SmartDashboard.putNumber("speed", currentRPM);
+        boolean atSpeed = Math.abs(currentRPM - TARGET_RPM) < Turret.kFlywheelAtSpeedThresholdRPM;
 
-        // double feedOutput = feedPID.calculate(currentRPM, targetRPM);
-        // feedOutput = MathUtil.clamp(feedOutput, -1, 0);
-        turret.manualFlywheels(-0.5);
-        SmartDashboard.putNumber("flywheelspeed", currentRPM);
+        turret.spinFeed(atSpeed ? FEED_SPEED : 0);
 
-        SmartDashboard.putNumber("feederspeed", turret.getFeedRPM());
-        turret.spinFeed(FEED_SPEED);
-
+        SmartDashboard.putNumber("Flywheel RPM", currentRPM);
+        SmartDashboard.putNumber("Flywheel Target RPM", TARGET_RPM);
+        SmartDashboard.putBoolean("Flywheel At Speed", atSpeed);
+        SmartDashboard.putNumber("Feeder RPM", turret.getFeedRPM());
     }
 
     @Override
     public void end(boolean interrupted) {
-        turret.spinFeed(0);       // Stop feeding
-        turret.setFlywheelRPM(0); // Stop flywheel
+        turret.spinFeed(0);
+        turret.setFlywheelRPM(0);
     }
 
     @Override
     public boolean isFinished() {
-        return false; // Run until canceled externally
+        return false;
     }
 }
