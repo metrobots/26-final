@@ -30,6 +30,7 @@ public class Turret extends SubsystemBase {
     private final RelativeEncoder flywheelEncoder;
     private final AbsoluteEncoder hoodEncoder;
     private final AbsoluteEncoder turretEncoder;
+    private final RelativeEncoder feedEncoder;
 
     // Constants
     private final double maxHoodAngle = 90;
@@ -104,11 +105,16 @@ public class Turret extends SubsystemBase {
         flywheelEncoder = flywheelSpark1.getEncoder();
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
         turretEncoder = turretSpark.getAbsoluteEncoder();
+        feedEncoder = feedSpark.getEncoder();
     }
 
     // ---------------- HOOD ----------------
     public void manualHood(double input) {
         hoodSpark.set(input);
+    }
+
+     public double getFeedRPM() {
+        return feedEncoder.getVelocity() * 60; // RPS → RPM
     }
 
     public void setHoodAngle(double setpoint) {

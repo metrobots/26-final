@@ -99,6 +99,10 @@ public class RobotContainer {
       new IntakeIn(m_intake, -1)
     );
 
+    primary.leftBumper().whileTrue(
+      new IntakeIn(m_intake, 1)
+    );
+
 
     // test turret commands
     m_turret.setDefaultCommand(

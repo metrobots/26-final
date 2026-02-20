@@ -12,7 +12,7 @@ public class ShootTurret extends Command {
 
     // Only start feeding when flywheel is within this RPM of target
     private static final double FEED_START_THRESHOLD_RPM = 50.0;
-    private static final double FEED_SPEED = 0.5;
+    private static final double FEED_SPEED = 1;
     private boolean feeding = false;
 
     public ShootTurret(Turret turret) {
@@ -30,27 +30,18 @@ public class ShootTurret extends Command {
     @Override
     public void execute() {
         double currentRPM = turret.getFlywheelRPM();
-        double targetRPM = -2000;
-        PIDController feedPID = new PIDController(0.5, 0.0, 0.0); // Tune these values
-        SmartDashboard.putNumber("speed", currentRPM);
+        // double targetRPM = -2000;
+        // PIDController feedPID = new PIDController(0.5, 0.0, 0.0); // Tune these values
+        // SmartDashboard.putNumber("speed", currentRPM);
 
-        double feedOutput = feedPID.calculate(currentRPM, targetRPM);
-        feedOutput = MathUtil.clamp(feedOutput, -1, 0);
-        turret.manualFlywheels(feedOutput);
+        // double feedOutput = feedPID.calculate(currentRPM, targetRPM);
+        // feedOutput = MathUtil.clamp(feedOutput, -1, 0);
+        turret.manualFlywheels(-0.5);
+        SmartDashboard.putNumber("flywheelspeed", currentRPM);
 
+        SmartDashboard.putNumber("feederspeed", turret.getFeedRPM());
         turret.spinFeed(FEED_SPEED);
 
-
-        // // Start feeding only when flywheel is near target
-        // if (!feeding && Math.abs(currentRPM - targetRPM) < FEED_START_THRESHOLD_RPM) {
-        //     feeding = true;
-        // }
-
-        // if (feeding) {
-        //     turret.spinFeed(FEED_SPEED);
-        // } else {
-        //     turret.spinFeed(0);
-        // }
     }
 
     @Override
