@@ -22,6 +22,7 @@ public final class Constants {
   public static final int kFeedCanId = 7;
   public static final int kHoodCanId = 4;
   public static final int kFlywheel1CanId = 27;
+  public static final int kFlywheel2CanId = 28;
 
   // INDEXER -
   public static final int kIndexerCanId = 35;

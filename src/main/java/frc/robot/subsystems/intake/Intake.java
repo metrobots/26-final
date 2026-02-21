@@ -9,8 +9,8 @@ import frc.robot.utils.Constants;
 public class Intake extends SubsystemBase {
 
     // Create the intake motors
-    private SparkMax intakePivot = new SparkMax(Constants.kIntakePivotCanId, MotorType.kBrushless);
-    private SparkMax intakeDrive = new SparkMax(Constants.kIntakeDriveCanId, MotorType.kBrushless);
+    public SparkMax intakePivot = new SparkMax(Constants.kIntakePivotCanId, MotorType.kBrushless);
+    public SparkMax intakeDrive = new SparkMax(Constants.kIntakeDriveCanId, MotorType.kBrushless);
     private SparkMax indexer = new SparkMax(Constants.kIndexerCanId, MotorType.kBrushless);
 
     double kP = 0.000001;

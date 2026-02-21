@@ -22,12 +22,14 @@ import frc.robot.utils.LimelightLib;
 public class Turret extends SubsystemBase {
     // Motors
     public final SparkFlex flywheelSpark1; 
+    public final SparkFlex flywheelSpark2; 
     public final SparkMax hoodSpark; 
     public final SparkMax feedSpark;
     public final SparkMax turretSpark;
 
     // Encoders
     private final RelativeEncoder flywheelEncoder;
+    private final RelativeEncoder flywheelEncoder2;
     private final AbsoluteEncoder hoodEncoder;
     private final AbsoluteEncoder turretEncoder;
     private final RelativeEncoder feedEncoder;
@@ -60,6 +62,7 @@ public class Turret extends SubsystemBase {
     public Turret() {
         // Motor initialization
         flywheelSpark1 = new SparkFlex(Constants.kFlywheel1CanId, MotorType.kBrushless);
+        flywheelSpark2 = new SparkFlex(Constants.kFlywheel2CanId, MotorType.kBrushless);
         hoodSpark = new SparkMax(Constants.kHoodCanId, MotorType.kBrushless);
         feedSpark = new SparkMax(Constants.kFeedCanId, MotorType.kBrushless);
         turretSpark = new SparkMax(Constants.kTurretCanId, MotorType.kBrushless);
@@ -79,22 +82,41 @@ public class Turret extends SubsystemBase {
         hoodSpark.configure(hoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         // ---------------- FLYWHEEL CONFIG ----------------
-        double flywheelFreeSpeedRPS = 6784.0 / 60.0; // RPM to RPS
-        double kV = flywheelNominalVoltage / flywheelFreeSpeedRPS;
+        double flywheelFreeSpeedRPS = 6784.0 / 60.0;
 
-        flywheelMotorConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(40);
-        flywheelMotorConfig.encoder
+        SparkMaxConfig flywheelMasterConfig = new SparkMaxConfig();
+        SparkMaxConfig flywheelFollowerConfig = new SparkMaxConfig();
+
+        flywheelMasterConfig
+                .idleMode(IdleMode.kCoast)
+                .smartCurrentLimit(40);
+
+        flywheelMasterConfig.encoder
                 .positionConversionFactor(1.0)
                 .velocityConversionFactor(1.0 / 60.0);
-        flywheelMotorConfig.closedLoop
+
+        flywheelMasterConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(kFlywheelKp, 0, 0)
                 .feedForward.kV(kFlywheelKv);
 
-        invertedFlywheelMotorConfig.apply(flywheelMotorConfig);
-        invertedFlywheelMotorConfig.inverted(true);
+        // Follower config
+        flywheelFollowerConfig
+                .apply(flywheelMasterConfig)
+                .follow(flywheelSpark1, true);  // true = inverted follower
 
-        flywheelSpark1.configure(flywheelMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        // Apply configs
+        flywheelSpark1.configure(
+                flywheelMasterConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters
+        );
+
+        flywheelSpark2.configure(
+                flywheelFollowerConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters
+        );
 
         // ---------------- TURRET CONFIG ----------------
         turretMotorConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(30);
@@ -109,6 +131,7 @@ public class Turret extends SubsystemBase {
 
         // ---------------- ENCODERS ----------------
         flywheelEncoder = flywheelSpark1.getEncoder();
+        flywheelEncoder2 = flywheelSpark2.getEncoder();
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
         turretEncoder = turretSpark.getAbsoluteEncoder();
         feedEncoder = feedSpark.getEncoder();

@@ -21,23 +21,25 @@ public class ShootTurret extends Command {
 
     @Override
     public void execute() {
-        turret.setFlywheelRPM(TARGET_RPM);
+        // turret.setFlywheelRPM(TARGET_RPM);
 
-        double currentRPM = turret.getFlywheelRPM();
-        boolean atSpeed = Math.abs(currentRPM - TARGET_RPM) < Turret.kFlywheelAtSpeedThresholdRPM;
+        // double currentRPM = turret.getFlywheelRPM();
+        // boolean atSpeed = Math.abs(currentRPM - TARGET_RPM) < Turret.kFlywheelAtSpeedThresholdRPM;
 
-        turret.spinFeed(atSpeed ? FEED_SPEED : 0);
+        // turret.spinFeed(atSpeed ? FEED_SPEED : 0);
 
-        SmartDashboard.putNumber("Flywheel RPM", currentRPM);
-        SmartDashboard.putNumber("Flywheel Target RPM", TARGET_RPM);
-        SmartDashboard.putBoolean("Flywheel At Speed", atSpeed);
-        SmartDashboard.putNumber("Feeder RPM", turret.getFeedRPM());
+        // SmartDashboard.putNumber("Flywheel RPM", currentRPM);
+        // SmartDashboard.putNumber("Flywheel Target RPM", TARGET_RPM);
+        // SmartDashboard.putBoolean("Flywheel At Speed", atSpeed);
+        // SmartDashboard.putNumber("Feeder RPM", turret.getFeedRPM());
+        turret.manualFlywheels(0.3);
     }
 
     @Override
     public void end(boolean interrupted) {
-        turret.spinFeed(0);
-        turret.setFlywheelRPM(0);
+        turret.manualFlywheels(0);
+        // turret.spinFeed(0);
+        // turret.setFlywheelRPM(0);
     }
 
     @Override

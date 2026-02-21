@@ -24,12 +24,12 @@ public class ManualPivotIntake extends Command {
     // SmartDashboard.putNumber("intakePoint", intake.getEncoder());
 
     // double speed = intakePID.calculate(setpoint, intake.getEncoder());
-    intake.manualPivot(-0.3);
+    intake.intakePivot.set(0.5);
   }
 
   @Override
   public void end(boolean interrupted) {
-    intake.manualPivot(0.0);
+    intake.intakePivot.set(0.0);
     // intakePID.close();
   }
 
