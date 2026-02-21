@@ -20,7 +20,7 @@ public class Declimb extends Command {
     // Called when the command is initially scheduled.
     @Override
     public void initialize() {
-        climbSubsystem.setDesiredHeight(0);
+        climbSubsystem.setDesiredExtension(0);
     }
 
     // Called every time the scheduler runs while the command is scheduled.
@@ -39,6 +39,6 @@ public class Declimb extends Command {
     public boolean isFinished() {
         // Going to need to tune this. Probably going to require a threshold due to floating-point
         // inaccuracy.
-        return climbSubsystem.getHeightInInches() <= 0;
+        return climbSubsystem.getExtensionInInches() <= 0;
     }
 }

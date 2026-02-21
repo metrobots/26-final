@@ -10,12 +10,7 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.subsystems.climb.commands.Climb;
-import frc.robot.subsystems.climb.commands.Declimb;
 import frc.robot.utils.Constants;
 
 /**
@@ -28,14 +23,14 @@ import frc.robot.utils.Constants;
  * only requiring a button press (see commented out getAutoClimbCommand()).
  */
 public class ClimbSubsystem extends SubsystemBase {
-    // Define motors and controllers for climb.
+    /* Motors, encoders, and configs. */
     private final SparkMax climbMotor;
     private final RelativeEncoder encoder;
     private final SparkClosedLoopController closedLoopController;
     // TODO: Move to Config.java
     private final SparkMaxConfig motorConfig = new SparkMaxConfig();
 
-    // 2" radius drum.
+    // 2 inch drum , 4π inch circumference.
     private final int radius = 2;
     private final double circumference = 2 * Math.PI * radius;
     // Gear reduction of 64:1 (4:1 -> 4:1 -> 4:1)
@@ -43,10 +38,12 @@ public class ClimbSubsystem extends SubsystemBase {
     private final double positionConversionFactor = circumference / gearRatio;
 
     // TODO: Move to Constants.java
-    /** The distance from the ground to the top of climb at rest. */
-    public static final float CLIMB_HEIGHT_OFFSET = -1;
-    /** The maximum distance from the ground to the top of climb. */
-    public static final float MAX_CLIMB_HEIGHT = -1;
+    /** The distance from the bottom of climb to the top in inches with the arm fully extended. */
+    public static double CLIMB_MAX_HEIGHT = 27.0;
+    /** The distance from the bottom of climb to the top in inches with the arm fully collapsed. */
+    public static double CLIMB_MIN_HEIGHT = 20.0;
+    /** The maximum extension of the climb mechanism. */
+    public static double CLIMB_MAX_EXTENSION = CLIMB_MAX_HEIGHT - CLIMB_MIN_HEIGHT;
 
     public ClimbSubsystem() {
         climbMotor = new SparkMax(Constants.kClimbCanId, MotorType.kBrushless);
@@ -85,16 +82,9 @@ public class ClimbSubsystem extends SubsystemBase {
     }
 
     /**
-     * @return The distance from ground to the top of climb mechanism in inches.
-     */
-    public double getHeightInInches() {
-        return encoder.getPosition() + CLIMB_HEIGHT_OFFSET;
-    }
-
-    /**
      * Sets the desired height (in inches) for the top of the climb mechanism. 
      */
-    public void setDesiredHeight(double desiredHeight) {
+    public void setDesiredExtension(double desiredHeight) {
         closedLoopController.setSetpoint(desiredHeight, ControlType.kPosition);
     }
 
@@ -105,11 +95,4 @@ public class ClimbSubsystem extends SubsystemBase {
     public void stopMotor() {
         climbMotor.stopMotor();
     }
-
-    // public Command getAutoClimbCommand() {
-    //     return Commands.sequence(
-    //             new Climb(this),
-    //             new WaitCommand(1),
-    //             new Declimb(this));
-    // }
 }
