@@ -21,7 +21,7 @@ public class Climb extends Command {
     @Override
     public void initialize() {
         // Sets the desired height to 30 inches. Going to need to tune this in the future.
-        climbSubsystem.setDesiredHeight(ClimbSubsystem.MAX_CLIMB_HEIGHT);
+        climbSubsystem.setDesiredExtension(ClimbSubsystem.CLIMB_MAX_EXTENSION);
     }
 
     // Called every time the scheduler runs while the command is scheduled.
@@ -40,6 +40,6 @@ public class Climb extends Command {
     public boolean isFinished() {
         // Going to need to tune this. Probably going to require a threshold due to floating-point
         // inaccuracy.
-        return climbSubsystem.getHeightInInches() >= ClimbSubsystem.MAX_CLIMB_HEIGHT;
+        return climbSubsystem.getExtensionInInches() >= ClimbSubsystem.CLIMB_MAX_HEIGHT;
     }
 }
