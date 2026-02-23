@@ -68,15 +68,12 @@ public class Turret extends SubsystemBase {
         turretSpark = new SparkMax(Constants.kTurretCanId, MotorType.kBrushless);
 
         // ---------------- HOOD CONFIG ----------------
-        double hoodFactor = 2 * Math.PI; // radians per rotation
         hoodMotorConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
-        hoodMotorConfig.absoluteEncoder
-                .inverted(false)
-                .positionConversionFactor(hoodFactor)
-                .velocityConversionFactor(hoodFactor / 60.0)
-                .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
+        hoodMotorConfig.encoder
+                .positionConversionFactor(1)
+                .velocityConversionFactor(1);
         hoodMotorConfig.closedLoop
-                .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(1, 0, 0)
                 .positionWrappingEnabled(false);
         hoodSpark.configure(hoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -120,11 +117,10 @@ public class Turret extends SubsystemBase {
 
         // ---------------- TURRET CONFIG ----------------
         turretMotorConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(30);
-        turretMotorConfig.encoder
-                .positionConversionFactor(1.0)
-                .velocityConversionFactor(1.0 / 60.0);
+        turretMotorConfig.absoluteEncoder
+                .positionConversionFactor(1.0);
         turretMotorConfig.closedLoop
-                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
                 .pid(0.5, 0, 0);
         turretSpark.configure(turretMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
