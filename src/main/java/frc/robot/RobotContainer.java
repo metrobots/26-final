@@ -1,30 +1,21 @@
 package frc.robot;
 
-import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
-
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeIn;
-import frc.robot.subsystems.intake.commands.IntakePurge;
+import frc.robot.subsystems.intake.commands.IntakePivot;
 import frc.robot.subsystems.intake.commands.ManualPivotIntake;
-import frc.robot.subsystems.intake.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretHoodTable;
-import frc.robot.subsystems.turret.commands.AimTurret;
-import frc.robot.subsystems.turret.commands.ManualHood;
-import frc.robot.subsystems.turret.commands.ManualTurret;
-// import frc.robot.subsystems.turret.commands.PurgeShooter;
-import frc.robot.subsystems.turret.commands.ShootTurret;
+import frc.robot.subsystems.turret.commands.TestTurret;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
-import frc.robot.utils.utilcommands.Turtle;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -39,7 +30,7 @@ public class RobotContainer {
   final Drivetrain m_drivetrain;
   final Turret m_turret;
   final Intake m_intake;
-  private final TurretHoodTable hoodTable = new TurretHoodTable();
+  final Dashboard m_dashboard;
   
   // The driver's controller
   private final CommandXboxController primary = Constants.primary;
@@ -49,6 +40,7 @@ public class RobotContainer {
     m_drivetrain = new Drivetrain();
     m_turret = new Turret();
     m_intake = new Intake();
+    m_dashboard = new Dashboard();
     
     
     registerNamedCommands();
@@ -68,11 +60,7 @@ public class RobotContainer {
         }, m_drivetrain)
     );
 
-    // m_intake.setDefaultCommand(
-    //   new SpinIndexer(m_intake, 0.2)  
-    // );
-
-    // SmartDashboard.putData("Auto Chooser", autoChooser); // Put the auto chooser on the dashboard
+    // if you do auto choose add it here
   } 
 
 
@@ -81,34 +69,24 @@ public class RobotContainer {
   }
 
   private void configureButtonBindings() {
-    // Configure bindings for controller
-    //  m_drivetrain.setDefaultCommand( // IF THE DRIVETRAIN ISN'T DOING ANYTHING ELSE, DO THIS
-    //     new RunCommand(() -> {
-    //         m_drivetrain.drive(
-    //             MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband),
-    //             MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband),
-    //             -MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband),
-    //             true);
-    //     }, m_drivetrain)
-    // );
-
+    //intake pivot command
     primary.a().whileTrue(
       new ManualPivotIntake(m_intake)
     );
 
+    // intake command
     primary.leftTrigger().whileTrue(
       new IntakeIn(m_intake, -1)
     );
 
+    // outtake command
     primary.leftBumper().whileTrue(
       new IntakeIn(m_intake, 1)
     );
 
-
-    // test turret commands
+    // turret commands
     m_turret.setDefaultCommand(
         m_turret.run(() -> {
-
             // ===== Turret rotation =====
             if (primary.povLeft().getAsBoolean()) {
                 m_turret.manualTurret(0.08);
@@ -134,55 +112,15 @@ public class RobotContainer {
         })
     );
 
+    // auto align turret command
     primary.rightTrigger().whileTrue(
-      new ShootTurret(m_turret)
+      new TestTurret(m_turret)
     );
 
+    primary.y().whileTrue(
+      new IntakePivot(m_intake)
+    );
 
-
-    // y to align + range HUB
-    // primary.y().toggleOnTrue(
-    //   new AimTurret(m_turret, hoodTable)
-    // );
-
-    
-
-    // // x to turtle (bring everything inside frame)
-    // primary.x().toggleOnTrue(
-    //   new Turtle(m_turret)
-    // );
-
-    // RT to shoot
-    // primary.rightTrigger().toggleOnTrue(
-    //   new ShootTurret(m_turret)
-    // );
-    // // RB to purge shooter
-    // primary.rightBumper().toggleOnTrue(
-    //   new PurgeShooter(m_turret)
-    // );
-
-    // // LT to intake
-    // primary.leftTrigger().toggleOnTrue(
-    //   new IntakeIn(m_intake, 1)
-    // );
-    // // LB to purge intake
-    // primary.leftBumper().toggleOnTrue(
-    //   new IntakePurge()
-    // );
-
-    // // d-pad to manual move turret + hood
-    // primary.povUp().toggleOnTrue(
-    //   new ManualHood(m_turret, 1)
-    // );
-    // primary.povDown().toggleOnTrue(
-    //   new ManualHood(m_turret, -1)
-    // );
-    // primary.povLeft().toggleOnTrue(
-    //   new ManualTurret(m_turret, -1)
-    // );
-    // primary.povRight().toggleOnTrue(
-    //   new ManualTurret (m_turret, 1)
-    // );
   }
 
   /**
