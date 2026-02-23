@@ -1,6 +1,8 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -20,7 +22,6 @@ import frc.robot.subsystems.turret.commands.ManualHood;
 import frc.robot.subsystems.turret.commands.ManualTurret;
 // import frc.robot.subsystems.turret.commands.PurgeShooter;
 import frc.robot.subsystems.turret.commands.ShootTurret;
-import frc.robot.subsystems.turret.commands.test.TurnTurret;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
 import frc.robot.utils.utilcommands.Turtle;
@@ -190,6 +191,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return null;
+    return new PathPlannerAuto("Example Auto");
   }
 }
