@@ -28,13 +28,12 @@ public class ManualHood extends Command {
   @Override
   public void execute() {
     turret.manualHood(input);
-    
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    turret.hoodSpark.stopMotor();
+    turret.manualHood(0);
   }
 
   // Returns true when the command should end.

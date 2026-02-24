@@ -1,15 +1,11 @@
 package frc.robot.subsystems.turret;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.wpilibj.DigitalInput;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkSoftLimit.SoftLimitDirection;
-import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.FeedbackSensor;
-import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -17,7 +13,6 @@ import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants;
-import frc.robot.utils.LimelightLib;
 
 public class Turret extends SubsystemBase {
     // Motors
@@ -29,25 +24,17 @@ public class Turret extends SubsystemBase {
 
     // Encoders
     private final RelativeEncoder flywheelEncoder;
-    private final RelativeEncoder flywheelEncoder2;
     private final AbsoluteEncoder hoodEncoder;
     private final AbsoluteEncoder turretEncoder;
     private final RelativeEncoder feedEncoder;
 
     // Constants
-    private final double maxHoodAngle = 90;
-    private final double minHoodAngle = 0;
     private final double maxTurretAngle = 40;
-    private final double flywheelNominalVoltage = 12.0;
-
-    // Target flywheel RPM
-    private double targetFlywheelRPM = 0;
 
     // Configs
     private final SparkMaxConfig hoodMotorConfig = new SparkMaxConfig();
-    private final SparkMaxConfig flywheelMotorConfig = new SparkMaxConfig();
-    private final SparkMaxConfig invertedFlywheelMotorConfig = new SparkMaxConfig();
     private final SparkMaxConfig turretMotorConfig = new SparkMaxConfig();
+    private final SparkMaxConfig feedConfig = new SparkMaxConfig();
 
     // ---------------- FLYWHEEL CONSTANTS (used by commands) ----------------
     public static final double kFlywheelTargetRPM = 2000.0;
@@ -55,10 +42,7 @@ public class Turret extends SubsystemBase {
     public static final double kFlywheelKp = 0.001;
     public static final double kFlywheelKv = 12.0 / (6784.0 / 60.0); // 12V / free speed RPS
 
-    // Turret PID constants for Limelight
-    private static final double kTurretTxKp = 1.0;
-    private static final double kTxDeadband = 0.5;
-
+    @SuppressWarnings("removal")
     public Turret() {
         // Motor initialization
         flywheelSpark1 = new SparkFlex(Constants.kFlywheel1CanId, MotorType.kBrushless);
@@ -79,7 +63,6 @@ public class Turret extends SubsystemBase {
         hoodSpark.configure(hoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         // ---------------- FEED CONFIG ----------------
-        SparkMaxConfig feedConfig = new SparkMaxConfig();
         feedConfig
             .idleMode(IdleMode.kBrake)
             .smartCurrentLimit(40);
@@ -89,9 +72,6 @@ public class Turret extends SubsystemBase {
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters
         );
-
-        // ---------------- FLYWHEEL CONFIG ----------------
-        double flywheelFreeSpeedRPS = 6784.0 / 60.0;
 
         SparkMaxConfig flywheelMasterConfig = new SparkMaxConfig();
         SparkMaxConfig flywheelFollowerConfig = new SparkMaxConfig();
@@ -139,7 +119,6 @@ public class Turret extends SubsystemBase {
 
         // ---------------- ENCODERS ----------------
         flywheelEncoder = flywheelSpark1.getEncoder();
-        flywheelEncoder2 = flywheelSpark2.getEncoder();
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
         turretEncoder = turretSpark.getAbsoluteEncoder();
         feedEncoder = feedSpark.getEncoder();
@@ -150,14 +129,6 @@ public class Turret extends SubsystemBase {
         hoodSpark.set(input);
     }
 
-     public double getFeedRPM() {
-        return feedEncoder.getVelocity() * 60; // RPS → RPM
-    }
-
-    public void setHoodAngle(double setpoint) {
-        double clamped = MathUtil.clamp(setpoint, minHoodAngle, maxHoodAngle);
-        hoodSpark.getClosedLoopController().setSetpoint(clamped, ControlType.kPosition);
-    }
 
     // ---------------- TURRET ----------------
     public void manualTurret(double input) {
@@ -174,31 +145,18 @@ public class Turret extends SubsystemBase {
         flywheelSpark1.set(speed);
     }
 
-    public void setFlywheelRPM(double rpm) {
-        double targetRPS = rpm / 60.0;
-        flywheelSpark1.getClosedLoopController().setSetpoint(targetRPS, ControlType.kVelocity);
-    }
-
-    public void setTargetFlywheelRPM(double rpm) {
-        targetFlywheelRPM = rpm;
-    }
-
-    public double getTargetFlywheelRPM() {
-        return targetFlywheelRPM;
-    }
-
     public double getFlywheelRPM() {
-        return flywheelEncoder.getVelocity() * 60; // RPS → RPM
-    }
-
-    public boolean isFlywheelAtTarget() {
-        return Math.abs(getFlywheelRPM() - targetFlywheelRPM) < 50; // RPM tolerance
+        return flywheelEncoder.getVelocity(); // RPS → RPM
     }
 
     // ---------------- FEED ----------------
     public void spinFeed(double speed) {
         feedSpark.set(speed);
-    } //checking w sync
+    }
+
+    public double getFeedRPM() {
+        return feedEncoder.getVelocity(); // RPS → RPM
+    }
 
     // ---------------- ACCESSORS ----------------
     public double getTurretAngle() { return turretEncoder.getPosition(); }

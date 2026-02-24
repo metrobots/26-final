@@ -11,13 +11,13 @@ import frc.robot.utils.LimelightLib;
 
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class TestTurret extends Command {
+public class RotateTurret extends Command {
   private final Turret turret;
   private static final String LIMELIGHT_NAME = "limelight-front";
   private static final PIDController turretPID = new PIDController(0.00001, 0, 0);
 
   /** Creates a new TestTurret. */
-  public TestTurret(Turret turret) {
+  public RotateTurret(Turret turret) {
         this.turret = turret;
         addRequirements(turret);
   }
