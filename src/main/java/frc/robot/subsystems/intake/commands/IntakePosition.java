@@ -5,32 +5,31 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.intake.Intake;
 
-public class IntakePivot extends Command {
+public class IntakePosition extends Command {
 
   private final Intake intake;
-  PIDController intakePID = new PIDController(0.001, 0, 0);
+  PIDController intakePID = new PIDController(0.07, 0, 0);
 
   /**
    * @param intake Intake subsystem
    */
-  public IntakePivot(Intake intake) {
+  public IntakePosition(Intake intake) {
     this.intake = intake;
     addRequirements(intake);
   }
 
   @Override
   public void execute() {
-    // double setpoint = 40;
     SmartDashboard.putNumber("intakePoint", intake.getEncoder());
 
-    // double speed = intakePID.calculate(setpoint, intake.getEncoder());
-    // intake.intakePivot.set(0.5);
+    double speed = intakePID.calculate(-6, intake.getEncoder()); // went to 5.5
+    intake.intakePivot.set(-speed);
   }
 
   @Override
   public void end(boolean interrupted) {
-    // intake.intakePivot.set(0.0);
-    // intakePID.close();
+    intake.intakePivot.set(0.0);
+    intakePID.close();
   }
 
   @Override

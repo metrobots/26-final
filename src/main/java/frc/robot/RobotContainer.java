@@ -9,11 +9,9 @@ import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeIn;
-import frc.robot.subsystems.intake.commands.IntakePivot;
-import frc.robot.subsystems.intake.commands.ManualPivotIntake;
+import frc.robot.subsystems.intake.commands.IntakePosition;
 import frc.robot.subsystems.turret.Turret;
-import frc.robot.subsystems.turret.TurretHoodTable;
-import frc.robot.subsystems.turret.commands.TestTurret;
+import frc.robot.subsystems.turret.commands.ShootTurret;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
 
@@ -71,7 +69,7 @@ public class RobotContainer {
   private void configureButtonBindings() {
     //intake pivot command
     primary.a().whileTrue(
-      new ManualPivotIntake(m_intake)
+      new IntakePosition(m_intake)
     );
 
     // intake command
@@ -114,11 +112,7 @@ public class RobotContainer {
 
     // auto align turret command
     primary.rightTrigger().whileTrue(
-      new TestTurret(m_turret)
-    );
-
-    primary.y().whileTrue(
-      new IntakePivot(m_intake)
+      new ShootTurret(m_turret)
     );
 
   }
