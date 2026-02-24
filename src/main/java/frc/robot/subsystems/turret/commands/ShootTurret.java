@@ -20,7 +20,7 @@ driverController.x().whileTrue(
 driverController.y().whileTrue(
     turret.sysIdDynamic(SysIdRoutine.Direction.kReverse)); 
     
-2. Open Driver Station, Open AdvantageScope (or Glass Log Viewer), Enable Data Log Recording
+2. Open Driver Station, open Glass Log Viewer and connect to robot. Glass will automatically detect the SysId data stream and start logging when you run the tests.
 
 3. Run Tests (THIS ORDER MATTERS) You will run four tests.
 
