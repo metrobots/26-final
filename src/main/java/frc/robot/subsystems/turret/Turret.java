@@ -78,6 +78,18 @@ public class Turret extends SubsystemBase {
                 .positionWrappingEnabled(false);
         hoodSpark.configure(hoodMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
+        // ---------------- FEED CONFIG ----------------
+        SparkMaxConfig feedConfig = new SparkMaxConfig();
+        feedConfig
+            .idleMode(IdleMode.kBrake)
+            .smartCurrentLimit(40);
+
+        feedSpark.configure(
+            feedConfig,
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters
+        );
+
         // ---------------- FLYWHEEL CONFIG ----------------
         double flywheelFreeSpeedRPS = 6784.0 / 60.0;
 
@@ -155,18 +167,6 @@ public class Turret extends SubsystemBase {
             voltage = 0;
         }
         turretSpark.setVoltage(voltage);
-    }
-
-    public void setTurretAngle(double setpoint) {
-        double clamped = MathUtil.clamp(setpoint, -maxTurretAngle, maxTurretAngle);
-        turretSpark.getClosedLoopController().setSetpoint(clamped, ControlType.kPosition);
-    }
-
-    public void aimTurretWithTx() {
-        double tx = LimelightLib.getTX("limelight");
-        if (!LimelightLib.getTV("limelight") || Math.abs(tx) < kTxDeadband) return;
-        double target = MathUtil.clamp(turretEncoder.getPosition() + tx * kTurretTxKp, -maxTurretAngle, maxTurretAngle);
-        turretSpark.getClosedLoopController().setSetpoint(target, ControlType.kPosition);
     }
 
     // ---------------- FLYWHEEL ----------------
