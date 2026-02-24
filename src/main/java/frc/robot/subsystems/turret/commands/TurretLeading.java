@@ -28,7 +28,7 @@ public class TurretLeading extends Command {
 
 
   private static final PIDController turretPID =
-      new PIDController(0.02, 0.0, 0.0);
+      new PIDController(0.0001, 0.0, 0.0);
 
   public TurretLeading(Turret turret, Drivetrain drivetrain) {
     this.turret = turret;
