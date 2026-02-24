@@ -11,10 +11,10 @@ public class ShootTurret extends Command {
 
     private final Turret turret;
 
-    // 🔁 Target must be NEGATIVE for flywheel direction
+    // Target must be NEGATIVE for flywheel direction
     private static final double TARGET_RPM = -33.0;
 
-    // 🎯 Tune these values
+    // Tune these values
     private final PIDController pid = new PIDController(0.0005, 0.0, 0.0);
     private final SimpleMotorFeedforward ff =
             new SimpleMotorFeedforward(0.2, 0.00015);
@@ -48,7 +48,7 @@ public class ShootTurret extends Command {
         // Combine
         double output = pidOutput + ffOutput;
 
-        // 🔒 Clamp so it NEVER goes positive (prevents braking) // thank you chatGPT for this AMAZING comment
+        // Clamp so it NEVER goes positive (prevents braking) // thank you chatGPT for this AMAZING comment
         output = Math.min(0.0, Math.max(-1.0, output));
 
         turret.manualFlywheels(output);
