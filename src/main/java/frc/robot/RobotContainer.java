@@ -5,6 +5,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.intake.Intake;
@@ -68,9 +69,23 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
     //intake pivot command
+    // primary.a().whileTrue(
+    //   new IntakePosition(m_intake)
+    // );
+
+    // SYSID TUNING COMMANDS:
+
     primary.a().whileTrue(
-      new IntakePosition(m_intake)
-    );
+    m_turret.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+
+    primary.b().whileTrue(
+        m_turret.sysIdDynamic(SysIdRoutine.Direction.kForward));
+
+    primary.x().whileTrue(
+        m_turret.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+
+    primary.y().whileTrue(
+        m_turret.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
     // intake command
     primary.leftTrigger().whileTrue(

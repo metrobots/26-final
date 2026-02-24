@@ -5,25 +5,77 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
+// TUNING DIRECTIONS FOR SYSID CHARACTERIZATION:
+/*
+1. ADD TEMP BINDINGS: 
+driverController.a().whileTrue(
+    turret.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+
+driverController.b().whileTrue(
+    turret.sysIdDynamic(SysIdRoutine.Direction.kForward));
+
+driverController.x().whileTrue(
+    turret.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+
+driverController.y().whileTrue(
+    turret.sysIdDynamic(SysIdRoutine.Direction.kReverse)); 
+    
+2. Open Driver Station, Open AdvantageScope (or Glass Log Viewer), Enable Data Log Recording
+
+3. Run Tests (THIS ORDER MATTERS) You will run four tests.
+
+    3a. Test 1 — Quasistatic Forward
+        Enable robot
+        Hold A
+        Let it slowly ramp to near max speed
+        Release before it saturates at 12V
+        Duration: ~5–7 seconds
+        Disable robot.
+
+    3b. Test 2 — Dynamic Forward
+        Enable robot
+        Hold B
+        It will jump to high voltage instantly
+        Let it reach steady speed
+        Release
+        Duration: ~3–4 seconds
+        Disable robot.
+
+    3c. Test 3 — Quasistatic Reverse
+        Same as forward, but hold X
+
+    3d. Test 4 — Dynamic Reverse
+        Same as forward, but hold Y
+
+4. Stop recording in Driver Station, Download the .wpilog file.
+
+5. Open WPILib SysId tool.
+    Drag in the .wpilog
+    Select mechanism: flywheel
+    Select:
+        Voltage
+        Angular velocity (RPS)
+    Click Analyze
+*/
+
 import frc.robot.subsystems.turret.Turret;
 
 public class ShootTurret extends Command {
 
     private final Turret turret;
 
-    // Target must be NEGATIVE for flywheel direction
-    private static final double TARGET_RPM = -33.0;
+    // 2000 RPM ≈ 33.3 RPS
+    private static final double TARGET_RPS = -33.3;
 
-    // Tune these values
+    // Replace with SysId values after characterization
     private final PIDController pid = new PIDController(0.0005, 0.0, 0.0);
     private final SimpleMotorFeedforward ff =
-            new SimpleMotorFeedforward(0.2, 0.00015);
+            new SimpleMotorFeedforward(0.2, 0.12);
 
     public ShootTurret(Turret turret) {
         this.turret = turret;
         addRequirements(turret);
-
-        pid.setTolerance(2); // ±2 RPM tolerance
+        pid.setTolerance(1.0); // 1 RPS tolerance
     }
 
     @Override
@@ -34,26 +86,18 @@ public class ShootTurret extends Command {
     @Override
     public void execute() {
 
-        double currentRPM = turret.getFlywheelRPM();
+        double currentRPS = turret.getFlywheelVelocity();
 
-        SmartDashboard.putNumber("flywheelRPM", currentRPM);
-        SmartDashboard.putNumber("feedRPM", turret.getFeedRPM());
+        SmartDashboard.putNumber("Flywheel RPS", currentRPS);
+        SmartDashboard.putNumber("Target RPS", TARGET_RPS);
 
-        // PID correction
-        double pidOutput = pid.calculate(currentRPM, TARGET_RPM);
+        double ffVolts = ff.calculate(TARGET_RPS);
+        double pidVolts = pid.calculate(currentRPS, TARGET_RPS);
 
-        // Feedforward (calculate with positive magnitude, apply negative sign)
-        double ffOutput = -ff.calculate(Math.abs(TARGET_RPM));
+        double totalVolts = ffVolts + pidVolts;
 
-        // Combine
-        double output = pidOutput + ffOutput;
+        turret.setFlywheelVoltage(totalVolts);
 
-        // Clamp so it NEVER goes positive (prevents braking) // thank you chatGPT for this AMAZING comment
-        output = Math.min(0.0, Math.max(-1.0, output));
-
-        turret.manualFlywheels(output);
-
-        // Only run feeder when at speed
         if (pid.atSetpoint()) {
             turret.spinFeed(0.5);
         } else {
@@ -63,7 +107,7 @@ public class ShootTurret extends Command {
 
     @Override
     public void end(boolean interrupted) {
-        turret.manualFlywheels(0);
+        turret.setFlywheelVoltage(0);
         turret.spinFeed(0);
     }
 
