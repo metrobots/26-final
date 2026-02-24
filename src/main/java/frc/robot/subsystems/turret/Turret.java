@@ -30,7 +30,6 @@ public class Turret extends SubsystemBase {
     public final SparkMax feedSpark;
     public final SparkMax turretSpark;
 
-    // ---------------- ENCODERS ----------------
     private final RelativeEncoder flywheelEncoder;
     private final AbsoluteEncoder hoodEncoder;
     private final AbsoluteEncoder turretEncoder;
@@ -107,6 +106,10 @@ public class Turret extends SubsystemBase {
         return flywheelEncoder.getVelocity();
     }
 
+    public double getFlywheelPosition() {
+        return flywheelEncoder.getPosition();
+    }
+
     // =========================
     // ===== SYSID SETUP =======
     // =========================
@@ -119,7 +122,8 @@ public class Turret extends SubsystemBase {
                 log -> {
                     log.motor("flywheel")
                         .voltage(Units.Volts.of(lastFlywheelVoltage))
-                        .angularVelocity(Units.RotationsPerSecond.of(getFlywheelVelocity()));
+                        .angularVelocity(Units.RotationsPerSecond.of(getFlywheelVelocity()))
+                        .angularPosition(Units.Rotations.of(getFlywheelPosition()));
                 },
                 this
             )

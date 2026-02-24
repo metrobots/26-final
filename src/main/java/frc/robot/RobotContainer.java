@@ -75,17 +75,17 @@ public class RobotContainer {
 
     // SYSID TUNING COMMANDS:
 
-    primary.a().whileTrue(
-    m_turret.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    // primary.a().whileTrue(
+    // m_turret.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
 
-    primary.b().whileTrue(
-        m_turret.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    // primary.b().whileTrue(
+    //     m_turret.sysIdDynamic(SysIdRoutine.Direction.kForward));
 
-    primary.x().whileTrue(
-        m_turret.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    // primary.x().whileTrue(
+    //     m_turret.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
 
-    primary.y().whileTrue(
-        m_turret.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    // primary.y().whileTrue(
+    //     m_turret.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
     // intake command
     primary.leftTrigger().whileTrue(
@@ -97,35 +97,34 @@ public class RobotContainer {
       new IntakeIn(m_intake, 1)
     );
 
-    // turret commands
-    m_turret.setDefaultCommand(
-        m_turret.run(() -> {
-            // ===== Turret rotation =====
-            if (primary.povLeft().getAsBoolean()) {
-                m_turret.manualTurret(0.08);
-            } 
-            else if (primary.povRight().getAsBoolean()) {
-                m_turret.manualTurret(-0.08);
-            } 
-            else {
-                m_turret.manualTurret(0);
-            }
+    // // turret commands
+    // m_turret.setDefaultCommand(
+    //     m_turret.run(() -> {
+    //         // ===== Turret rotation =====
+    //         if (primary.povLeft().getAsBoolean()) {
+    //             m_turret.manualTurret(0.08);
+    //         } 
+    //         else if (primary.povRight().getAsBoolean()) {
+    //             m_turret.manualTurret(-0.08);
+    //         } 
+    //         else {
+    //             m_turret.manualTurret(0);
+    //         }
 
-            // ===== Hood control =====
-            if (primary.povUp().getAsBoolean()) {
-                m_turret.manualHood(-0.06);
-            } 
-            else if (primary.povDown().getAsBoolean()) {
-                m_turret.manualHood(0.06);
-            } 
-            else {
-                m_turret.manualHood(0);
-            }
+    //         // ===== Hood control =====
+    //         if (primary.povUp().getAsBoolean()) {
+    //             m_turret.manualHood(-0.06);
+    //         } 
+    //         else if (primary.povDown().getAsBoolean()) {
+    //             m_turret.manualHood(0.06);
+    //         } 
+    //         else {
+    //             m_turret.manualHood(0);
+    //         }
 
-        })
-    );
+    //     })
+    // );
 
-    // auto align turret command
     primary.rightTrigger().whileTrue(
       new ShootTurret(m_turret)
     );

@@ -67,15 +67,12 @@ public class ShootTurret extends Command {
     // 2000 RPM ≈ 33.3 RPS
     private static final double TARGET_RPS = -33.3;
 
-    // Replace with SysId values after characterization
-    private final PIDController pid = new PIDController(0.0005, 0.0, 0.0);
-    private final SimpleMotorFeedforward ff =
-            new SimpleMotorFeedforward(0.2, 0.12);
+    private final PIDController pid = new PIDController(2, 0.0, 0.0);
 
     public ShootTurret(Turret turret) {
         this.turret = turret;
         addRequirements(turret);
-        pid.setTolerance(1.0); // 1 RPS tolerance
+        pid.setTolerance(2.0); // 1 RPS tolerance
     }
 
     @Override
@@ -91,14 +88,13 @@ public class ShootTurret extends Command {
         SmartDashboard.putNumber("Flywheel RPS", currentRPS);
         SmartDashboard.putNumber("Target RPS", TARGET_RPS);
 
-        double ffVolts = ff.calculate(TARGET_RPS);
         double pidVolts = pid.calculate(currentRPS, TARGET_RPS);
 
-        double totalVolts = ffVolts + pidVolts;
+        SmartDashboard.putNumber("Total Volts", pidVolts);
 
-        turret.setFlywheelVoltage(totalVolts);
+        turret.setFlywheelVoltage(pidVolts);
 
-        if (pid.atSetpoint()) {
+        if (Math.abs(currentRPS - TARGET_RPS) < 1.0) {
             turret.spinFeed(0.5);
         } else {
             turret.spinFeed(0.0);
