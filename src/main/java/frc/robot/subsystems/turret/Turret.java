@@ -2,17 +2,10 @@ package frc.robot.subsystems.turret;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
-import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Voltage;
-
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -108,33 +101,6 @@ public class Turret extends SubsystemBase {
 
     public double getFlywheelPosition() {
         return flywheelEncoder.getPosition();
-    }
-
-    // =========================
-    // ===== SYSID SETUP =======
-    // =========================
-
-    private final SysIdRoutine flywheelSysId =
-        new SysIdRoutine(
-            new SysIdRoutine.Config(),
-            new SysIdRoutine.Mechanism(
-                (Voltage volts) -> setFlywheelVoltage(volts.in(Units.Volts)),
-                log -> {
-                    log.motor("flywheel")
-                        .voltage(Units.Volts.of(lastFlywheelVoltage))
-                        .angularVelocity(Units.RotationsPerSecond.of(getFlywheelVelocity()))
-                        .angularPosition(Units.Rotations.of(getFlywheelPosition()));
-                },
-                this
-            )
-        );
-
-    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return flywheelSysId.quasistatic(direction);
-    }
-
-    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return flywheelSysId.dynamic(direction);
     }
 
     // =========================

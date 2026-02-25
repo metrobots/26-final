@@ -3,60 +3,6 @@ package frc.robot.subsystems.turret.commands;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-
-// TUNING DIRECTIONS FOR SYSID CHARACTERIZATION:
-/*
-1. ADD TEMP BINDINGS: 
-driverController.a().whileTrue(
-    turret.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-
-driverController.b().whileTrue(
-    turret.sysIdDynamic(SysIdRoutine.Direction.kForward));
-
-driverController.x().whileTrue(
-    turret.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-
-driverController.y().whileTrue(
-    turret.sysIdDynamic(SysIdRoutine.Direction.kReverse)); 
-    
-2. Open Driver Station, open Glass Log Viewer and connect to robot. Glass will automatically detect the SysId data stream and start logging when you run the tests.
-
-3. Run Tests (THIS ORDER MATTERS) You will run four tests.
-
-    3a. Test 1 — Quasistatic Forward
-        Enable robot
-        Hold A
-        Let it slowly ramp to near max speed
-        Release before it saturates at 12V
-        Duration: ~5–7 seconds
-        Disable robot.
-
-    3b. Test 2 — Dynamic Forward
-        Enable robot
-        Hold B
-        It will jump to high voltage instantly
-        Let it reach steady speed
-        Release
-        Duration: ~3–4 seconds
-        Disable robot.
-
-    3c. Test 3 — Quasistatic Reverse
-        Same as forward, but hold X
-
-    3d. Test 4 — Dynamic Reverse
-        Same as forward, but hold Y
-
-4. Stop recording in Driver Station, Download the .wpilog file.
-
-5. Open WPILib SysId tool.
-    Drag in the .wpilog
-    Select mechanism: flywheel
-    Select:
-        Voltage
-        Angular velocity (RPS)
-    Click Analyze
-*/
 
 import frc.robot.subsystems.turret.Turret;
 
