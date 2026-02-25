@@ -65,14 +65,14 @@ public class ShootTurret extends Command {
     private final Turret turret;
 
     // 2000 RPM ≈ 33.3 RPS
-    private static final double TARGET_RPS = -33.3;
+    private static final double TARGET_RPS = -33;
 
     private final PIDController pid = new PIDController(2, 0.0, 0.0);
 
     public ShootTurret(Turret turret) {
         this.turret = turret;
         addRequirements(turret);
-        pid.setTolerance(2.0); // 1 RPS tolerance
+        pid.setTolerance(1.0); // 1 RPS tolerance
     }
 
     @Override
