@@ -1,29 +1,51 @@
 package frc.robot.subsystems.climb;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.AnalogEncoder;
-import frc.robot.utils.Config;
-import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.RelativeEncoder;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.ResetMode;
+import com.revrobotics.PersistMode;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants;
-import frc.robot.utils.Constants.AutoConstants;
-import frc.robot.utils.Constants.DriveConstants;
 
 public class Climb extends SubsystemBase {
-    
-    // Define motors and such for climb
-    private SparkMax climbMotor = new SparkMax(Constants.kClimbCanId, MotorType.kBrushless);
-    // Make methods for moving the climb mech
+
+    private final SparkMax climbMotor;
+    private final SparkMaxConfig motorConfig = new SparkMaxConfig();
+
+    public Climb() {
+        climbMotor = new SparkMax(Constants.kClimbCanId, MotorType.kBrushless);
+        configure();
+    }
+
+    private void configure() {
+        motorConfig
+            // Inverted so + goes up, - goes down
+            .inverted(true);
+
+        climbMotor.configure(
+            motorConfig,
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters
+        );
+    }
+
+    /**
+     * Manually move the climb.
+     * 
+     * @param speed -1.0 to 1.0
+     *              positive = up
+     *              negative = down
+     */
+    public void move(double speed) {
+        climbMotor.set(speed);
+    }
+
+    /**
+     * Stops the climb motor.
+     */
+    public void stop() {
+        climbMotor.stopMotor();
+    }
 }

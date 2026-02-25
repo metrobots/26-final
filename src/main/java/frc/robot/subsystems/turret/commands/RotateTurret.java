@@ -2,38 +2,42 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.turret.commands.test;
+package frc.robot.subsystems.turret.commands;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.utils.LimelightLib;
+
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class TurnTurret extends Command {
-  double speed;
+public class RotateTurret extends Command {
   private final Turret turret;
-  /** Creates a new TurnTurret. */
-  public TurnTurret(double input, Turret turret) {
-    // Use addRequirements() here to declare subsystem dependencies.
-    this.turret = turret;
-    this.speed = input;
-    addRequirements(turret);
+  private static final String LIMELIGHT_NAME = "limelight-front";
+  private static final PIDController turretPID = new PIDController(0.00001, 0, 0);
 
-
+  /** Creates a new TestTurret. */
+  public RotateTurret(Turret turret) {
+        this.turret = turret;
+        addRequirements(turret);
   }
-
-  // Called when the command is initially scheduled.
-  @Override
-  public void initialize() {}
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    turret.manualTurret(speed);
+    if (!LimelightLib.getTV(LIMELIGHT_NAME)) return;
+
+    double input = turretPID.calculate(LimelightLib.getTX(LIMELIGHT_NAME), 0);
+
+    turret.manualTurret(input);
+
   }
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+    turret.manualTurret(0);
+  }
 
   // Returns true when the command should end.
   @Override

@@ -1,56 +1,46 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// // Copyright (c) FIRST and other WPILib contributors.
+// // Open Source Software; you can modify and/or share it under the terms of
+// // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.utils.utilcommands;
+// package frc.robot.utils.utilcommands;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.turret.Turret;
+// import edu.wpi.first.wpilibj2.command.Command;
+// import frc.robot.subsystems.turret.Turret;
 
-/* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
+// /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
 
-public class Turtle extends Command {
-  /** Creates a new Turtle. */
-  Turret turret;
-  int speed = 1;
+// public class Turtle extends Command {
+//   /** Creates a new Turtle. */
+//   Turret turret;
+//   int speed = 1;
 
-  public Turtle(Turret turret) {
+//   public Turtle(Turret turret) {
 
-    // Use addRequirements() here to declare subsystem dependencies.
-    this.turret = turret;
-  }
+//     // Use addRequirements() here to declare subsystem dependencies.
+//     this.turret = turret;
+//   }
 
-  // Called when the command is initially scheduled.
-  @Override
-  public void initialize() {}
+//   // Called when the command is initially scheduled.
+//   @Override
+//   public void initialize() {}
 
-  // Called every time the scheduler runs while the command is scheduled.
-  @Override
-  public void execute() {
-    turret.manualFlywheels(speed);
-    Intake.pivotIntake(placeholder.empyy()); // I'm not sure what the actual setpoint value should be yet.
-  }
+//   // Called every time the scheduler runs while the command is scheduled.
+//   @Override
+//   public void execute() {
+//     turret.manualFlywheels(speed);
+//     // Intake.pivotIntake(placeholder.empyy()); // I'm not sure what the actual setpoint value should be yet.
+//   }
 
-  // Called once the command ends or is interrupted.
-  @Override
-  public void end(boolean interrupted) {
+//   // Called once the command ends or is interrupted.
+//   @Override
+//   public void end(boolean interrupted) {
 
-    turret.flywheelSpark1.stopMotor();
-    turret.flywheelSpark2.stopMotor();
+//     turret.flywheelSpark1.stopMotor();
+//   }
 
-    m_drivingSpark.stopMotor();
-    m_turningSpark.stopMotor();
-
-    climbMotor.stopMotor();
-
-    intakePivot.stopMotor();
-    intakeDrive.stopMoror();
-    indexer.stopMotor();
-  }
-
-  // Returns true when the command should end.
-  @Override
-  public boolean isFinished() {
-    return false;
-  }
-}
+//   // Returns true when the command should end.
+//   @Override
+//   public boolean isFinished() {
+//     return false;
+//   }
+// }
