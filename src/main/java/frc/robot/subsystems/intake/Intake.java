@@ -4,9 +4,16 @@ import edu.wpi.first.math.controller.PIDController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.utils.Constants;
+import frc.robot.subsystems.dashboard.Dashboard;
 
 public class Intake extends SubsystemBase {
+    // Dahboard so we can tell hub states
+    Dashboard dashboard;
+    Alliance alliance; 
 
     // Create the intake motors
     public SparkMax intakePivot = new SparkMax(Constants.kIntakePivotCanId, MotorType.kBrushless);
@@ -24,11 +31,21 @@ public class Intake extends SubsystemBase {
         ACTIVE,
         ACTIVE_INTAKING,
         INACTIVE,
+        INACTIVE_INTAKING,
         MANUAL_SPIN,
         ERROR
     }
 
-    IndexerState currentState = IndexerState.ACTIVE;
+    public IndexerState currentState = IndexerState.ACTIVE;
+
+    public Intake (Dashboard dashboard) {
+        this.dashboard = dashboard;
+        if (DriverStation.getAlliance().get() == Alliance.Blue) {
+            alliance = Alliance.Blue;
+        } else {
+            alliance = Alliance.Red;
+        }
+    }
     
     public void periodic () {
         switch (currentState) {
@@ -38,10 +55,18 @@ public class Intake extends SubsystemBase {
                 spinIndexer(0.5);
             case INACTIVE:
                 spinIndexer(0);
+            case INACTIVE_INTAKING:
+                spinIndexer(0.1);
+                spinIndexer(-0.1);
             case MANUAL_SPIN:
                 spinIndexer(1);
             case ERROR:
                 indexer.stopMotor();
+        }
+        if ((alliance == Alliance.Red && dashboard.isRedHubActive()) || (alliance == Alliance.Blue && dashboard.isBlueHubActive())) {
+            currentState = IndexerState.ACTIVE;
+        } else {
+            currentState = IndexerState.INACTIVE;
         }
     }
 
@@ -55,6 +80,10 @@ public class Intake extends SubsystemBase {
             setIndexerState (IndexerState.ACTIVE_INTAKING);
         } else if (currentState == IndexerState.ACTIVE_INTAKING && !intaking) {
             setIndexerState (IndexerState.ACTIVE);
+        } else if (currentState == IndexerState.INACTIVE && intaking) {
+            setIndexerState (IndexerState.INACTIVE_INTAKING);
+        } else if (currentState == IndexerState.INACTIVE_INTAKING && !intaking) {
+            setIndexerState(IndexerState.INACTIVE);
         }
         return;
     }

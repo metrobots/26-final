@@ -21,11 +21,13 @@ public class IntakeIn extends Command {
   @Override
   public void execute() {
     intake.driveIntake(speed);
+    intake.indexer(true);
   }
 
   @Override
   public void end(boolean interrupted) {
     intake.driveIntake(0.0);
+    intake.indexer(false);
   }
 
   @Override
