@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.PoseEstimator;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeIn;
 import frc.robot.subsystems.turret.Turret;
@@ -28,6 +29,7 @@ public class RobotContainer {
   final Turret m_turret;
   final Intake m_intake;
   final Dashboard m_dashboard;
+  private final PoseEstimator m_poseEstimator;
   
   // The driver's controller
   private final CommandXboxController primary = Constants.primary;
@@ -38,6 +40,7 @@ public class RobotContainer {
     m_turret = new Turret();
     m_intake = new Intake();
     m_dashboard = new Dashboard();
+    m_poseEstimator = new PoseEstimator(m_drivetrain);
     
     
     registerNamedCommands();
