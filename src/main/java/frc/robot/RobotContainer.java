@@ -26,7 +26,6 @@ public class RobotContainer {
   // Auto SendableChooser
   // private final SendableChooser<Command> autoChooser;
   // Subsystem declarations
-  final Dashboard m_dashboard;
   final Drivetrain m_drivetrain;
   final Turret m_turret;
   final Intake m_intake;
@@ -59,10 +58,6 @@ public class RobotContainer {
                 (MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband)),
                 true);
         }, m_drivetrain)
-    );
-
-    m_intake.setDefaultCommand(
-      new SpinIndexer(m_intake)  
     );
 
     // SmartDashboard.putData("Auto Chooser", autoChooser); // Put the auto chooser on the dashboard
