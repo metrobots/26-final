@@ -374,4 +374,17 @@ public class Drivetrain extends SubsystemBase {
   public double getTurnRate() {
     return -m_gyro.getRate();
   }
+
+  public Rotation2d getGyroRotation() {
+      return Rotation2d.fromDegrees(-m_gyro.getAngle());
+  }
+
+  public SwerveModulePosition[] getModulePositions() {
+      return new SwerveModulePosition[] {
+          m_frontLeft.getPosition(),
+          m_frontRight.getPosition(),
+          m_rearLeft.getPosition(),
+          m_rearRight.getPosition()
+      };
+  }
 }

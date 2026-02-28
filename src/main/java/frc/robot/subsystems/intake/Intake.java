@@ -38,36 +38,36 @@ public class Intake extends SubsystemBase {
 
     public IndexerState currentState = IndexerState.ACTIVE;
 
-    public Intake (Dashboard dashboard) {
-        this.dashboard = dashboard;
-        if (DriverStation.getAlliance().get() == Alliance.Blue) {
-            alliance = Alliance.Blue;
-        } else {
-            alliance = Alliance.Red;
-        }
+    public Intake () {
+        // this.dashboard = dashboard;
+        // if (DriverStation.getAlliance().get() == Alliance.Blue) {
+        //     alliance = Alliance.Blue;
+        // } else {
+        //     alliance = Alliance.Red;
+        // }
     }
     
     public void periodic () {
-        switch (currentState) {
-            case ACTIVE:
-                spinIndexer(0);
-            case ACTIVE_INTAKING:
-                spinIndexer(0.5);
-            case INACTIVE:
-                spinIndexer(0);
-            case INACTIVE_INTAKING:
-                spinIndexer(0.1);
-                spinIndexer(-0.1);
-            case MANUAL_SPIN:
-                spinIndexer(1);
-            case ERROR:
-                indexer.stopMotor();
-        }
-        if ((alliance == Alliance.Red && dashboard.isRedHubActive()) || (alliance == Alliance.Blue && dashboard.isBlueHubActive())) {
-            currentState = IndexerState.ACTIVE;
-        } else {
-            currentState = IndexerState.INACTIVE;
-        }
+        // switch (currentState) {
+        //     case ACTIVE:
+        //         spinIndexer(0);
+        //     case ACTIVE_INTAKING:
+        //         spinIndexer(0.5);
+        //     case INACTIVE:
+        //         spinIndexer(0);
+        //     case INACTIVE_INTAKING:
+        //         spinIndexer(0.1);
+        //         spinIndexer(-0.1);
+        //     case MANUAL_SPIN:
+        //         spinIndexer(1);
+        //     case ERROR:
+        //         indexer.stopMotor();
+        // }
+        // if ((alliance == Alliance.Red && dashboard.isRedHubActive()) || (alliance == Alliance.Blue && dashboard.isBlueHubActive())) {
+        //     currentState = IndexerState.ACTIVE;
+        // } else {
+        //     currentState = IndexerState.INACTIVE;
+        // }
     }
 
     public void setIndexerState (IndexerState requestedState) {
