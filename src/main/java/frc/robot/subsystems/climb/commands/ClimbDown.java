@@ -20,7 +20,9 @@ public class ClimbDown extends Command {
 
     @Override
     public void execute() {
-        climb.move(speed);
+
+        climb.positionalMove(climb.getMinHeight(), speed);
+
     }
 
     @Override
