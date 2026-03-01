@@ -91,7 +91,7 @@ public class Turret extends SubsystemBase {
 
     public void setFlywheelVoltage(double volts) {
         lastFlywheelVoltage = volts;
-        flywheelSpark1.setVoltage(volts);
+        flywheelSpark1.set(volts);
     }
 
     // Returns RPS

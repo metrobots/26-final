@@ -14,8 +14,8 @@ public final class Constants {
   public static CommandXboxController primary = new CommandXboxController(OIConstants.kDriverControllerPort);
 
   // INTAKE - 
-  public static final int kIntakePivotCanId = 21;
-  public static final int kIntakeDriveCanId = 22;
+  public static final int kIntakePivotCanId = 48;
+  public static final int kIntakeDriveCanId = 46;
 
   // SHOOTER - 
   public static final int kTurretCanId = 3;
@@ -59,23 +59,23 @@ public final class Constants {
 
 
     // by module 
-    public static final int kFrontLeftDrivingCanId = 49;
-    public static final int kFrontLeftTurningCanId = 48;
+    public static final int kFrontLeftDrivingCanId = 42; // 
+    public static final int kFrontLeftTurningCanId = 49;
 
-    public static final int kRearLeftDrivingCanId = 42;
+    public static final int kRearLeftDrivingCanId = 21; //
     public static final int kRearLeftTurningCanId = 43;
 
 
-    public static final int kFrontRightDrivingCanId = 44;
+    public static final int kFrontRightDrivingCanId = 44; //good
     public static final int kFrontRightTurningCanId = 45;
 
-    public static final int kRearRightDrivingCanId = 46;
+    public static final int kRearRightDrivingCanId = 22; //good
     public static final int kRearRightTurningCanId = 47;
 
     // Encoders
     public static final int kFrontLeftEncoder = 1; 
-    public static final int kFrontRightEncoder = 3;
-    public static final int kRearLeftEncoder = 0; 
+    public static final int kFrontRightEncoder = 0;
+    public static final int kRearLeftEncoder = 3; 
     public static final int kRearRightEncoder = 2;
     // Encoder offsets
     public static final double kFrontLeftEncoderOffset = 6.0883963923748174;

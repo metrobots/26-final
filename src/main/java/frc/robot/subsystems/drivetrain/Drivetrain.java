@@ -61,7 +61,7 @@ public class Drivetrain extends SubsystemBase {
   // PID controller for heading
   private PIDController headingCorrector = new PIDController(0, 0, 0);
 
-  private static Field2d field = Constants.AutoConstants.field2d;
+  private final Field2d field = new Field2d();
 
   // Ban people from going directly forward to backward immediately
   private final SlewRateLimiter xSpeedLimiter = new SlewRateLimiter(AutoConstants.kMaxAccelerationMetersPerSecondSquared);
@@ -93,6 +93,8 @@ public class Drivetrain extends SubsystemBase {
   );
 
   public Drivetrain() {
+
+    SmartDashboard.putData("Field", field);
 
     // Pathplanner things
     try{
@@ -160,6 +162,7 @@ public class Drivetrain extends SubsystemBase {
       SmartDashboard.putNumber("RL", m_rearLeft.getAngleFull());
       SmartDashboard.putNumber("RR", m_rearRight.getAngleFull());
       SmartDashboard.putNumber("angle", m_gyro.getAngle());
+      field.setRobotPose(m_poseEstimator.getEstimatedPosition());
   }
 
   /**
