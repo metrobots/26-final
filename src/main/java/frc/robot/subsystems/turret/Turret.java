@@ -76,6 +76,12 @@ public class Turret extends SubsystemBase {
         // ---------------- TURRET CONFIG ----------------
         SparkMaxConfig turretConfig = new SparkMaxConfig();
         turretConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(30);
+
+        turretConfig.absoluteEncoder
+            .positionConversionFactor(360.0 / 100.0)
+            .velocityConversionFactor((360.0 / 100.0) / 60.0)
+            .inverted(false);
+
         turretSpark.configure(turretConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         // ---------------- ENCODERS ----------------
@@ -112,13 +118,7 @@ public class Turret extends SubsystemBase {
     }
 
     public void manualTurret(double input) {
-        double angle = turretEncoder.getPosition();
         double output = MathUtil.clamp(input, -1.0, 1.0);
-
-        if (angle >= maxTurretAngle || angle <= -maxTurretAngle) {
-            output = 0;
-        }
-
         turretSpark.set(output);
     }
 
@@ -132,9 +132,5 @@ public class Turret extends SubsystemBase {
 
     public double getTurretAngle() {
         return turretEncoder.getPosition();
-    }
-
-    public double getHoodAngle() {
-        return hoodEncoder.getPosition();
     }
 }

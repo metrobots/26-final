@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems.turret.commands;
 
+import com.revrobotics.AbsoluteEncoder;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.turret.Turret;
@@ -14,7 +16,7 @@ import frc.robot.utils.LimelightLib;
 public class RotateTurret extends Command {
   private final Turret turret;
   private static final String LIMELIGHT_NAME = "limelight-front";
-  private static final PIDController turretPID = new PIDController(0.00001, 0, 0);
+  private static final PIDController turretPID = new PIDController(0.00001, 0, 0); //est start at 0.02
 
   /** Creates a new TestTurret. */
   public RotateTurret(Turret turret) {
@@ -29,8 +31,11 @@ public class RotateTurret extends Command {
 
     double input = turretPID.calculate(LimelightLib.getTX(LIMELIGHT_NAME), 0);
 
-    turret.manualTurret(input);
-
+    if (turret.getTurretAngle() > 30 || turret.getTurretAngle() < -30) {
+      turret.manualTurret(0);
+    } else {
+      turret.manualTurret(input);
+    }
   }
 
   // Called once the command ends or is interrupted.
