@@ -27,7 +27,7 @@ public class ShootTurret extends Command {
     }
 
     @Override
-    public void execute() {
+    public void execute() { 
 
         double currentRPM = turret.flywheelSpark1.getEncoder().getVelocity();
 
