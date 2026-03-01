@@ -55,21 +55,18 @@ public final class Constants {
 
     // Drivetrain CAN IDs
 
-
-
-
     // by module 
-    public static final int kFrontLeftDrivingCanId = 42; // 
+    public static final int kFrontLeftDrivingCanId = 42;  
     public static final int kFrontLeftTurningCanId = 49;
 
-    public static final int kRearLeftDrivingCanId = 21; //
+    public static final int kRearLeftDrivingCanId = 21; 
     public static final int kRearLeftTurningCanId = 43;
 
 
-    public static final int kFrontRightDrivingCanId = 44; //good
+    public static final int kFrontRightDrivingCanId = 44; 
     public static final int kFrontRightTurningCanId = 45;
 
-    public static final int kRearRightDrivingCanId = 22; //good
+    public static final int kRearRightDrivingCanId = 22; 
     public static final int kRearRightTurningCanId = 47;
 
     // Encoders
@@ -98,8 +95,7 @@ public final class Constants {
 
     // Motor attributes
     public static final double kDrivingMotorFreeSpeedRps = NeoMotorConstants.kFreeSpeedRpm / 60.0;
-    public static final double kDriveWheelFreeSpeedRps = (kDrivingMotorFreeSpeedRps * kWheelCircumferenceMeters) /
-      kDrivingMotorReduction;
+    public static final double kDriveWheelFreeSpeedRps = (kDrivingMotorFreeSpeedRps * kWheelCircumferenceMeters) / kDrivingMotorReduction;
   }
 
   public static final class OIConstants {
