@@ -11,12 +11,26 @@ import frc.robot.utils.Constants;
 
 public class Climb extends SubsystemBase {
 
+    private static final PIDController climbPID = new PIDController(0, 0, 0);
+    private final RelativeEncoder encoder;
+
     private final SparkMax climbMotor;
     private final SparkMaxConfig motorConfig = new SparkMaxConfig();
 
+    private final double maxHeight;
+    private final double minHeight;
+    private final double maxExtension;
+
     public Climb() {
+
         climbMotor = new SparkMax(Constants.kClimbCanId, MotorType.kBrushless);
+        encoder = climbMotor.getEncoder();
         configure();
+
+        // placeholder values; tunning is required.
+        this.maxHeight = 20.0;
+        this.minHeight = 10.0;
+        this.maxExtension = 21.0;
     }
 
     private void configure() {
@@ -29,6 +43,30 @@ public class Climb extends SubsystemBase {
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters
         );
+    }
+
+    public void getEncoder() {
+        return encoder;
+    }
+
+    public double getMaxHeight() {
+        return maxHeight;
+    }
+
+    public double getMinHeight() {
+        return minHeight;
+    }
+
+    public double getMaxExtension() {
+        return maxExtension;
+    }
+
+    // Positional movement
+    public void positionalMove(double setpoint, double speed) {
+
+        climbMotor.set(climbPID.calculate(speed, setpoint));
+
+        return;
     }
 
     /**

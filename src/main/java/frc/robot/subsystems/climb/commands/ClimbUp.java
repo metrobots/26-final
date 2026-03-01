@@ -20,11 +20,14 @@ public class ClimbUp extends Command {
 
     @Override
     public void execute() {
-        climb.move(speed);
+        
+        climb.positionalMove(climb.getMaxExtension(), speed);
+
     }
 
     @Override
     public void end(boolean interrupted) {
+        climb.positionalMove(climb.getMinHeight(), speed);
         climb.stop();
     }
 
