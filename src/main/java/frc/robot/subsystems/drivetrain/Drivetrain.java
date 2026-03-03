@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.turret.Turret;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.AutoConstants;
 import frc.robot.utils.Constants.DriveConstants;
@@ -29,8 +30,9 @@ import frc.robot.utils.LimelightLib.PoseEstimate;
 
 public class Drivetrain extends SubsystemBase {
 
-  // ----- Limelight name — change to match your camera's hostname -----
-  private static final String LIMELIGHT_NAME = "limelight";
+  private final Turret m_turret;
+
+  private static final String LIMELIGHT_NAME = "limelight-front";
 
   // Create the modules
   // Front Left
@@ -98,7 +100,8 @@ public class Drivetrain extends SubsystemBase {
     new Pose2d()  // Initial pose
   );
 
-  public Drivetrain() {
+  public Drivetrain(Turret turret) {
+    this.m_turret = turret;
 
     SmartDashboard.putData("Field", field);
 
@@ -138,6 +141,15 @@ public class Drivetrain extends SubsystemBase {
   @Override
   public void periodic() {
 
+    LimelightLib.setCameraPose_RobotSpace( //all of these are meters
+      LIMELIGHT_NAME, 
+      0, //forward offset
+      0, //left offset
+      0, //height from floor
+      0, //roll
+      0, //pitch
+      m_turret.getTurretAngle()); //yaw (turret angle)
+
     // Update the odometry with wheel encoders and gyro
     m_odometry.update(
         Rotation2d.fromDegrees(-m_gyro.getAngle()),
@@ -151,7 +163,7 @@ public class Drivetrain extends SubsystemBase {
     // --- MegaTag2: tell the Limelight which way the robot is facing before asking for a pose ---
     LimelightLib.SetRobotOrientation(
         LIMELIGHT_NAME,
-        getHeading(),   // yaw (degrees, CCW-positive, field-relative)
+        MathUtil.inputModulus(-m_gyro.getAngle(), 0, 360),   // yaw (degrees, CCW-positive, field-relative)
         getTurnRate(),  // yaw rate (degrees/sec)
         0, 0, 0, 0      // pitch / roll — not needed for 2D
     );

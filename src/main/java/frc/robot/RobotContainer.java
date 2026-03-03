@@ -36,8 +36,9 @@ public class RobotContainer {
 
    public RobotContainer() {
 
-    m_drivetrain = new Drivetrain();
+    
     m_turret = new Turret();
+    m_drivetrain = new Drivetrain(m_turret);
     m_dashboard = new Dashboard();
     m_intake = new Intake();
     
