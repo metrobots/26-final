@@ -1,6 +1,8 @@
 package frc.robot.subsystems.intake;
 
 import edu.wpi.first.math.controller.PIDController;
+
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -18,7 +20,7 @@ public class Intake extends SubsystemBase {
     // Create the intake motors
     public SparkMax intakePivot = new SparkMax(Constants.kIntakePivotCanId, MotorType.kBrushless);
     public SparkMax intakeDrive = new SparkMax(Constants.kIntakeDriveCanId, MotorType.kBrushless);
-    private SparkMax indexer = new SparkMax(Constants.kIndexerCanId, MotorType.kBrushless);
+    public SparkFlex indexer = new SparkFlex(Constants.kIndexerCanId, MotorType.kBrushless);
 
     double kP = 0.000001;
     double kI = 0;

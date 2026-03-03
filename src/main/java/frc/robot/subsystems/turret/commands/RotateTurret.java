@@ -7,6 +7,7 @@ package frc.robot.subsystems.turret.commands;
 import com.revrobotics.AbsoluteEncoder;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.utils.LimelightLib;
@@ -16,7 +17,7 @@ import frc.robot.utils.LimelightLib;
 public class RotateTurret extends Command {
   private final Turret turret;
   private static final String LIMELIGHT_NAME = "limelight-front";
-  private static final PIDController turretPID = new PIDController(0.00001, 0, 0); //est start at 0.02
+  private static final PIDController turretPID = new PIDController(0.014, 0, 0.002); //est start at 0.02
 
   /** Creates a new TestTurret. */
   public RotateTurret(Turret turret) {
@@ -25,18 +26,46 @@ public class RotateTurret extends Command {
   }
 
   // Called every time the scheduler runs while the command is scheduled.
-  @Override
-  public void execute() {
-    if (!LimelightLib.getTV(LIMELIGHT_NAME)) return;
+ @Override
+public void execute() {
 
-    double input = turretPID.calculate(LimelightLib.getTX(LIMELIGHT_NAME), 0);
-
-    if (turret.getTurretAngle() > 30 || turret.getTurretAngle() < -30) {
-      turret.manualTurret(0);
-    } else {
-      turret.manualTurret(input);
+    // If no target, stop turret
+    if (!LimelightLib.getTV(LIMELIGHT_NAME)) {
+        turret.manualTurret(0);
+        return;
     }
-  }
+
+    if (LimelightLib.getFiducialID(LIMELIGHT_NAME) == 26) {
+
+    double tx = LimelightLib.getTX(LIMELIGHT_NAME);
+    double angle = turret.getTurretAngle();
+
+    SmartDashboard.putNumber("tx", tx);
+    SmartDashboard.putNumber("Turret Angle", angle);
+
+    // Calculate PID output (negative if your motor direction requires it)
+    double output = -turretPID.calculate(tx, 0);
+
+    boolean atLeftLimit = angle > 110;
+    boolean atRightLimit = angle < -110;
+
+    boolean tryingToMoveLeft = output > 0;
+    boolean tryingToMoveRight = output < 0;
+
+    if ((atLeftLimit && tryingToMoveLeft) ||
+        (atRightLimit && tryingToMoveRight)) {
+
+        turret.manualTurret(0);  // Block outward motion
+    } 
+    else {
+        turret.manualTurret(output);  // Allow safe motion
+    }
+    }
+
+    // ----- Soft Limit Protection -----
+    // Prevent moving further OUT of bounds,
+    // but allow moving back inward.
+}
 
   // Called once the command ends or is interrupted.
   @Override

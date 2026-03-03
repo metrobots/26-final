@@ -3,6 +3,7 @@ package frc.robot.subsystems.turret.commands;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
 import frc.robot.subsystems.turret.Turret;
 
@@ -10,15 +11,24 @@ public class ShootTurret extends Command {
 
     private final Turret turret;
 
-    // 2000 RPM ≈ 33.3 RPS
-    private static final double TARGETRPM = -20;
+    // Target speed in RPS
+    private static final double TARGET_RPS = -20.0;
 
-    private final PIDController pid = new PIDController(0.5, 0.0, 0.0);
+    // PID constants (small because FF does most work)
+    private final PIDController pid = new PIDController(0.0, 0.0, 0.0);
+
+    // Feedforward constants (TUNE THESE)
+    private static final double kS = 0.15;    // volts to overcome friction
+    private static final double kV = 0.15;    // volts per RPS (starting guess)
+
+    private final SimpleMotorFeedforward ff =
+        new SimpleMotorFeedforward(kS, kV);
 
     public ShootTurret(Turret turret) {
         this.turret = turret;
         addRequirements(turret);
-        pid.setTolerance(1.0); // 1 RPS tolerance
+
+        pid.setTolerance(1.0); // ±1 RPS tolerance
     }
 
     @Override
@@ -27,32 +37,45 @@ public class ShootTurret extends Command {
     }
 
     @Override
-    public void execute() { 
+    public void execute() {
 
-        double currentRPM = turret.flywheelSpark1.getEncoder().getVelocity();
+        double currentRPS = turret.flywheelSpark1.getEncoder().getVelocity();
 
-        SmartDashboard.putNumber("Flywheel RPS", currentRPM);
-        SmartDashboard.putNumber("Target RPS", TARGETRPM);
+        SmartDashboard.putNumber("Flywheel RPS", currentRPS);
+        SmartDashboard.putNumber("Target RPS", TARGET_RPS);
 
-        double output = pid.calculate(currentRPM, TARGETRPM);
+        // PID correction (volts)
+        double pidOutput = pid.calculate(currentRPS, TARGET_RPS);
 
-        output = Math.max(-1.0, Math.min(1.0, output));
+        // Feedforward prediction (volts)
+        double ffOutput = ff.calculate(TARGET_RPS);
 
-        SmartDashboard.putNumber("output", output);
+        // Combine PID + FF
+        double totalVoltage = pidOutput + ffOutput;
 
-        turret.setFlywheelVoltage(output);
+        // Clamp to real voltage range
+        totalVoltage = Math.max(-12.0, Math.min(12.0, totalVoltage));
 
-        if (Math.abs(currentRPM - TARGETRPM) < 3.0) {
-            turret.spinFeed(0.5);
-        } else {
-            turret.spinFeed(0.0);
-        }
+        SmartDashboard.putNumber("PID Volts", pidOutput);
+        SmartDashboard.putNumber("FF Volts", ffOutput);
+        SmartDashboard.putNumber("Total Voltage", totalVoltage);
+
+        turret.setFlywheelVoltage(totalVoltage);
+
+        turret.spinFeed(0.7);
+
+        // Only feed when at speed
+        // if (pid.atSetpoint()) {
+        //     turret.spinFeed(-0.7);
+        // } else {
+        //     turret.spinFeed(0.0);
+        // }
     }
 
     @Override
     public void end(boolean interrupted) {
-        turret.setFlywheelVoltage(0);
-        turret.spinFeed(0);
+        turret.setFlywheelVoltage(0.0);
+        turret.spinFeed(0.0);
     }
 
     @Override

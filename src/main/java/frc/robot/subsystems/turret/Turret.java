@@ -25,7 +25,7 @@ public class Turret extends SubsystemBase {
 
     private final RelativeEncoder flywheelEncoder;
     private final AbsoluteEncoder hoodEncoder;
-    private final AbsoluteEncoder turretEncoder;
+    public final AbsoluteEncoder turretEncoder;
     private final RelativeEncoder feedEncoder;
 
     private final double maxTurretAngle = 40;
@@ -78,7 +78,7 @@ public class Turret extends SubsystemBase {
         turretConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(30);
 
         turretConfig.absoluteEncoder
-            .positionConversionFactor(360.0 / 100.0)
+            .positionConversionFactor(360.0)
             .velocityConversionFactor((360.0 / 100.0) / 60.0)
             .inverted(false);
 
@@ -131,6 +131,14 @@ public class Turret extends SubsystemBase {
     }
 
     public double getTurretAngle() {
-        return turretEncoder.getPosition();
+        double angle = turretEncoder.getPosition(); // 0–360
+
+        angle %= 360;
+
+        if (angle > 180) {
+            angle -= 360;
+        }
+
+        return angle; // now -180 to 180
     }
 }

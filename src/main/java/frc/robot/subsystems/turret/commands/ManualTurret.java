@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.turret.commands;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.turret.Turret;
 
@@ -14,20 +15,32 @@ public class ManualTurret extends Command {
   Turret turret;
   double input;
 
-  public ManualTurret(Turret turret, double input /*Negative value to change direction*/) {
-    // Use addRequirements() here to declare subsystem dependencies.
-    turret = turret;
-    input = input;
+  public ManualTurret(Turret turret, double input) {
+      this.turret = turret;
+      this.input = input;
+      addRequirements(turret);
   }
 
   // Called when the command is initially scheduled.
   @Override
-  public void initialize() {}
+  public void initialize() {
+  }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    turret.manualTurret(input);
+  
+  double angle = turret.turretEncoder.getPosition();
+
+  SmartDashboard.putNumber("Turret", angle);
+
+  
+    if (angle > 120 && angle < 245) {
+        turret.manualTurret(0);
+    } else {
+        turret.manualTurret(input);
+    }
+
   }
 
   // Called once the command ends or is interrupted.
