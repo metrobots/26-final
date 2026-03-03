@@ -143,11 +143,11 @@ public class Drivetrain extends SubsystemBase {
 
     LimelightLib.setCameraPose_RobotSpace( //all of these are meters
       LIMELIGHT_NAME, 
-      0, //forward offset
-      0, //left offset
-      0, //height from floor
+      0.0810, //forward offset
+      -0.0613, //left offset (negative to right)
+      0.5279, //height from floor
       0, //roll
-      0, //pitch
+      -30.5964, //pitch
       m_turret.getTurretAngle()); //yaw (turret angle)
 
     // Update the odometry with wheel encoders and gyro
