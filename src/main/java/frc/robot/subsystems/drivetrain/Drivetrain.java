@@ -24,8 +24,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.AutoConstants;
 import frc.robot.utils.Constants.DriveConstants;
+import frc.robot.utils.LimelightLib;
+import frc.robot.utils.LimelightLib.PoseEstimate;
 
 public class Drivetrain extends SubsystemBase {
+
+  // ----- Limelight name — change to match your camera's hostname -----
+  private static final String LIMELIGHT_NAME = "limelight";
+
   // Create the modules
   // Front Left
   private final Module m_frontLeft = new Module(
@@ -141,6 +147,36 @@ public class Drivetrain extends SubsystemBase {
             m_rearLeft.getPosition(),
             m_rearRight.getPosition()
         });
+
+    // --- MegaTag2: tell the Limelight which way the robot is facing before asking for a pose ---
+    LimelightLib.SetRobotOrientation(
+        LIMELIGHT_NAME,
+        getHeading(),   // yaw (degrees, CCW-positive, field-relative)
+        getTurnRate(),  // yaw rate (degrees/sec)
+        0, 0, 0, 0      // pitch / roll — not needed for 2D
+    );
+
+    // Fetch the MegaTag2 vision estimate (most accurate single-tag + multi-tag method)
+    PoseEstimate visionEstimate = LimelightLib.getBotPoseEstimate_wpiBlue_MegaTag2(LIMELIGHT_NAME);
+
+    // Only fuse the vision measurement when it looks trustworthy:
+    //   • at least one tag was seen
+    //   • robot isn't spinning fast (MegaTag2 is unreliable when rotating quickly)
+    if (LimelightLib.validPoseEstimate(visionEstimate)
+        && Math.abs(getTurnRate()) < 720) {
+
+      m_poseEstimator.addVisionMeasurement(
+          visionEstimate.pose,
+          visionEstimate.timestampSeconds
+      );
+
+      // Show the raw Limelight vision pose as a separate "robot" on the field widget
+      field.getObject("Limelight Vision").setPose(visionEstimate.pose);
+
+      // Publish some useful debug values to SmartDashboard
+      SmartDashboard.putNumber("LL Tag Count",    visionEstimate.tagCount);
+      SmartDashboard.putNumber("LL Avg Tag Dist", visionEstimate.avgTagDist);
+    }
 
     // Update the pose estimator with wheel encoders and gyro
     m_poseEstimator.update(
