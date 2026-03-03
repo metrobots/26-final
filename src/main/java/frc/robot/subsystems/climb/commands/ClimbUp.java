@@ -5,34 +5,29 @@ import frc.robot.subsystems.climb.Climb;
 
 public class ClimbUp extends Command {
     private final Climb climb;
-    private final double speed;
 
     /** 
      * Move the climb up at a given speed while the command is active. 
      * @param climbSubsystem the climb subsystem
      * @param speed positive value (0-1) for upward movement
      */
-    public ClimbUp(Climb climbSubsystem, double speed) {
+    public ClimbUp(Climb climbSubsystem) {
         this.climb = climbSubsystem;
-        this.speed = speed;
         addRequirements(climbSubsystem);
     }
 
     @Override
-    public void execute() {
-        
-        climb.positionalMove(climb.getMaxExtension(), speed);
-
+    public void initialize() {
+        climb.setDesiredExtension(Climb.maxExtensionInInches);
     }
 
     @Override
     public void end(boolean interrupted) {
-        climb.positionalMove(climb.getMinHeight(), speed);
         climb.stop();
     }
 
     @Override
     public boolean isFinished() {
-        return false; // Runs until the button is released
+        return climb.getExtension() >= Climb.maxExtensionInInches;
     }
 }
