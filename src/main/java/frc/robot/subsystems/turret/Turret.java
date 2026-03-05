@@ -50,7 +50,7 @@ public class Turret extends SubsystemBase {
 
         masterConfig
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(40);
+            .smartCurrentLimit(70);
 
         // Velocity in RPS
         masterConfig.encoder

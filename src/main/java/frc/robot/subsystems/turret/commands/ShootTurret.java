@@ -11,21 +11,19 @@ public class ShootTurret extends Command {
 
     private final Turret turret;
 
-    // Target speed in RPS
-    private static final double TARGET_RPS = -30.0;
+    // Target speed in RPS (negative is forward)
+    private static final double TARGET_RPS = -85.0; // ~5100 RPM for 5 lb flywheel
 
-    // PID constants (small because FF does most work)
-    private final PIDController pid = new PIDController(0.7, 0.0, 0.0);
+    // PID constants for velocity loop
+    private final PIDController pid = new PIDController(0.05, 0.0, 0.0);
 
-    // Feedforward constants (TUNE THESE)
-    private static final double kS = 0.4;    // volts to overcome friction
-    private static final double kV = 0.2;    // volts per RPS (starting guess)
+    // Feedforward constants (tuned for NEO Vortex + 5lb flywheel)
+    private static final double kS = 0.2;    // volts to overcome friction
+    private static final double kV = 0.3;    // volts per RPS
+    private static final double kA = 0.0;    // optional acceleration term
 
     private final SimpleMotorFeedforward ff =
-        new SimpleMotorFeedforward(kS, kV);
-
-    // Track if flywheel has reached speed once
-    private boolean hasReachedSpeed = false;
+        new SimpleMotorFeedforward(kS, kV, kA);
 
     public ShootTurret(Turret turret) {
         this.turret = turret;
@@ -37,55 +35,40 @@ public class ShootTurret extends Command {
     @Override
     public void initialize() {
         pid.reset();
-        hasReachedSpeed = false;
     }
 
     @Override
     public void execute() {
 
-        double currentRPS = turret.flywheelSpark1.getEncoder().getVelocity();
-        double feedRPS = turret.feedSpark.getEncoder().getVelocity();
+        double currentRPS = turret.getFlywheelVelocity();
 
-        SmartDashboard.putNumber("Flywheel RPS", currentRPS);
-        SmartDashboard.putNumber("Target RPS", TARGET_RPS);
-
-        // Check if we've reached target speed at least once
-        if (!hasReachedSpeed && Math.abs(currentRPS - TARGET_RPS) <= 1.0) {
-            hasReachedSpeed = true;
-        }
-
-        // PID correction (volts)
-        double pidOutput = pid.calculate(currentRPS, TARGET_RPS);
-
-        // Feedforward prediction (volts)
+        // Feedforward voltage
         double ffOutput = ff.calculate(TARGET_RPS);
+
+        // PID correction
+        double pidOutput = pid.calculate(currentRPS, TARGET_RPS);
 
         // Combine PID + FF
         double totalVoltage = pidOutput + ffOutput;
 
-        // ------------------------------
-        // RECOVERY MODE (only after reaching speed, only when below target)
-        // ------------------------------
-        boolean recoveryMode = hasReachedSpeed && currentRPS > (TARGET_RPS + 1.0);
-
-        if (recoveryMode) {
-            totalVoltage = -12.0;    // full send recovery
-        }
-
-        turret.spinFeed(1);    // normal feed
-
-        SmartDashboard.putBoolean("Recovery Mode", recoveryMode);
-        SmartDashboard.putBoolean("Has Reached Speed", hasReachedSpeed);
-
-        // Clamp voltage
+        // Clamp voltage to motor limits
         totalVoltage = Math.max(-12.0, Math.min(12.0, totalVoltage));
 
+        turret.setFlywheelVoltage(totalVoltage);
+
+        // Feed only if flywheel is within 2 RPS of target
+        if (Math.abs(currentRPS - TARGET_RPS) <= 2.0) {
+            turret.spinFeed(1.0);
+        } else {
+            turret.spinFeed(0.0);
+        }
+
+        // SmartDashboard telemetry
+        SmartDashboard.putNumber("Flywheel RPS", currentRPS);
+        SmartDashboard.putNumber("Target RPS", TARGET_RPS);
         SmartDashboard.putNumber("PID Volts", pidOutput);
         SmartDashboard.putNumber("FF Volts", ffOutput);
         SmartDashboard.putNumber("Total Voltage", totalVoltage);
-        SmartDashboard.putNumber("Feed Velocity", feedRPS);
-
-        turret.setFlywheelVoltage(totalVoltage);
     }
 
     @Override
