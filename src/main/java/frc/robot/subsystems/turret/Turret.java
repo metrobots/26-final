@@ -1,6 +1,7 @@
 package frc.robot.subsystems.turret;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
@@ -70,7 +71,10 @@ public class Turret extends SubsystemBase {
 
         // ---------------- FEED CONFIG ----------------
         SparkMaxConfig feedConfig = new SparkMaxConfig();
-        feedConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(40);
+        feedConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(60);
+        feedConfig.encoder
+            .positionConversionFactor(1.0)
+            .velocityConversionFactor(1.0 / 60.0);
         feedSpark.configure(feedConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         // ---------------- TURRET CONFIG ----------------
@@ -91,13 +95,18 @@ public class Turret extends SubsystemBase {
         feedEncoder = feedSpark.getEncoder();
     }
 
+    @Override
+    public void periodic() {
+        // ---------------- TELEMETRY ----------------
+        SmartDashboard.putNumber("Turret Angle (deg)", getTurretAngle());
+    }
+
     // =========================
     // ===== FLYWHEEL ==========
     // =========================
 
     public void setFlywheelVoltage(double volts) {
-        lastFlywheelVoltage = volts;
-        flywheelSpark1.set(volts);
+        flywheelSpark1.setVoltage(volts);
     }
 
     // Returns RPS

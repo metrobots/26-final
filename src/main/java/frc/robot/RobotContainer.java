@@ -90,7 +90,7 @@ public class RobotContainer {
 
     // intake command
     primary.leftTrigger().whileTrue(
-      new IntakeIn(m_intake, -1)
+      new IntakeIn(m_intake, -0.7)
     );
 
     // outtake command
