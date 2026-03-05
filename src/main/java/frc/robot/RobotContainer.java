@@ -107,33 +107,33 @@ public class RobotContainer {
     );
 
     // // turret commands
-    // m_turret.setDefaultCommand(
-    //     m_turret.run(() -> {
-    //         // ===== Turret rotation =====
+    m_turret.setDefaultCommand(
+        m_turret.run(() -> {
+            // ===== Turret rotation =====
 
-    //         if (primary.povLeft().getAsBoolean()) {
-    //             m_turret.manualTurret(0.1);
-    //         } 
-    //         else if (primary.povRight().getAsBoolean()) {
-    //             m_turret.manualTurret(-0.1);
-    //         } 
-    //         else {
-    //             m_turret.manualTurret(0);
-    //         }
+            if (primary.povLeft().getAsBoolean()) {
+                m_turret.manualTurret(0.1);
+            } 
+            else if (primary.povRight().getAsBoolean()) {
+                m_turret.manualTurret(-0.1);
+            } 
+            else {
+                m_turret.manualTurret(0);
+            }
 
-    //         // // ===== Hood control =====
-    //         // if (primary.povUp().getAsBoolean()) {
-    //         //     m_turret.manualHood(-0.06);
-    //         // } 
-    //         // else if (primary.povDown().getAsBoolean()) {
-    //         //     m_turret.manualHood(0.06);
-    //         // } 
-    //         // else {
-    //         //     m_turret.manualHood(0);
-    //         // }
+            // ===== Hood control =====
+            if (primary.povUp().getAsBoolean()) {
+                m_turret.manualHood(-0.06);
+            } 
+            else if (primary.povDown().getAsBoolean()) {
+                m_turret.manualHood(0.06);
+            } 
+            else {
+                m_turret.manualHood(0);
+            }
 
-    //     })
-    // );
+        })
+    );
 
     primary.rightTrigger().whileTrue(
       new ShootTurret(m_turret)
