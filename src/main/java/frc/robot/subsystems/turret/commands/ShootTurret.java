@@ -12,7 +12,7 @@ public class ShootTurret extends Command {
     private final Turret turret;
 
     // Target speed in RPS (negative is forward)
-    private static final double TARGET_RPS = -85.0; // ~5100 RPM for 5 lb flywheel
+    private static final double TARGET_RPS = -27.0; // ~5100 RPM for 5 lb flywheel
 
     // PID constants for velocity loop
     private final PIDController pid = new PIDController(0.05, 0.0, 0.0);
@@ -20,7 +20,7 @@ public class ShootTurret extends Command {
     // Feedforward constants (tuned for NEO Vortex + 5lb flywheel)
     private static final double kS = 0.2;    // volts to overcome friction
     private static final double kV = 0.3;    // volts per RPS
-    private static final double kA = 0.0;    // optional acceleration term
+    private static final double kA = 1.20;    // optional acceleration term
 
     private final SimpleMotorFeedforward ff =
         new SimpleMotorFeedforward(kS, kV, kA);
