@@ -22,7 +22,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.subsystems.turret.Turret;
-import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.AutoConstants;
 import frc.robot.utils.Constants.DriveConstants;
 import frc.robot.utils.LimelightLib;
@@ -33,10 +32,27 @@ public class Drivetrain extends SubsystemBase {
     private final Turret m_turret;
     private static final String LIMELIGHT_NAME = "limelight-front";
 
-    // Odometry pose for driving
+    /* ================= FIELD CONSTANTS ================= */
+
+    private static final double FIELD_LENGTH = 16.54;
+    private static final double FIELD_WIDTH = 8.21;
+
+    private static final double LEFT_THIRD_ENDPOINT = FIELD_LENGTH / 3.0;
+
+    private static final Translation2d FIELD_CENTER =
+            new Translation2d(FIELD_LENGTH / 2.0, FIELD_WIDTH / 2.0);
+
+    /* ================= FIELD DISPLAY ================= */
+
+    private final Field2d field = new Field2d();
+    private final FieldObject2d centerVector;
+
+    /* ================= STATE ================= */
+
     private Pose2d currentPose = new Pose2d();
 
     /* ================= MODULES ================= */
+
     private final Module m_frontLeft = new Module(
             DriveConstants.kFrontLeftDrivingCanId,
             DriveConstants.kFrontLeftTurningCanId,
@@ -67,14 +83,15 @@ public class Drivetrain extends SubsystemBase {
 
     private final SlewRateLimiter xLimiter =
             new SlewRateLimiter(AutoConstants.kMaxAccelerationMetersPerSecondSquared);
+
     private final SlewRateLimiter yLimiter =
             new SlewRateLimiter(AutoConstants.kMaxAccelerationMetersPerSecondSquared);
+
     private final SlewRateLimiter rotLimiter =
             new SlewRateLimiter(AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared);
 
-    private final Field2d field = new Field2d();
-
     /* ================= POSE ESTIMATORS ================= */
+
     private final SwerveDrivePoseEstimator m_odometryEstimator =
             new SwerveDrivePoseEstimator(
                     DriveConstants.kDriveKinematics,
@@ -91,23 +108,21 @@ public class Drivetrain extends SubsystemBase {
                     new Pose2d()
             );
 
-    /* ================= ZONE ================= */
-    private final Translation2d zoneBottomLeft = new Translation2d(2.0, 2.0);
-    private final double zoneWidth = 3.0;
-    private final double zoneHeight = 2.0;
-    private final Translation2d zoneCenter = zoneBottomLeft.plus(new Translation2d(zoneWidth/2, zoneHeight/2));
-    private final FieldObject2d zoneMarker;
+    /* ================= CONSTRUCTOR ================= */
 
     public Drivetrain(Turret turret) {
+
         this.m_turret = turret;
 
         SmartDashboard.putData("Field", field);
 
-        // Create zone marker at the center of rectangle
-        zoneMarker = field.getObject("ZoneMarker");
-        zoneMarker.setPose(new Pose2d(zoneCenter, new Rotation2d()));
+        centerVector = field.getObject("RobotToCenter");
+
+        field.getObject("FieldCenter")
+                .setPose(new Pose2d(FIELD_CENTER, new Rotation2d()));
 
         try {
+
             RobotConfig config = RobotConfig.fromGUISettings();
 
             AutoBuilder.configure(
@@ -117,32 +132,39 @@ public class Drivetrain extends SubsystemBase {
                     this::driveRobotRelative,
                     new PPHolonomicDriveController(
                             new PIDConstants(5, 0, 0),
-                            new PIDConstants(5, 0, 0)),
+                            new PIDConstants(5, 0, 0)
+                    ),
                     config,
                     () -> DriverStation.getAlliance().isPresent()
                             && DriverStation.getAlliance().get() == DriverStation.Alliance.Red,
-                    this);
+                    this
+            );
 
         } catch (Exception e) {
+
             DriverStation.reportError(
-                    "Failed to configure AutoBuilder", e.getStackTrace());
+                    "Failed to configure AutoBuilder",
+                    e.getStackTrace()
+            );
+
         }
     }
 
+    /* ================= PERIODIC ================= */
+
     @Override
     public void periodic() {
-        // Update odometry-only estimator
+
         m_odometryEstimator.update(getGyroRotation(), getModulePositions());
 
-        // Update vision-fused estimator
         m_visionEstimator.update(getGyroRotation(), getModulePositions());
 
-        // Vision fusion
         LimelightLib.SetRobotOrientation(
                 LIMELIGHT_NAME,
                 MathUtil.inputModulus(getHeading(), 0, 360),
                 getTurnRate(),
-                0, 0, 0, 0);
+                0, 0, 0, 0
+        );
 
         PoseEstimate visionEstimate =
                 LimelightLib.getBotPoseEstimate_wpiBlue_MegaTag2(LIMELIGHT_NAME);
@@ -158,72 +180,140 @@ public class Drivetrain extends SubsystemBase {
             field.getObject("Vision Raw").setPose(visionEstimate.pose);
         }
 
-        // Update current odometry pose
         Pose2d odomPose = m_odometryEstimator.getEstimatedPosition();
         Pose2d visionPose = m_visionEstimator.getEstimatedPosition();
-        currentPose = new Pose2d(odomPose.getX(), odomPose.getY(), getGyroRotation());
 
-        // Update Field2d robot pose (vision-fused)
+        currentPose = new Pose2d(
+                odomPose.getX(),
+                odomPose.getY(),
+                getGyroRotation()
+        );
+
         field.setRobotPose(visionPose);
 
-        // Check if robot is inside rectangle zone
-        boolean insideZone =
-                visionPose.getX() >= zoneBottomLeft.getX() &&
-                        visionPose.getX() <= zoneBottomLeft.getX() + zoneWidth &&
-                        visionPose.getY() >= zoneBottomLeft.getY() &&
-                        visionPose.getY() <= zoneBottomLeft.getY() + zoneHeight;
+        /* ===== LEFT THIRD CHECK ===== */
 
-        // Publish boolean to dashboard (you can color this green/red in Shuffleboard)
-        SmartDashboard.putBoolean("RobotInZone", insideZone);
+        boolean inLeftThird =
+                visionPose.getX() >= 0 &&
+                visionPose.getX() <= LEFT_THIRD_ENDPOINT;
 
-        // Debug
-        SmartDashboard.putNumber("Gyro Heading", getGyroRotation().getDegrees());
+        SmartDashboard.putBoolean("RobotInLeftThird", inLeftThird);
+
+        /* ===== VECTOR TO CENTER ===== */
+
+        Pose2d centerPose = new Pose2d(FIELD_CENTER, new Rotation2d());
+
+        centerVector.setPoses(
+                visionPose,
+                centerPose
+        );
+
+        SmartDashboard.putNumber(
+                "Gyro Heading",
+                getGyroRotation().getDegrees()
+        );
     }
 
     /* ================= POSE METHODS ================= */
+
     public Pose2d getPose() {
+
         Pose2d pose = m_odometryEstimator.getEstimatedPosition();
-        return new Pose2d(-pose.getX(), -pose.getY(), pose.getRotation());
+
+        return new Pose2d(
+                -pose.getX(),
+                -pose.getY(),
+                pose.getRotation()
+        );
     }
 
     public void resetOdometry(Pose2d pose) {
-        Pose2d invertedPose = new Pose2d(-pose.getX(), -pose.getY(), pose.getRotation());
-        m_odometryEstimator.resetPosition(getGyroRotation(), getModulePositions(), invertedPose);
-        m_visionEstimator.resetPosition(getGyroRotation(), getModulePositions(), invertedPose);
+
+        Pose2d invertedPose =
+                new Pose2d(-pose.getX(), -pose.getY(), pose.getRotation());
+
+        m_odometryEstimator.resetPosition(
+                getGyroRotation(),
+                getModulePositions(),
+                invertedPose
+        );
+
+        m_visionEstimator.resetPosition(
+                getGyroRotation(),
+                getModulePositions(),
+                invertedPose
+        );
     }
 
     /* ================= DRIVE ================= */
-    public void drive(double xSpeed, double ySpeed,
-                      double rot, boolean fieldRelative) {
 
-        double x = xLimiter.calculate(xSpeed) * DriveConstants.kMaxSpeedMetersPerSecond;
-        double y = yLimiter.calculate(ySpeed) * DriveConstants.kMaxSpeedMetersPerSecond;
-        double r = rotLimiter.calculate(rot) * DriveConstants.kMaxAngularSpeed;
+    public void drive(
+            double xSpeed,
+            double ySpeed,
+            double rot,
+            boolean fieldRelative
+    ) {
 
-        ChassisSpeeds speeds = fieldRelative
-                ? ChassisSpeeds.fromFieldRelativeSpeeds(x, y, r, getGyroRotation())
-                : new ChassisSpeeds(x, y, r);
+        double x =
+                xLimiter.calculate(xSpeed)
+                        * DriveConstants.kMaxSpeedMetersPerSecond;
 
-        setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds));
+        double y =
+                yLimiter.calculate(ySpeed)
+                        * DriveConstants.kMaxSpeedMetersPerSecond;
+
+        double r =
+                rotLimiter.calculate(rot)
+                        * DriveConstants.kMaxAngularSpeed;
+
+        ChassisSpeeds speeds =
+                fieldRelative
+                        ? ChassisSpeeds.fromFieldRelativeSpeeds(
+                                x, y, r, getGyroRotation())
+                        : new ChassisSpeeds(x, y, r);
+
+        setModuleStates(
+                DriveConstants.kDriveKinematics
+                        .toSwerveModuleStates(speeds)
+        );
     }
 
     public void driveRobotRelative(ChassisSpeeds speeds) {
+
         ChassisSpeeds inverted = new ChassisSpeeds(
                 -speeds.vxMetersPerSecond,
                 -speeds.vyMetersPerSecond,
                 speeds.omegaRadiansPerSecond
         );
-        setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(inverted));
+
+        setModuleStates(
+                DriveConstants.kDriveKinematics
+                        .toSwerveModuleStates(inverted)
+        );
     }
 
-    public void driveLocked(double xSpeed, double ySpeed,
-                            double targetHeading, boolean fieldRelative) {
-        double correction = headingCorrector.calculate(getHeading(), targetHeading);
+    public void driveLocked(
+            double xSpeed,
+            double ySpeed,
+            double targetHeading,
+            boolean fieldRelative
+    ) {
+
+        double correction =
+                headingCorrector.calculate(getHeading(), targetHeading);
+
         drive(xSpeed, ySpeed, correction, fieldRelative);
     }
 
+    /* ================= MODULE CONTROL ================= */
+
     public void setModuleStates(SwerveModuleState[] states) {
-        SwerveDriveKinematics.desaturateWheelSpeeds(states, DriveConstants.kMaxSpeedMetersPerSecond);
+
+        SwerveDriveKinematics.desaturateWheelSpeeds(
+                states,
+                DriveConstants.kMaxSpeedMetersPerSecond
+        );
+
         m_frontLeft.setDesiredState(states[0]);
         m_frontRight.setDesiredState(states[1]);
         m_rearLeft.setDesiredState(states[2]);
@@ -231,6 +321,7 @@ public class Drivetrain extends SubsystemBase {
     }
 
     public ChassisSpeeds getRobotRelativeSpeeds() {
+
         return DriveConstants.kDriveKinematics.toChassisSpeeds(
                 m_frontLeft.getState(),
                 m_frontRight.getState(),
@@ -240,6 +331,7 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* ================= GYRO ================= */
+
     public void zeroHeading() {
         m_gyro.reset();
     }
@@ -257,7 +349,9 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* ================= UTIL ================= */
+
     public SwerveModulePosition[] getModulePositions() {
+
         return new SwerveModulePosition[]{
                 m_frontLeft.getPosition(),
                 m_frontRight.getPosition(),
@@ -267,6 +361,7 @@ public class Drivetrain extends SubsystemBase {
     }
 
     public void resetEncoders() {
+
         m_frontLeft.resetEncoders();
         m_frontRight.resetEncoders();
         m_rearLeft.resetEncoders();
