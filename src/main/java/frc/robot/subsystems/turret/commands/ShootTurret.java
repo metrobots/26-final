@@ -19,7 +19,7 @@ public class ShootTurret extends Command {
 
     // Feedforward constants (tuned for NEO Vortex + 5lb flywheel)
     private static final double kS = 0.2;    // volts to overcome friction
-    private static final double kV = 0.3;    // volts per RPS
+    private static final double kV = 0.13;    // volts per RPS
     private static final double kA = 1.20;    // optional acceleration term
 
     private final SimpleMotorFeedforward ff =
