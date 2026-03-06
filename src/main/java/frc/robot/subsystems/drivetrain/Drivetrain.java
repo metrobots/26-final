@@ -40,7 +40,7 @@ public class Drivetrain extends SubsystemBase {
     private static final double LEFT_THIRD_ENDPOINT = FIELD_LENGTH / 3.0;
 
     private static final Translation2d FIELD_CENTER =
-            new Translation2d(FIELD_LENGTH / 2.0, FIELD_WIDTH / 2.0);
+            new Translation2d(LEFT_THIRD_ENDPOINT - 1, FIELD_WIDTH / 2.0);
 
     /* ================= FIELD DISPLAY ================= */
 

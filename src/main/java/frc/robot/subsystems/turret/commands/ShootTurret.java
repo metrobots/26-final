@@ -13,17 +13,25 @@ public class ShootTurret extends Command {
 
     // Target speed in RPS (negative is forward)
     private static final double TARGET_RPS = -27.0; // ~5100 RPM for 5 lb flywheel
+    private static final double TARGET_FEED_RPS = 100.0; // feed speed when flywheel is up to speed
 
     // PID constants for velocity loop
-    private final PIDController pid = new PIDController(0.05, 0.0, 0.0);
+    private final PIDController pid = new PIDController(0.35, 0.0, 0.0);
+    private final PIDController feedPID = new PIDController(0.12, 0.0, 0.0);
 
     // Feedforward constants (tuned for NEO Vortex + 5lb flywheel)
     private static final double kS = 0.2;    // volts to overcome friction
     private static final double kV = 0.13;    // volts per RPS
-    private static final double kA = 1.20;    // optional acceleration term
+    private static final double kA = 1.2;    // optional acceleration term
+
+    private static final double feedkS = 0.15;
+    private static final double feedkV = 0.12;
+    private static final double feedkA = 1.2;
 
     private final SimpleMotorFeedforward ff =
         new SimpleMotorFeedforward(kS, kV, kA);
+    private final SimpleMotorFeedforward feedFF =
+        new SimpleMotorFeedforward(feedkS, feedkV, feedkA);
 
     public ShootTurret(Turret turret) {
         this.turret = turret;
@@ -56,9 +64,22 @@ public class ShootTurret extends Command {
 
         turret.setFlywheelVoltage(totalVoltage);
 
-        // Feed only if flywheel is within 2 RPS of target
-        if (Math.abs(currentRPS - TARGET_RPS) <= 2.0) {
-            turret.spinFeed(1.0);
+        // Feed only if flywheel is within 5 RPS of target
+        double feedVelocity = turret.getFeedVelocity();
+
+        if (Math.abs(currentRPS - TARGET_RPS) <= 5.0) {
+
+            double feedFFVolts = feedFF.calculate(TARGET_FEED_RPS);
+            double feedPIDVolts = feedPID.calculate(feedVelocity, TARGET_FEED_RPS);
+
+            double feedVoltage = feedFFVolts + feedPIDVolts;
+
+            feedVoltage = Math.max(-12.0, Math.min(12.0, feedVoltage));
+
+            turret.spinFeed(feedVoltage);
+
+            SmartDashboard.putNumber("Feed Voltage", feedVoltage);
+
         } else {
             turret.spinFeed(0.0);
         }
@@ -66,6 +87,7 @@ public class ShootTurret extends Command {
         // SmartDashboard telemetry
         SmartDashboard.putNumber("Flywheel RPS", currentRPS);
         SmartDashboard.putNumber("Target RPS", TARGET_RPS);
+        SmartDashboard.putNumber("feedRPS", turret.getFeedVelocity());
         SmartDashboard.putNumber("PID Volts", pidOutput);
         SmartDashboard.putNumber("FF Volts", ffOutput);
         SmartDashboard.putNumber("Total Voltage", totalVoltage);

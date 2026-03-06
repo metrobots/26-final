@@ -21,7 +21,7 @@ public class IntakeIn extends Command {
   @Override
   public void execute() {
     intake.driveIntake(speed);
-    intake.spinIndexer(-0.06);
+    intake.spinIndexer(-0.06); //0.052
     intake.indexer(true);
   }
 

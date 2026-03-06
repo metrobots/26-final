@@ -50,7 +50,7 @@ public class Turret extends SubsystemBase {
 
         masterConfig
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(70);
+            .smartCurrentLimit(80);
 
         // Velocity in RPS
         masterConfig.encoder
@@ -71,7 +71,7 @@ public class Turret extends SubsystemBase {
 
         // ---------------- FEED CONFIG ----------------
         SparkMaxConfig feedConfig = new SparkMaxConfig();
-        feedConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(60);
+        feedConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(80);
         feedConfig.encoder
             .positionConversionFactor(1.0)
             .velocityConversionFactor(1.0 / 60.0);
@@ -132,7 +132,7 @@ public class Turret extends SubsystemBase {
     }
 
     public void spinFeed(double speed) {
-        feedSpark.set(speed);
+        feedSpark.setVoltage(speed);
     }
 
     public double getFeedVelocity() {
