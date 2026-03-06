@@ -46,10 +46,14 @@ public class Drivetrain extends SubsystemBase {
 
     private final Field2d field = new Field2d();
     private final FieldObject2d centerVector;
+    private final FieldObject2d triangleHorizontal;
+    private final FieldObject2d triangleVertical;
 
     /* ================= STATE ================= */
 
     private Pose2d currentPose = new Pose2d();
+
+    private double angleToCenter = 0.0;
 
     /* ================= MODULES ================= */
 
@@ -117,6 +121,8 @@ public class Drivetrain extends SubsystemBase {
         SmartDashboard.putData("Field", field);
 
         centerVector = field.getObject("RobotToCenter");
+        triangleHorizontal = field.getObject("TriangleHorizontal");
+        triangleVertical = field.getObject("TriangleVertical");
 
         field.getObject("FieldCenter")
                 .setPose(new Pose2d(FIELD_CENTER, new Rotation2d()));
@@ -199,14 +205,49 @@ public class Drivetrain extends SubsystemBase {
 
         SmartDashboard.putBoolean("RobotInLeftThird", inLeftThird);
 
-        /* ===== VECTOR TO CENTER ===== */
+        /* ===== VECTOR + RIGHT TRIANGLE TO CENTER ===== */
 
         Pose2d centerPose = new Pose2d(FIELD_CENTER, new Rotation2d());
 
+        Pose2d projectionPose = new Pose2d(
+                FIELD_CENTER.getX(),
+                visionPose.getY(),
+                new Rotation2d()
+        );
+
+        // Hypotenuse
         centerVector.setPoses(
                 visionPose,
                 centerPose
         );
+
+        // Horizontal leg
+        triangleHorizontal.setPoses(
+                visionPose,
+                projectionPose
+        );
+
+        // Vertical leg
+        triangleVertical.setPoses(
+                projectionPose,
+                centerPose
+        );
+        /* ===== ANGLE FROM ROBOT FRONT TO CENTER ===== */
+
+        double dx = FIELD_CENTER.getX() - visionPose.getX();
+        double dy = FIELD_CENTER.getY() - visionPose.getY();
+
+        double fieldAngleToCenter = Math.toDegrees(Math.atan2(dy, dx));
+
+        double robotHeading = getGyroRotation().getDegrees();
+
+        angleToCenter = MathUtil.inputModulus(
+                fieldAngleToCenter - robotHeading,
+                -180,
+                180
+        );
+
+        SmartDashboard.putNumber("AngleToCenter", angleToCenter);
 
         SmartDashboard.putNumber(
                 "Gyro Heading",
@@ -215,6 +256,10 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* ================= POSE METHODS ================= */
+
+    public double getAngleToCenter() {
+      return angleToCenter;
+    }
 
     public Pose2d getPose() {
 

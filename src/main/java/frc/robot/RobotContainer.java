@@ -99,7 +99,7 @@ public class RobotContainer {
     );
 
     primary.a().toggleOnTrue(
-      new RotateTurret(m_turret)
+      new RotateTurret(m_turret, m_drivetrain)
     );
 
     primary.x().whileTrue(
@@ -112,10 +112,10 @@ public class RobotContainer {
             // ===== Turret rotation =====
 
             if (primary.povLeft().getAsBoolean()) {
-                m_turret.manualTurret(0.1);
+                m_turret.manualTurret(-0.15);
             } 
             else if (primary.povRight().getAsBoolean()) {
-                m_turret.manualTurret(-0.1);
+                m_turret.manualTurret(0.15);
             } 
             else {
                 m_turret.manualTurret(0);
