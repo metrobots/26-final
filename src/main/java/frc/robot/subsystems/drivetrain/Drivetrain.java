@@ -234,6 +234,11 @@ public class Drivetrain extends SubsystemBase {
         );
         /* ===== ANGLE FROM ROBOT FRONT TO CENTER ===== */
 
+        public double getDistanceToCenter() {
+                Translation2d robotPos = currentPose.getTranslation();
+                return robotPos.getDistance(FIELD_CENTER);
+        }
+
         double dx = FIELD_CENTER.getX() - visionPose.getX();
         double dy = FIELD_CENTER.getY() - visionPose.getY();
 

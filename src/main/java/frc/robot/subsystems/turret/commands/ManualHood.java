@@ -14,10 +14,10 @@ public class ManualHood extends Command {
   Turret turret;
   double input;
 
-  public ManualHood(Turret turret, double input /*Negative value to change direction*/) {
-    // Use addRequirements() here to declare subsystem dependencies.
-    turret = turret;
-    input = input;
+  public ManualHood(Turret turret, double input) {
+    this.turret = turret;
+    this.input = input;
+    addRequirements(turret);
   }
 
   // Called when the command is initially scheduled.

@@ -6,23 +6,24 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.TurretHoodTable;
+import frc.robot.subsystems.drivetrain.Drivetrain;
 
 public class ShootTurret extends Command {
 
     private final Turret turret;
+    private final Drivetrain drivetrain;
 
-    // Target speed in RPS (negative is forward)
-    private static final double TARGET_RPS = -27.0; // ~5100 RPM for 5 lb flywheel
-    private static final double TARGET_FEED_RPS = 100.0; // feed speed when flywheel is up to speed
+    private final TurretHoodTable table = new TurretHoodTable();
 
-    // PID constants for velocity loop
+    private static final double TARGET_FEED_RPS = 100.0;
+
     private final PIDController pid = new PIDController(0.35, 0.0, 0.0);
     private final PIDController feedPID = new PIDController(0.12, 0.0, 0.0);
 
-    // Feedforward constants (tuned for NEO Vortex + 5lb flywheel)
-    private static final double kS = 0.2;    // volts to overcome friction
-    private static final double kV = 0.13;    // volts per RPS
-    private static final double kA = 1.2;    // optional acceleration term
+    private static final double kS = 0.2;
+    private static final double kV = 0.13;
+    private static final double kA = 1.2;
 
     private static final double feedkS = 0.15;
     private static final double feedkV = 0.12;
@@ -30,14 +31,18 @@ public class ShootTurret extends Command {
 
     private final SimpleMotorFeedforward ff =
         new SimpleMotorFeedforward(kS, kV, kA);
+
     private final SimpleMotorFeedforward feedFF =
         new SimpleMotorFeedforward(feedkS, feedkV, feedkA);
 
-    public ShootTurret(Turret turret) {
+    public ShootTurret(Turret turret, Drivetrain drivetrain) {
+
         this.turret = turret;
+        this.drivetrain = drivetrain;
+
         addRequirements(turret);
 
-        pid.setTolerance(1.0); // ±1 RPS tolerance
+        pid.setTolerance(1.0);
     }
 
     @Override
@@ -48,32 +53,37 @@ public class ShootTurret extends Command {
     @Override
     public void execute() {
 
+        // Get distance from drivetrain pose estimator
+        double distance = drivetrain.getDistanceToCenter();
+
+        // Lookup hood + shooter speed
+        TurretHoodTable.HoodData data = table.get(distance);
+
+        double targetRPS = -data.speed;
+        double hoodAngle = data.angle;
+
+        // Move hood automatically
+        turret.setHoodAngle(hoodAngle);
+
         double currentRPS = turret.getFlywheelVelocity();
 
-        // Feedforward voltage
-        double ffOutput = ff.calculate(TARGET_RPS);
+        // Flywheel control
+        double ffOutput = ff.calculate(targetRPS);
+        double pidOutput = pid.calculate(currentRPS, targetRPS);
 
-        // PID correction
-        double pidOutput = pid.calculate(currentRPS, TARGET_RPS);
-
-        // Combine PID + FF
         double totalVoltage = pidOutput + ffOutput;
-
-        // Clamp voltage to motor limits
         totalVoltage = Math.max(-12.0, Math.min(12.0, totalVoltage));
 
         turret.setFlywheelVoltage(totalVoltage);
 
-        // Feed only if flywheel is within 5 RPS of target
         double feedVelocity = turret.getFeedVelocity();
 
-        if (Math.abs(currentRPS - TARGET_RPS) <= 5.0) {
+        if (Math.abs(currentRPS - targetRPS) <= 5.0) {
 
             double feedFFVolts = feedFF.calculate(TARGET_FEED_RPS);
             double feedPIDVolts = feedPID.calculate(feedVelocity, TARGET_FEED_RPS);
 
             double feedVoltage = feedFFVolts + feedPIDVolts;
-
             feedVoltage = Math.max(-12.0, Math.min(12.0, feedVoltage));
 
             turret.spinFeed(feedVoltage);
@@ -84,10 +94,11 @@ public class ShootTurret extends Command {
             turret.spinFeed(0.0);
         }
 
-        // SmartDashboard telemetry
+        // Debug values
+        SmartDashboard.putNumber("DistanceToCenter", distance);
+        SmartDashboard.putNumber("Hood Angle", hoodAngle);
         SmartDashboard.putNumber("Flywheel RPS", currentRPS);
-        SmartDashboard.putNumber("Target RPS", TARGET_RPS);
-        SmartDashboard.putNumber("feedRPS", turret.getFeedVelocity());
+        SmartDashboard.putNumber("Target RPS", targetRPS);
         SmartDashboard.putNumber("PID Volts", pidOutput);
         SmartDashboard.putNumber("FF Volts", ffOutput);
         SmartDashboard.putNumber("Total Voltage", totalVoltage);
