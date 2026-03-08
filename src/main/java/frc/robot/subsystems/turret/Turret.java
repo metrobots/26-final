@@ -24,10 +24,10 @@ public class Turret extends SubsystemBase {
     public final SparkMax feedSpark;
     public final SparkMax turretSpark;
 
-    private final RelativeEncoder flywheelEncoder;
-    private final AbsoluteEncoder hoodEncoder;
+    public final RelativeEncoder flywheelEncoder;
+    public final AbsoluteEncoder hoodEncoder;
     public final AbsoluteEncoder turretEncoder;
-    private final RelativeEncoder feedEncoder;
+    public final RelativeEncoder feedEncoder;
 
     private final double maxTurretAngle = 40;
 

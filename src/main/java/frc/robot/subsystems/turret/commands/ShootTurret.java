@@ -20,6 +20,7 @@ public class ShootTurret extends Command {
 
     private final PIDController pid = new PIDController(0.35, 0.0, 0.0);
     private final PIDController feedPID = new PIDController(0.12, 0.0, 0.0);
+    private final PIDController hoodPID = new PIDController(0, 0, 0);
 
     private static final double kS = 0.2;
     private static final double kV = 0.13;
@@ -62,8 +63,10 @@ public class ShootTurret extends Command {
         double targetRPS = -data.speed;
         double hoodAngle = data.angle;
 
+        double hoodOutput = hoodPID.calculate(turret.hoodEncoder.getPosition(), hoodAngle);
+
         // Move hood automatically
-        turret.setHoodAngle(hoodAngle);
+        turret.manualHood(hoodOutput);
 
         double currentRPS = turret.getFlywheelVelocity();
 

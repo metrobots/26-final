@@ -122,21 +122,21 @@ public class RobotContainer {
             }
 
             // ===== Hood control =====
-            if (primary.povUp().getAsBoolean()) {
-                m_turret.manualHood(-0.06);
-            } 
-            else if (primary.povDown().getAsBoolean()) {
-                m_turret.manualHood(0.06);
-            } 
-            else {
-                m_turret.manualHood(0);
-            }
+            // if (primary.povUp().getAsBoolean()) {
+            //     m_turret.manualHood(-0.06);
+            // } 
+            // else if (primary.povDown().getAsBoolean()) {
+            //     m_turret.manualHood(0.06);
+            // } 
+            // else {
+            //     m_turret.manualHood(0);
+            // }
 
         })
     );
 
     primary.rightTrigger().whileTrue(
-      new ShootTurret(m_turret)
+      new ShootTurret(m_turret, m_drivetrain)
     );
 
   }
