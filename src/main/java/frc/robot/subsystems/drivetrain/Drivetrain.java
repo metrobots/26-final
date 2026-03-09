@@ -165,9 +165,19 @@ public class Drivetrain extends SubsystemBase {
 
         m_visionEstimator.update(getGyroRotation(), getModulePositions());
 
+        // 1️⃣ Convert robot heading from -180→180 to 0→360
+        double robotHeading360 = MathUtil.inputModulus(getHeading(), 0, 360);
+
+        double turretHeading = m_turret.getTurretAngle();
+
+        // 3️⃣ Combine robot + turret to get absolute camera heading
+        double cameraHeading = MathUtil.inputModulus(robotHeading360 - turretHeading, 0, 360);
+
+        SmartDashboard.putNumber("Camera Heading", cameraHeading);
+
         LimelightLib.SetRobotOrientation(
                 LIMELIGHT_NAME,
-                MathUtil.inputModulus(getHeading(), 0, 360),
+                cameraHeading,
                 getTurnRate(),
                 0, 0, 0, 0
         );
@@ -247,7 +257,7 @@ public class Drivetrain extends SubsystemBase {
                 180
         );
 
-        SmartDashboard.putNumber("AngleToCenter", angleToCenter);
+        SmartDashboard.putNumber("AngleToCenter", getAngleToCenter());
 
         SmartDashboard.putNumber(
                 "Gyro Heading",
@@ -257,9 +267,9 @@ public class Drivetrain extends SubsystemBase {
 
     /* ================= POSE METHODS ================= */
 
-    public double getAngleToCenter() {
-      return angleToCenter;
-    }
+        public double getAngleToCenter() {
+            return angleToCenter;
+        }
 
         public double getDistanceToCenter() {
                 Translation2d robotPos = currentPose.getTranslation();

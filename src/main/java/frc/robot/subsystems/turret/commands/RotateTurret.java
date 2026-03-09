@@ -20,7 +20,7 @@ public class RotateTurret extends Command {
   private final Turret turret;
 private final Drivetrain drivetrain;
   private static final String LIMELIGHT_NAME = "limelight-front";
-  private static final PIDController turretPID = new PIDController(0.01  , 0, 0); //est start at 0.02
+  private static final PIDController turretPID = new PIDController(0.2, 0, 0); //est start at 0.02
 
   /** Creates a new TestTurret. */
   public RotateTurret(Turret turret, Drivetrain drivetrain) {

@@ -25,7 +25,7 @@ public class Turret extends SubsystemBase {
     public final SparkMax turretSpark;
 
     public final RelativeEncoder flywheelEncoder;
-    public final AbsoluteEncoder hoodEncoder;
+    public final RelativeEncoder hoodEncoder;
     public final AbsoluteEncoder turretEncoder;
     public final RelativeEncoder feedEncoder;
 
@@ -81,16 +81,11 @@ public class Turret extends SubsystemBase {
         SparkMaxConfig turretConfig = new SparkMaxConfig();
         turretConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(30);
 
-        turretConfig.absoluteEncoder
-            .positionConversionFactor(360.0)
-            .velocityConversionFactor((360.0 / 100.0) / 60.0)
-            .inverted(false);
-
         turretSpark.configure(turretConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         // ---------------- ENCODERS ----------------
         flywheelEncoder = flywheelSpark1.getEncoder();
-        hoodEncoder = hoodSpark.getAbsoluteEncoder();
+        hoodEncoder = hoodSpark.getEncoder();
         turretEncoder = turretSpark.getAbsoluteEncoder();
         feedEncoder = feedSpark.getEncoder();
     }
@@ -99,6 +94,7 @@ public class Turret extends SubsystemBase {
     public void periodic() {
         // ---------------- TELEMETRY ----------------
         SmartDashboard.putNumber("Turret Angle (deg)", getTurretAngle());
+        SmartDashboard.putNumber("HOOD", getHood());
     }
 
     // =========================
@@ -126,6 +122,10 @@ public class Turret extends SubsystemBase {
         hoodSpark.set(input);
     }
 
+    public double getHood() {
+        return hoodEncoder.getPosition();
+    }
+
     public void manualTurret(double input) {
         double output = MathUtil.clamp(input, -1.0, 1.0);
         turretSpark.set(output);
@@ -140,14 +140,7 @@ public class Turret extends SubsystemBase {
     }
 
     public double getTurretAngle() {
-        double angle = turretEncoder.getPosition(); // 0–360
-
-        angle %= 360;
-
-        if (angle > 180) {
-            angle -= 360;
-        }
-
-        return angle; // now -180 to 180
+        double angle = turretEncoder.getPosition() * 100.8;
+        return MathUtil.inputModulus(-angle, 0, 360); // inverted, wrapped 0-360°
     }
 }

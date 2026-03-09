@@ -11,6 +11,8 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeIn;
 import frc.robot.subsystems.intake.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.commands.HoodTarget;
+import frc.robot.subsystems.turret.commands.ManualHood;
 import frc.robot.subsystems.turret.commands.RotateTurret;
 import frc.robot.subsystems.turret.commands.ShootTurret;
 import frc.robot.utils.Constants;
@@ -102,37 +104,12 @@ public class RobotContainer {
       new RotateTurret(m_turret, m_drivetrain)
     );
 
+    // primary.x().whileTrue(
+    //   new SpinIndexer(m_intake)
+    // );
+
     primary.x().whileTrue(
-      new SpinIndexer(m_intake)
-    );
-
-    // // turret commands
-    m_turret.setDefaultCommand(
-        m_turret.run(() -> {
-            // ===== Turret rotation =====
-
-            if (primary.povLeft().getAsBoolean()) {
-                m_turret.manualTurret(-0.15);
-            } 
-            else if (primary.povRight().getAsBoolean()) {
-                m_turret.manualTurret(0.15);
-            } 
-            else {
-                m_turret.manualTurret(0);
-            }
-
-            // ===== Hood control =====
-            // if (primary.povUp().getAsBoolean()) {
-            //     m_turret.manualHood(-0.06);
-            // } 
-            // else if (primary.povDown().getAsBoolean()) {
-            //     m_turret.manualHood(0.06);
-            // } 
-            // else {
-            //     m_turret.manualHood(0);
-            // }
-
-        })
+      new HoodTarget(m_turret, 20)
     );
 
     primary.rightTrigger().whileTrue(
