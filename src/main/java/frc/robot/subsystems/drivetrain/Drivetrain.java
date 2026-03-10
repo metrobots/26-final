@@ -8,6 +8,7 @@ import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -222,6 +223,7 @@ public class Drivetrain extends SubsystemBase {
         // MegaTag2 now has full knowledge of camera position and heading via
         // setCameraPose_RobotSpace, so its output is already robot-center pose.
         // Always override rotation with gyro — never trust MegaTag2 for heading.
+        poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 9999999));
         poseEstimator.addVisionMeasurement(
                 new Pose2d(vision.pose.getTranslation(), getGyroRotation()),
                 vision.timestampSeconds
