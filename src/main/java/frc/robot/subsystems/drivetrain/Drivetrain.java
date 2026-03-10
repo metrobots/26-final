@@ -11,14 +11,12 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.*;
+
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.smartdashboard.*;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.subsystems.turret.Turret;
@@ -29,59 +27,75 @@ import frc.robot.utils.LimelightLib.PoseEstimate;
 
 public class Drivetrain extends SubsystemBase {
 
-    private final Turret m_turret;
-    private static final String LIMELIGHT_NAME = "limelight-front";
+    private final Turret turret;
+    private static final String LIMELIGHT = "limelight-front";
 
     /* ================= FIELD CONSTANTS ================= */
 
     private static final double FIELD_LENGTH = 16.54;
-    private static final double FIELD_WIDTH = 8.21;
-
-    private static final double LEFT_THIRD_ENDPOINT = FIELD_LENGTH / 3.0;
+    private static final double FIELD_WIDTH  = 8.21;
 
     private static final Translation2d FIELD_CENTER =
-            new Translation2d(LEFT_THIRD_ENDPOINT - 1, FIELD_WIDTH / 2.0);
+            new Translation2d(FIELD_LENGTH / 2.0, FIELD_WIDTH / 2.0);
+
+    /* ================= TURRET / CAMERA GEOMETRY ================= */
+
+    /**
+     * Vector from robot center to turret pivot, expressed in robot frame.
+     * +X = forward, +Y = left.
+     * 0.228 m forward, 0.061 m left.
+     */
+    private static final Translation2d TURRET_PIVOT_FROM_ROBOT =
+            new Translation2d(0.228, -0.061);
+
+    /**
+     * Vector from turret pivot to camera lens, expressed in turret-local frame.
+     * Measure this physically — update as needed.
+     * Example: camera is 0.1524 m (6 in) behind the pivot, centered laterally.
+     */
+        private static final Translation2d CAMERA_FROM_TURRET_PIVOT =
+                new Translation2d(-0.147, 0.0);
 
     /* ================= FIELD DISPLAY ================= */
 
     private final Field2d field = new Field2d();
-    private final FieldObject2d centerVector;
-    private final FieldObject2d triangleHorizontal;
-    private final FieldObject2d triangleVertical;
 
     /* ================= STATE ================= */
 
-    private Pose2d currentPose = new Pose2d();
-
-    private double angleToCenter = 0.0;
+    private double angleToCenter    = 0;
+    private double distanceToCenter = 0;
 
     /* ================= MODULES ================= */
 
-    private final Module m_frontLeft = new Module(
+    private final Module frontLeft = new Module(
             DriveConstants.kFrontLeftDrivingCanId,
             DriveConstants.kFrontLeftTurningCanId,
             DriveConstants.kFrontLeftEncoder,
             DriveConstants.kFrontLeftEncoderOffset);
 
-    private final Module m_frontRight = new Module(
+    private final Module frontRight = new Module(
             DriveConstants.kFrontRightDrivingCanId,
             DriveConstants.kFrontRightTurningCanId,
             DriveConstants.kFrontRightEncoder,
             DriveConstants.kFrontRightEncoderOffset);
 
-    private final Module m_rearLeft = new Module(
+    private final Module rearLeft = new Module(
             DriveConstants.kRearLeftDrivingCanId,
             DriveConstants.kRearLeftTurningCanId,
             DriveConstants.kRearLeftEncoder,
             DriveConstants.kRearLeftEncoderOffset);
 
-    private final Module m_rearRight = new Module(
+    private final Module rearRight = new Module(
             DriveConstants.kRearRightDrivingCanId,
             DriveConstants.kRearRightTurningCanId,
             DriveConstants.kRearRightEncoder,
             DriveConstants.kRearRightEncoderOffset);
 
-    private final AHRS m_gyro = new AHRS(NavXComType.kMXP_SPI);
+    /* ================= SENSORS ================= */
+
+    private final AHRS gyro = new AHRS(NavXComType.kMXP_SPI);
+
+    /* ================= CONTROL ================= */
 
     private final PIDController headingCorrector = new PIDController(0, 0, 0);
 
@@ -94,17 +108,9 @@ public class Drivetrain extends SubsystemBase {
     private final SlewRateLimiter rotLimiter =
             new SlewRateLimiter(AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared);
 
-    /* ================= POSE ESTIMATORS ================= */
+    /* ================= POSE ESTIMATOR ================= */
 
-    private final SwerveDrivePoseEstimator m_odometryEstimator =
-            new SwerveDrivePoseEstimator(
-                    DriveConstants.kDriveKinematics,
-                    getGyroRotation(),
-                    getModulePositions(),
-                    new Pose2d()
-            );
-
-    private final SwerveDrivePoseEstimator m_visionEstimator =
+    private final SwerveDrivePoseEstimator poseEstimator =
             new SwerveDrivePoseEstimator(
                     DriveConstants.kDriveKinematics,
                     getGyroRotation(),
@@ -115,22 +121,16 @@ public class Drivetrain extends SubsystemBase {
     /* ================= CONSTRUCTOR ================= */
 
     public Drivetrain(Turret turret) {
-
-        this.m_turret = turret;
-
+        this.turret = turret;
         SmartDashboard.putData("Field", field);
+        configureAutoBuilder();
+    }
 
-        centerVector = field.getObject("RobotToCenter");
-        triangleHorizontal = field.getObject("TriangleHorizontal");
-        triangleVertical = field.getObject("TriangleVertical");
+    /* ================= AUTO BUILDER ================= */
 
-        field.getObject("FieldCenter")
-                .setPose(new Pose2d(FIELD_CENTER, new Rotation2d()));
-
+    private void configureAutoBuilder() {
         try {
-
             RobotConfig config = RobotConfig.fromGUISettings();
-
             AutoBuilder.configure(
                     this::getPose,
                     this::resetOdometry,
@@ -145,14 +145,8 @@ public class Drivetrain extends SubsystemBase {
                             && DriverStation.getAlliance().get() == DriverStation.Alliance.Red,
                     this
             );
-
         } catch (Exception e) {
-
-            DriverStation.reportError(
-                    "Failed to configure AutoBuilder",
-                    e.getStackTrace()
-            );
-
+            DriverStation.reportError("Failed to configure AutoBuilder", e.getStackTrace());
         }
     }
 
@@ -160,271 +154,191 @@ public class Drivetrain extends SubsystemBase {
 
     @Override
     public void periodic() {
+        updateOdometry();
+        updateVision();
+        updateFieldCalculations();
+        updateDashboard();
+    }
 
-        m_odometryEstimator.update(getGyroRotation(), getModulePositions());
+    /* ================= ODOMETRY ================= */
 
-        m_visionEstimator.update(getGyroRotation(), getModulePositions());
+    private void updateOdometry() {
+        poseEstimator.update(getGyroRotation(), getModulePositions());
+    }
 
-        // 1️⃣ Convert robot heading from -180→180 to 0→360
-        double robotHeading360 = MathUtil.inputModulus(getHeading(), 0, 360);
+    /* ================= VISION ================= */
 
-        double turretHeading = m_turret.getTurretAngle();
+    private void updateVision() {
 
-        // 3️⃣ Combine robot + turret to get absolute camera heading
-        double cameraHeading = MathUtil.inputModulus(robotHeading360 - turretHeading, 0, 360);
+        // The camera rotates with the turret, so MegaTag2 needs the camera's
+        // actual field-space yaw (robot heading + turret offset), not just robot heading.
+        Rotation2d turretHeadingField = getGyroRotation()
+                .plus(Rotation2d.fromDegrees(turret.getTurretAngleRelative()));
 
-        SmartDashboard.putNumber("Camera Heading", cameraHeading);
-
+        // Tell MegaTag2 the camera's true field-relative heading and robot yaw rate.
+        // Using turretHeadingField here is critical — passing only gyro yaw would make
+        // MegaTag2 think the whole robot rotated whenever the turret moves.
         LimelightLib.SetRobotOrientation(
-                LIMELIGHT_NAME,
-                cameraHeading,
+                LIMELIGHT,
+                turretHeadingField.getDegrees(),
                 getTurnRate(),
                 0, 0, 0, 0
         );
 
-        PoseEstimate visionEstimate =
-                LimelightLib.getBotPoseEstimate_wpiBlue_MegaTag2(LIMELIGHT_NAME);
+        PoseEstimate vision = LimelightLib.getBotPoseEstimate_wpiBlue_MegaTag2(LIMELIGHT);
 
-        if (LimelightLib.validPoseEstimate(visionEstimate)
-                && Math.abs(getTurnRate()) < 720) {
+        if (!LimelightLib.validPoseEstimate(vision)) return;
 
-            m_visionEstimator.addVisionMeasurement(
-                    visionEstimate.pose,
-                    visionEstimate.timestampSeconds
-            );
+        // Reject noisy measurements during fast rotation (MegaTag2 degrades quickly here)
+        if (Math.abs(getTurnRate()) > 720) return;
 
-            field.getObject("Vision Raw").setPose(visionEstimate.pose);
-        }
+        // -----------------------------------------------------------------------
+        // MegaTag2 reports the pose of whatever frame the Limelight camera
+        // offset is set to in the web UI.  Since the camera is on a rotating
+        // turret we do NOT use the web-UI offset; instead we treat the reported
+        // translation as the camera lens position in field space and manually
+        // walk back to robot center using live turret angle data.
+        // -----------------------------------------------------------------------
 
-        Pose2d odomPose = m_odometryEstimator.getEstimatedPosition();
-        Pose2d visionPose = m_visionEstimator.getEstimatedPosition();
+        Translation2d cameraPositionField = vision.pose.getTranslation();
 
-        currentPose = new Pose2d(
-                odomPose.getX(),
-                odomPose.getY(),
-                getGyroRotation()
-        );
+        // --- Step 1: turret heading in field space (already computed above) ---
 
-        field.setRobotPose(visionPose);
+        // --- Step 2: rotate each offset into field frame ---
+        // Pivot offset is fixed in robot frame → rotate by robot heading
+        Translation2d pivotOffsetField =
+                TURRET_PIVOT_FROM_ROBOT.rotateBy(getGyroRotation());
 
-        /* ===== LEFT THIRD CHECK ===== */
+        // Camera offset is fixed in turret frame → rotate by turret field heading
+        Translation2d cameraOffsetField =
+                CAMERA_FROM_TURRET_PIVOT.rotateBy(turretHeadingField);
 
-        boolean inLeftThird =
-                visionPose.getX() >= 0 &&
-                visionPose.getX() <= LEFT_THIRD_ENDPOINT;
+        // --- Step 3: walk from camera lens → robot center ---
+        // camera = robot + pivotOffset + cameraOffset
+        // → robot = camera - cameraOffset - pivotOffset
+        Translation2d robotPositionField = cameraPositionField
+                .minus(cameraOffsetField)
+                .minus(pivotOffsetField);
 
-        SmartDashboard.putBoolean("RobotInLeftThird", inLeftThird);
+        // Use gyro for heading — never trust MegaTag2's rotation output
+        Pose2d robotPose = new Pose2d(robotPositionField, getGyroRotation());
 
-        /* ===== VECTOR + RIGHT TRIANGLE TO CENTER ===== */
+        poseEstimator.addVisionMeasurement(robotPose, vision.timestampSeconds);
 
-        Pose2d centerPose = new Pose2d(FIELD_CENTER, new Rotation2d());
+        // Debug: show raw camera position on field
+        field.getObject("VisionCamera").setPose(
+                new Pose2d(cameraPositionField, turretHeadingField));
+    }
 
-        Pose2d projectionPose = new Pose2d(
-                FIELD_CENTER.getX(),
-                visionPose.getY(),
-                new Rotation2d()
-        );
+    /* ================= FIELD CALCULATIONS ================= */
 
-        // Hypotenuse
-        centerVector.setPoses(
-                visionPose,
-                centerPose
-        );
+    private void updateFieldCalculations() {
 
-        // Horizontal leg
-        triangleHorizontal.setPoses(
-                visionPose,
-                projectionPose
-        );
+        Pose2d pose  = poseEstimator.getEstimatedPosition();
+        field.setRobotPose(pose);
 
-        // Vertical leg
-        triangleVertical.setPoses(
-                projectionPose,
-                centerPose
-        );
-        /* ===== ANGLE FROM ROBOT FRONT TO CENTER ===== */
+        Translation2d robot = pose.getTranslation();
+        distanceToCenter = robot.getDistance(FIELD_CENTER);
 
-        double dx = FIELD_CENTER.getX() - visionPose.getX();
-        double dy = FIELD_CENTER.getY() - visionPose.getY();
+        double dx = FIELD_CENTER.getX() - robot.getX();
+        double dy = FIELD_CENTER.getY() - robot.getY();
 
-        double fieldAngleToCenter = Math.toDegrees(Math.atan2(dy, dx));
-
+        double fieldAngle   = Math.toDegrees(Math.atan2(dy, dx));
         double robotHeading = getGyroRotation().getDegrees();
 
-        angleToCenter = MathUtil.inputModulus(
-                fieldAngleToCenter - robotHeading,
-                -180,
-                180
-        );
+        angleToCenter = MathUtil.inputModulus(fieldAngle - robotHeading, -180, 180);
+    }
 
-        SmartDashboard.putNumber("AngleToCenter", getAngleToCenter());
+    /* ================= DASHBOARD ================= */
 
-        SmartDashboard.putNumber(
-                "Gyro Heading",
-                getGyroRotation().getDegrees()
-        );
+    private void updateDashboard() {
+        SmartDashboard.putNumber("Robot Heading",      getGyroRotation().getDegrees());
+        SmartDashboard.putNumber("Angle To Center",    angleToCenter);
+        SmartDashboard.putNumber("Distance To Center", distanceToCenter);
     }
 
     /* ================= POSE METHODS ================= */
 
-        public double getAngleToCenter() {
-            return angleToCenter;
-        }
-
-        public double getDistanceToCenter() {
-                Translation2d robotPos = currentPose.getTranslation();
-                return robotPos.getDistance(FIELD_CENTER);
-        }
-
     public Pose2d getPose() {
-
-        Pose2d pose = m_odometryEstimator.getEstimatedPosition();
-
-        return new Pose2d(
-                -pose.getX(),
-                -pose.getY(),
-                pose.getRotation()
-        );
+        return poseEstimator.getEstimatedPosition();
     }
 
     public void resetOdometry(Pose2d pose) {
-
-        Pose2d invertedPose =
-                new Pose2d(-pose.getX(), -pose.getY(), pose.getRotation());
-
-        m_odometryEstimator.resetPosition(
-                getGyroRotation(),
-                getModulePositions(),
-                invertedPose
-        );
-
-        m_visionEstimator.resetPosition(
-                getGyroRotation(),
-                getModulePositions(),
-                invertedPose
-        );
+        poseEstimator.resetPosition(getGyroRotation(), getModulePositions(), pose);
     }
+
+    public double getAngleToCenter()    { return angleToCenter; }
+    public double getDistanceToCenter() { return distanceToCenter; }
 
     /* ================= DRIVE ================= */
 
-    public void drive(
-            double xSpeed,
-            double ySpeed,
-            double rot,
-            boolean fieldRelative
-    ) {
+    public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
 
-        double x =
-                xLimiter.calculate(xSpeed)
-                        * DriveConstants.kMaxSpeedMetersPerSecond;
+        double x = xLimiter.calculate(xSpeed) * DriveConstants.kMaxSpeedMetersPerSecond;
+        double y = yLimiter.calculate(ySpeed)  * DriveConstants.kMaxSpeedMetersPerSecond;
+        double r = rotLimiter.calculate(rot)   * DriveConstants.kMaxAngularSpeed;
 
-        double y =
-                yLimiter.calculate(ySpeed)
-                        * DriveConstants.kMaxSpeedMetersPerSecond;
+        ChassisSpeeds speeds = fieldRelative
+                ? ChassisSpeeds.fromFieldRelativeSpeeds(x, y, r, getGyroRotation())
+                : new ChassisSpeeds(x, y, r);
 
-        double r =
-                rotLimiter.calculate(rot)
-                        * DriveConstants.kMaxAngularSpeed;
-
-        ChassisSpeeds speeds =
-                fieldRelative
-                        ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                                x, y, r, getGyroRotation())
-                        : new ChassisSpeeds(x, y, r);
-
-        setModuleStates(
-                DriveConstants.kDriveKinematics
-                        .toSwerveModuleStates(speeds)
-        );
+        setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds));
     }
 
     public void driveRobotRelative(ChassisSpeeds speeds) {
-
-        ChassisSpeeds inverted = new ChassisSpeeds(
-                -speeds.vxMetersPerSecond,
-                -speeds.vyMetersPerSecond,
-                speeds.omegaRadiansPerSecond
-        );
-
-        setModuleStates(
-                DriveConstants.kDriveKinematics
-                        .toSwerveModuleStates(inverted)
-        );
+        setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds));
     }
 
-    public void driveLocked(
-            double xSpeed,
-            double ySpeed,
-            double targetHeading,
-            boolean fieldRelative
-    ) {
-
-        double correction =
-                headingCorrector.calculate(getHeading(), targetHeading);
-
+    public void driveLocked(double xSpeed, double ySpeed, double targetHeading, boolean fieldRelative) {
+        double correction = headingCorrector.calculate(getHeading(), targetHeading);
         drive(xSpeed, ySpeed, correction, fieldRelative);
     }
 
     /* ================= MODULE CONTROL ================= */
 
     public void setModuleStates(SwerveModuleState[] states) {
-
-        SwerveDriveKinematics.desaturateWheelSpeeds(
-                states,
-                DriveConstants.kMaxSpeedMetersPerSecond
-        );
-
-        m_frontLeft.setDesiredState(states[0]);
-        m_frontRight.setDesiredState(states[1]);
-        m_rearLeft.setDesiredState(states[2]);
-        m_rearRight.setDesiredState(states[3]);
+        SwerveDriveKinematics.desaturateWheelSpeeds(states, DriveConstants.kMaxSpeedMetersPerSecond);
+        frontLeft.setDesiredState(states[0]);
+        frontRight.setDesiredState(states[1]);
+        rearLeft.setDesiredState(states[2]);
+        rearRight.setDesiredState(states[3]);
     }
 
     public ChassisSpeeds getRobotRelativeSpeeds() {
-
         return DriveConstants.kDriveKinematics.toChassisSpeeds(
-                m_frontLeft.getState(),
-                m_frontRight.getState(),
-                m_rearLeft.getState(),
-                m_rearRight.getState()
+                frontLeft.getState(),
+                frontRight.getState(),
+                rearLeft.getState(),
+                rearRight.getState()
         );
     }
 
     /* ================= GYRO ================= */
 
-    public void zeroHeading() {
-        m_gyro.reset();
-    }
+    public void zeroHeading() { gyro.reset(); }
 
     public double getHeading() {
-        return MathUtil.inputModulus(-m_gyro.getAngle(), -180, 180);
+        return MathUtil.inputModulus(-gyro.getAngle(), -180, 180);
     }
 
-    public double getTurnRate() {
-        return -m_gyro.getRate();
-    }
-
-    public Rotation2d getGyroRotation() {
-        return Rotation2d.fromDegrees(-m_gyro.getAngle());
-    }
+    public double getTurnRate()       { return -gyro.getRate(); }
+    public Rotation2d getGyroRotation() { return Rotation2d.fromDegrees(-gyro.getAngle()); }
 
     /* ================= UTIL ================= */
 
     public SwerveModulePosition[] getModulePositions() {
-
         return new SwerveModulePosition[]{
-                m_frontLeft.getPosition(),
-                m_frontRight.getPosition(),
-                m_rearLeft.getPosition(),
-                m_rearRight.getPosition()
+                frontLeft.getPosition(),
+                frontRight.getPosition(),
+                rearLeft.getPosition(),
+                rearRight.getPosition()
         };
     }
 
     public void resetEncoders() {
-
-        m_frontLeft.resetEncoders();
-        m_frontRight.resetEncoders();
-        m_rearLeft.resetEncoders();
-        m_rearRight.resetEncoders();
+        frontLeft.resetEncoders();
+        frontRight.resetEncoders();
+        rearLeft.resetEncoders();
+        rearRight.resetEncoders();
     }
 }

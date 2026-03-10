@@ -90,6 +90,23 @@ public class RobotContainer {
     // primary.y().whileTrue(
     //     m_turret.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
+        m_turret.setDefaultCommand(
+        m_turret.run(() -> {
+            // ===== Turret rotation =====
+
+            if (primary.povLeft().getAsBoolean()) {
+                m_turret.manualTurret(0.1);
+            } 
+            else if (primary.povRight().getAsBoolean()) {
+                m_turret.manualTurret(-0.1);
+            } 
+            else {
+                m_turret.manualTurret(0);
+            }
+
+          }
+        ));
+
     // intake command
     primary.leftTrigger().whileTrue(
       new IntakeIn(m_intake, -0.7)

@@ -26,13 +26,13 @@ public class Turret extends SubsystemBase {
 
     public final RelativeEncoder flywheelEncoder;
     public final RelativeEncoder hoodEncoder;
-    public final AbsoluteEncoder turretEncoder;
+    public final AbsoluteEncoder turretAbsoluteEncoder;
+    public final RelativeEncoder turretRelativeEncoder;
     public final RelativeEncoder feedEncoder;
 
-    private final double maxTurretAngle = 40;
-
-    // Store applied voltage for SysId logging
-    private double lastFlywheelVoltage = 0.0;
+    // ---------------- CONSTANTS ----------------
+    private static final double GEAR_RATIO = 0.03334;  // Motor:Turret
+    private static final double TURRET_FORWARD_OFFSET = 0.0; // absolute encoder fraction
 
     // ---------------- CONSTRUCTOR ----------------
     @SuppressWarnings("removal")
@@ -52,7 +52,6 @@ public class Turret extends SubsystemBase {
             .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(80);
 
-        // Velocity in RPS
         masterConfig.encoder
             .positionConversionFactor(1.0)
             .velocityConversionFactor(1.0 / 60.0);
@@ -80,32 +79,42 @@ public class Turret extends SubsystemBase {
         // ---------------- TURRET CONFIG ----------------
         SparkMaxConfig turretConfig = new SparkMaxConfig();
         turretConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(30);
-
         turretSpark.configure(turretConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         // ---------------- ENCODERS ----------------
         flywheelEncoder = flywheelSpark1.getEncoder();
         hoodEncoder = hoodSpark.getEncoder();
-        turretEncoder = turretSpark.getAbsoluteEncoder();
+        turretAbsoluteEncoder = turretSpark.getAbsoluteEncoder();
+        turretRelativeEncoder = turretSpark.getEncoder(); // relative motor encoder
         feedEncoder = feedSpark.getEncoder();
+
+        // ---------------- CALIBRATE RELATIVE ENCODER ----------------
+        calibrateTurretEncoder();
+    }
+
+    /**
+     * Syncs the relative encoder with the absolute encoder at startup.
+     */
+    public void calibrateTurretEncoder() {
+        double absFraction = turretAbsoluteEncoder.getPosition() - TURRET_FORWARD_OFFSET;
+        turretRelativeEncoder.setPosition(absFraction);
     }
 
     @Override
     public void periodic() {
-        // ---------------- TELEMETRY ----------------
         SmartDashboard.putNumber("Turret Angle (deg)", getTurretAngle());
+        SmartDashboard.putNumber("Turret Angle Relative (deg)", getTurretAngleRelative());
+        SmartDashboard.putNumber("Turret Encoder Raw", turretAbsoluteEncoder.getPosition());
         SmartDashboard.putNumber("HOOD", getHood());
     }
 
     // =========================
     // ===== FLYWHEEL ==========
     // =========================
-
     public void setFlywheelVoltage(double volts) {
         flywheelSpark1.setVoltage(volts);
     }
 
-    // Returns RPS
     public double getFlywheelVelocity() {
         return flywheelEncoder.getVelocity();
     }
@@ -117,7 +126,6 @@ public class Turret extends SubsystemBase {
     // =========================
     // ===== OTHER SYSTEMS =====
     // =========================
-
     public void manualHood(double input) {
         hoodSpark.set(input);
     }
@@ -139,8 +147,36 @@ public class Turret extends SubsystemBase {
         return feedEncoder.getVelocity();
     }
 
+    // =========================
+    // ===== TURRET ANGLES =====
+    // =========================
+
+    /**
+     * Returns turret angle in degrees, 0-360.
+     * Forward = 0, right = increasing, left = wraps from 360 downward.
+     */
     public double getTurretAngle() {
-        double angle = turretEncoder.getPosition() * 100.8;
-        return MathUtil.inputModulus(-angle, 0, 360); // inverted, wrapped 0-360°
+        // Total motor rotations (calibrated relative encoder)
+        double motorRotations = turretRelativeEncoder.getPosition();
+
+        // Convert motor rotations to turret rotations
+        double turretRotations = motorRotations * GEAR_RATIO;
+
+        // Convert to degrees
+        double turretDegrees = turretRotations * 360.0;
+
+        // Optional: normalize to 0-360°
+        turretDegrees = ((turretDegrees % 360.0) + 360.0) % 360.0;
+
+        return (turretDegrees * 1.09756097561);
+    }
+
+    /**
+     * Returns signed turret angle in degrees, -180 to 180.
+     * 0 = forward, positive = right, negative = left.
+     */
+    public double getTurretAngleRelative() {
+        double angle = getTurretAngle();
+        return ((angle + 180.0) % 360.0) - 180.0;
     }
 }
