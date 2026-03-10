@@ -43,18 +43,26 @@ public class Drivetrain extends SubsystemBase {
     /**
      * Vector from robot center to turret pivot, expressed in robot frame.
      * +X = forward, +Y = left.
-     * 0.228 m forward, 0.061 m left.
      */
-    private static final Translation2d TURRET_PIVOT_FROM_ROBOT =
-            new Translation2d(0.228, -0.061);
+    private static final double TURRET_PIVOT_FORWARD = 0.228;  // meters
+    private static final double TURRET_PIVOT_SIDE    = -0.061; // meters (negative = right)
 
     /**
-     * Vector from turret pivot to camera lens, expressed in turret-local frame.
-     * Measure this physically — update as needed.
-     * Example: camera is 0.1524 m (6 in) behind the pivot, centered laterally.
+     * Distance from turret pivot to camera lens along the turret's forward axis.
+     * Negative because camera is behind the pivot.
      */
-        private static final Translation2d CAMERA_FROM_TURRET_PIVOT =
-                new Translation2d(-0.147, 0.0);
+    private static final double CAMERA_FROM_PIVOT_AXIAL = -0.147; // meters
+
+    /**
+     * Camera height from ground: 21 inches converted to meters.
+     */
+    private static final double CAMERA_HEIGHT = 21.0 * 0.0254; // 0.5334 meters
+
+    /**
+     * Camera pitch: 30 degrees upward from horizontal.
+     * Negative sign because Limelight uses negative pitch for upward tilt.
+     */
+    private static final double CAMERA_PITCH = -30.0; // degrees
 
     /* ================= FIELD DISPLAY ================= */
 
@@ -170,17 +178,36 @@ public class Drivetrain extends SubsystemBase {
 
     private void updateVision() {
 
-        // The camera rotates with the turret, so MegaTag2 needs the camera's
-        // actual field-space yaw (robot heading + turret offset), not just robot heading.
-        Rotation2d turretHeadingField = getGyroRotation()
-                .plus(Rotation2d.fromDegrees(turret.getTurretAngleRelative()));
+        double turretAngleDeg = turret.getTurretAngleRelative();
+        double turretAngleRad = Math.toRadians(turretAngleDeg);
 
-        // Tell MegaTag2 the camera's true field-relative heading and robot yaw rate.
-        // Using turretHeadingField here is critical — passing only gyro yaw would make
-        // MegaTag2 think the whole robot rotated whenever the turret moves.
+        // Compute the camera's current position in robot space by rotating
+        // the axial camera offset (along the turret's forward axis) by the
+        // live turret angle, then adding the fixed pivot offset from robot center.
+        double camForward = TURRET_PIVOT_FORWARD + (CAMERA_FROM_PIVOT_AXIAL * Math.cos(turretAngleRad));
+        double camSide    = TURRET_PIVOT_SIDE    + (CAMERA_FROM_PIVOT_AXIAL * Math.sin(turretAngleRad));
+
+        // Tell Limelight exactly where the camera is in robot space right now.
+        // Per the docs, call this BEFORE SetRobotOrientation so both values
+        // are flushed to the Limelight in the same update.
+        //
+        // NOTE: The Limelight web UI camera pose must be set to all zeros —
+        // this call fully replaces the static web UI offset each loop.
+        LimelightLib.setCameraPose_RobotSpace(
+                LIMELIGHT,
+                camForward,      // forward from robot center (meters)
+                camSide,         // left of robot center (meters, negative = right)
+                CAMERA_HEIGHT,   // up from robot center (meters)
+                0.0,             // roll (degrees)
+                CAMERA_PITCH,    // pitch (degrees, negative = upward tilt)
+                turretAngleDeg   // yaw (degrees, live turret angle relative to robot forward)
+        );
+
+        // Pass only the gyro heading — camera yaw is already handled above
+        // by setCameraPose_RobotSpace, so we do NOT pass turretHeadingField here.
         LimelightLib.SetRobotOrientation(
                 LIMELIGHT,
-                turretHeadingField.getDegrees(),
+                getGyroRotation().getDegrees(),
                 getTurnRate(),
                 0, 0, 0, 0
         );
@@ -189,45 +216,19 @@ public class Drivetrain extends SubsystemBase {
 
         if (!LimelightLib.validPoseEstimate(vision)) return;
 
-        // Reject noisy measurements during fast rotation (MegaTag2 degrades quickly here)
+        // Reject noisy measurements during fast rotation
         if (Math.abs(getTurnRate()) > 720) return;
 
-        // -----------------------------------------------------------------------
-        // MegaTag2 reports the pose of whatever frame the Limelight camera
-        // offset is set to in the web UI.  Since the camera is on a rotating
-        // turret we do NOT use the web-UI offset; instead we treat the reported
-        // translation as the camera lens position in field space and manually
-        // walk back to robot center using live turret angle data.
-        // -----------------------------------------------------------------------
+        // MegaTag2 now has full knowledge of camera position and heading via
+        // setCameraPose_RobotSpace, so its output is already robot-center pose.
+        // Always override rotation with gyro — never trust MegaTag2 for heading.
+        poseEstimator.addVisionMeasurement(
+                new Pose2d(vision.pose.getTranslation(), getGyroRotation()),
+                vision.timestampSeconds
+        );
 
-        Translation2d cameraPositionField = vision.pose.getTranslation();
-
-        // --- Step 1: turret heading in field space (already computed above) ---
-
-        // --- Step 2: rotate each offset into field frame ---
-        // Pivot offset is fixed in robot frame → rotate by robot heading
-        Translation2d pivotOffsetField =
-                TURRET_PIVOT_FROM_ROBOT.rotateBy(getGyroRotation());
-
-        // Camera offset is fixed in turret frame → rotate by turret field heading
-        Translation2d cameraOffsetField =
-                CAMERA_FROM_TURRET_PIVOT.rotateBy(turretHeadingField);
-
-        // --- Step 3: walk from camera lens → robot center ---
-        // camera = robot + pivotOffset + cameraOffset
-        // → robot = camera - cameraOffset - pivotOffset
-        Translation2d robotPositionField = cameraPositionField
-                .minus(cameraOffsetField)
-                .minus(pivotOffsetField);
-
-        // Use gyro for heading — never trust MegaTag2's rotation output
-        Pose2d robotPose = new Pose2d(robotPositionField, getGyroRotation());
-
-        poseEstimator.addVisionMeasurement(robotPose, vision.timestampSeconds);
-
-        // Debug: show raw camera position on field
-        field.getObject("VisionCamera").setPose(
-                new Pose2d(cameraPositionField, turretHeadingField));
+        // Debug: show MegaTag2's raw pose output on the field display
+        field.getObject("VisionPose").setPose(vision.pose);
     }
 
     /* ================= FIELD CALCULATIONS ================= */
@@ -321,7 +322,7 @@ public class Drivetrain extends SubsystemBase {
         return MathUtil.inputModulus(-gyro.getAngle(), -180, 180);
     }
 
-    public double getTurnRate()       { return -gyro.getRate(); }
+    public double getTurnRate()         { return -gyro.getRate(); }
     public Rotation2d getGyroRotation() { return Rotation2d.fromDegrees(-gyro.getAngle()); }
 
     /* ================= UTIL ================= */
