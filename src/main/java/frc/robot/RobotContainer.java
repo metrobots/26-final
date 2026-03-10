@@ -95,10 +95,10 @@ public class RobotContainer {
             // ===== Turret rotation =====
 
             if (primary.povLeft().getAsBoolean()) {
-                m_turret.manualTurret(0.1);
+                m_turret.manualTurret(0.2);
             } 
             else if (primary.povRight().getAsBoolean()) {
-                m_turret.manualTurret(-0.1);
+                m_turret.manualTurret(-0.2);
             } 
             else {
                 m_turret.manualTurret(0);

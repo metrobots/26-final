@@ -16,15 +16,14 @@ public class RotateTurret extends Command {
   private final PIDController turretPID =
       new PIDController(0.005, 0.0, 0.0);
 
-  private static final double MAX_TURRET = 110;
-  private static final double MIN_TURRET = -110;
+  private static final double MAX_TURRET = 40;
+  private static final double MIN_TURRET = -40;
 
   public RotateTurret(Turret turret, Drivetrain drivetrain) {
 
     this.turret = turret;
     this.drivetrain = drivetrain;
 
-    turretPID.enableContinuousInput(-180, 180);
     turretPID.setTolerance(2.0);
 
     addRequirements(turret);
@@ -34,10 +33,8 @@ public class RotateTurret extends Command {
   public void execute() {
 
     double targetAngle = drivetrain.getAngleToCenter();
-    double currentAngle = turret.getTurretAngle();
+    double currentAngle = turret.getTurretAngleRelative();
 
-    // Convert 0–360 → -180 to 180
-    currentAngle = MathUtil.inputModulus(currentAngle, -180, 180);
 
     double output = turretPID.calculate(currentAngle, targetAngle);
 

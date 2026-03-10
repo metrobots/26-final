@@ -31,8 +31,7 @@ public class Turret extends SubsystemBase {
     public final RelativeEncoder feedEncoder;
 
     // ---------------- CONSTANTS ----------------
-    private static final double GEAR_RATIO = 0.03334;  // Motor:Turret
-    private static final double TURRET_FORWARD_OFFSET = 0.0; // absolute encoder fraction
+    private static final double GEAR_RATIO = 0.03659432;  // Motor:Turret
 
     // ---------------- CONSTRUCTOR ----------------
     @SuppressWarnings("removal")
@@ -89,23 +88,22 @@ public class Turret extends SubsystemBase {
         feedEncoder = feedSpark.getEncoder();
 
         // ---------------- CALIBRATE RELATIVE ENCODER ----------------
-        calibrateTurretEncoder();
+        // calibrateTurretEncoder();
     }
 
     /**
      * Syncs the relative encoder with the absolute encoder at startup.
      */
-    public void calibrateTurretEncoder() {
-        double absFraction = turretAbsoluteEncoder.getPosition() - TURRET_FORWARD_OFFSET;
-        turretRelativeEncoder.setPosition(absFraction);
-    }
+    // public void calibrateTurretEncoder() {
+    //     double absFraction = turretAbsoluteEncoder.getPosition();
+    //     turretRelativeEncoder.setPosition(absFraction);
+    // }
 
     @Override
     public void periodic() {
         SmartDashboard.putNumber("Turret Angle (deg)", getTurretAngle());
         SmartDashboard.putNumber("Turret Angle Relative (deg)", getTurretAngleRelative());
         SmartDashboard.putNumber("Turret Encoder Raw", turretAbsoluteEncoder.getPosition());
-        SmartDashboard.putNumber("HOOD", getHood());
     }
 
     // =========================
@@ -156,24 +154,22 @@ public class Turret extends SubsystemBase {
      * Forward = 0, right = increasing, left = wraps from 360 downward.
      */
     public double getTurretAngle() {
-        // Total motor rotations (calibrated relative encoder)
         double motorRotations = turretRelativeEncoder.getPosition();
 
-        // Convert motor rotations to turret rotations
-        double turretRotations = motorRotations * GEAR_RATIO;
+        // invert sign so CCW is positive
+        double turretRotations = -motorRotations * GEAR_RATIO;
 
-        // Convert to degrees
         double turretDegrees = turretRotations * 360.0;
 
-        // Optional: normalize to 0-360°
+        // normalize to 0-360
         turretDegrees = ((turretDegrees % 360.0) + 360.0) % 360.0;
 
-        return (turretDegrees * 1.09756097561);
+        return turretDegrees;
     }
 
     /**
      * Returns signed turret angle in degrees, -180 to 180.
-     * 0 = forward, positive = right, negative = left.
+     * 0 = forward, positive = CCW (left), negative = CW (right).
      */
     public double getTurretAngleRelative() {
         double angle = getTurretAngle();
