@@ -179,7 +179,7 @@ public class Drivetrain extends SubsystemBase {
 
     private void updateVision() {
 
-        double turretAngleDeg = turret.getTurretAngleRelative();
+        double turretAngleDeg = -turret.getTurretAngleRelative();
         double turretAngleRad = Math.toRadians(turretAngleDeg);
 
         // Compute the camera's current position in robot space by rotating
