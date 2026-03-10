@@ -179,14 +179,14 @@ public class Drivetrain extends SubsystemBase {
 
     private void updateVision() {
 
-        double turretAngleDeg = -turret.getTurretAngleRelative();
+        double turretAngleDeg = turret.getTurretAngleRelative();
         double turretAngleRad = Math.toRadians(turretAngleDeg);
 
         // Compute the camera's current position in robot space by rotating
         // the axial camera offset (along the turret's forward axis) by the
         // live turret angle, then adding the fixed pivot offset from robot center.
         double camForward = TURRET_PIVOT_FORWARD + (CAMERA_FROM_PIVOT_AXIAL * Math.cos(turretAngleRad));
-        double camSide    = TURRET_PIVOT_SIDE    + (CAMERA_FROM_PIVOT_AXIAL * Math.sin(turretAngleRad));
+        double camSide    = TURRET_PIVOT_SIDE    - (CAMERA_FROM_PIVOT_AXIAL * Math.sin(turretAngleRad));
 
         // Tell Limelight exactly where the camera is in robot space right now.
         // Per the docs, call this BEFORE SetRobotOrientation so both values
