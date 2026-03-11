@@ -104,6 +104,16 @@ public class RobotContainer {
                 m_turret.manualTurret(0);
             }
 
+            if (primary.povUp().getAsBoolean()) {
+                m_turret.manualHood(-0.06);
+            } 
+            else if (primary.povDown().getAsBoolean()) {
+                m_turret.manualHood(0.06);
+            } 
+            else {
+                m_turret.manualHood(0);
+            }
+
           }
         ));
 

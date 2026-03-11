@@ -26,6 +26,8 @@ import frc.robot.utils.Constants.DriveConstants;
 import frc.robot.utils.LimelightLib;
 import frc.robot.utils.LimelightLib.PoseEstimate;
 
+import java.util.List;
+
 public class Drivetrain extends SubsystemBase {
 
     private final Turret turret;
@@ -37,7 +39,7 @@ public class Drivetrain extends SubsystemBase {
     private static final double FIELD_WIDTH  = 8.21;
 
     private static final Translation2d FIELD_CENTER =
-            new Translation2d(FIELD_LENGTH / 3.0, FIELD_WIDTH / 2.0);
+            new Translation2d((FIELD_LENGTH / 3.0) - 1, FIELD_WIDTH / 2.0);
 
     /* ================= TURRET / CAMERA GEOMETRY ================= */
 
@@ -46,7 +48,7 @@ public class Drivetrain extends SubsystemBase {
      * +X = forward, +Y = left.
      */
     private static final double TURRET_PIVOT_FORWARD = 0.228;  // meters
-    private static final double TURRET_PIVOT_SIDE    = -0.061; // meters (negative = right)
+    private static final double TURRET_PIVOT_SIDE    = 0.061; // meters (negative = right)
 
     /**
      * Distance from turret pivot to camera lens along the turret's forward axis.
@@ -63,7 +65,7 @@ public class Drivetrain extends SubsystemBase {
      * Camera pitch: 30 degrees upward from horizontal.
      * Negative sign because Limelight uses negative pitch for upward tilt.
      */
-    private static final double CAMERA_PITCH = -30.0; // degrees
+    private static final double CAMERA_PITCH = 30.632901; // degrees
 
     /* ================= FIELD DISPLAY ================= */
 
@@ -237,26 +239,44 @@ public class Drivetrain extends SubsystemBase {
 
     private void updateFieldCalculations() {
 
-        Pose2d pose  = poseEstimator.getEstimatedPosition();
+        Pose2d pose = poseEstimator.getEstimatedPosition();
         field.setRobotPose(pose);
 
-        Translation2d robot = pose.getTranslation();
-        distanceToCenter = robot.getDistance(FIELD_CENTER);
+        // Rotate the turret pivot offset from robot frame into field frame,
+        // then add the robot's field position to get the turret pivot world position.
+        double robotHeading = getGyroRotation().getRadians();
+        double turretWorldX = pose.getX()
+                + TURRET_PIVOT_FORWARD * Math.cos(robotHeading)
+                - TURRET_PIVOT_SIDE   * Math.sin(robotHeading);
+        double turretWorldY = pose.getY()
+                + TURRET_PIVOT_FORWARD * Math.sin(robotHeading)
+                + TURRET_PIVOT_SIDE   * Math.cos(robotHeading);
 
-        double dx = FIELD_CENTER.getX() - robot.getX();
-        double dy = FIELD_CENTER.getY() - robot.getY();
+        Translation2d turretPivot = new Translation2d(turretWorldX, turretWorldY);
 
-        double fieldAngle   = Math.toDegrees(Math.atan2(dy, dx));
-        double robotHeading = getGyroRotation().getDegrees();
+        distanceToCenter = turretPivot.getDistance(FIELD_CENTER);
 
-        angleToCenter = MathUtil.inputModulus(fieldAngle - robotHeading, -180, 180);
+        double dx = FIELD_CENTER.getX() - turretPivot.getX();
+        double dy = FIELD_CENTER.getY() - turretPivot.getY();
+
+        double fieldAngle = Math.toDegrees(Math.atan2(dy, dx));
+        angleToCenter = MathUtil.inputModulus(getGyroRotation().getDegrees() - fieldAngle, -180, 180);
+
+        // Draw the field center marker, turret pivot marker, and a line between them
+        field.getObject("FieldCenter").setPose(
+                new Pose2d(FIELD_CENTER, new Rotation2d()));
+        field.getObject("TurretPivot").setPose(
+                new Pose2d(turretPivot, getGyroRotation()));
+        field.getObject("ToCenter").setPoses(List.of(
+                new Pose2d(turretPivot, new Rotation2d()),
+                new Pose2d(FIELD_CENTER, new Rotation2d())));
     }
 
     /* ================= DASHBOARD ================= */
 
     private void updateDashboard() {
-        SmartDashboard.putNumber("Robot Heading",      getGyroRotation().getDegrees());
-        SmartDashboard.putNumber("Angle To Center",    angleToCenter);
+        SmartDashboard.putNumber("Robot Heading", getGyroRotation().getDegrees());
+        SmartDashboard.putNumber("test", getAngleToCenter());
         SmartDashboard.putNumber("Distance To Center", distanceToCenter);
     }
 
