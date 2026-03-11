@@ -117,7 +117,7 @@ public class RobotContainer {
       new IntakeIn(m_intake, 1)
     );
 
-    primary.a().toggleOnTrue(
+    primary.a().whileTrue(
       new RotateTurret(m_turret, m_drivetrain)
     );
 

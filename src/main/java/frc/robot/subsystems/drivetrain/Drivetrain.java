@@ -37,7 +37,7 @@ public class Drivetrain extends SubsystemBase {
     private static final double FIELD_WIDTH  = 8.21;
 
     private static final Translation2d FIELD_CENTER =
-            new Translation2d(FIELD_LENGTH / 2.0, FIELD_WIDTH / 2.0);
+            new Translation2d(FIELD_LENGTH / 3.0, FIELD_WIDTH / 2.0);
 
     /* ================= TURRET / CAMERA GEOMETRY ================= */
 

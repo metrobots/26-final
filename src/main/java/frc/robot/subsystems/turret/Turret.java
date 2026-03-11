@@ -88,16 +88,16 @@ public class Turret extends SubsystemBase {
         feedEncoder = feedSpark.getEncoder();
 
         // ---------------- CALIBRATE RELATIVE ENCODER ----------------
-        // calibrateTurretEncoder();
+        calibrateTurretEncoder();
     }
 
     /**
      * Syncs the relative encoder with the absolute encoder at startup.
      */
-    // public void calibrateTurretEncoder() {
-    //     double absFraction = turretAbsoluteEncoder.getPosition();
-    //     turretRelativeEncoder.setPosition(absFraction);
-    // }
+    public void calibrateTurretEncoder() {
+        double absFraction = turretAbsoluteEncoder.getPosition();
+        turretRelativeEncoder.setPosition(absFraction);
+    }
 
     @Override
     public void periodic() {
