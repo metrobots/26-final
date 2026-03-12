@@ -1,6 +1,7 @@
 package frc.robot.subsystems.turret;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.revrobotics.spark.SparkFlex;
@@ -99,6 +100,7 @@ public class Turret extends SubsystemBase {
      * Syncs the relative encoder with the absolute encoder at startup.
      */
     public void calibrateTurretEncoder() {
+      Timer.delay(0.5);
       double absFraction = turretAbsoluteEncoder.getPosition();
       double correctedFraction = absFraction - ABS_ENCODER_ZERO_OFFSET;
       double motorRotations = -correctedFraction * 8;
