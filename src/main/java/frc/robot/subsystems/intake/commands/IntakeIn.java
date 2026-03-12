@@ -28,7 +28,6 @@ public class IntakeIn extends Command {
   @Override
   public void end(boolean interrupted) {
     intake.driveIntake(0.0);
-    intake.spinIndexer(0.0);
     intake.indexer(false);
   }
 
