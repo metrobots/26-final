@@ -81,8 +81,10 @@ public class AimAndShootTurret extends Command {
 
         double currentAngle = turret.getTurretAngleRelative();
 
-        double turretOutput =
-            MathUtil.clamp(turretPID.calculate(currentAngle, targetAngle), -0.6, 0.6);
+        double angularVelocity = drivetrain.getTurnRate();
+        double turretVelocityFF = angularVelocity * 0.005; // TUNE THE SCALAR
+
+        double turretOutput = MathUtil.clamp(turretPID.calculate(currentAngle, targetAngle) + turretVelocityFF, -0.6, 0.6);
 
         boolean atLeftLimit = currentAngle >= MAX_TURRET;
         boolean atRightLimit = currentAngle <= MIN_TURRET;
@@ -143,10 +145,11 @@ public class AimAndShootTurret extends Command {
 
         double feedVelocity = turret.getFeedVelocity();
 
-        boolean atSpeed = Math.abs(currentRPS - targetRPS) <= 5.0;
+        boolean atSpeed = Math.abs(currentRPS - targetRPS) <= 2.5;
         boolean aimed = (currentAngle >= targetAngle - 0.5) && (currentAngle <= targetAngle + 0.5);
+        boolean hoodReady = Math.abs(turret.hoodEncoder.getPosition() - hoodAngle) <= 0.3;
 
-        if (atSpeed) {
+        if (atSpeed && aimed && hoodReady) {
 
             double feedFFVolts = feedFF.calculate(TARGET_FEED_RPS);
             double feedPIDVolts =
