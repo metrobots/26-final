@@ -31,7 +31,7 @@ public class AimAndShootTurret extends Command {
     // Turret PID
     private final PIDController turretPID = new PIDController(0.03, 0.0, 0.0);
 
-    private static final double MAX_TURRET = 40.0;
+    private static final double MAX_TURRET = 30.0;
     private static final double MIN_TURRET = -40.0;
 
     // Flywheel feedforward
