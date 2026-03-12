@@ -73,6 +73,7 @@ public class Turret extends SubsystemBase {
         // ---------------- FEED CONFIG ----------------
         SparkMaxConfig feedConfig = new SparkMaxConfig();
         feedConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(80);
+        feedConfig.voltageCompensation(12.0);
         feedConfig.encoder
             .positionConversionFactor(1.0)
             .velocityConversionFactor(1.0 / 60.0);
