@@ -11,6 +11,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeIn;
 import frc.robot.subsystems.intake.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.commands.AimAndShootTurret;
 import frc.robot.subsystems.turret.commands.HoodTarget;
 import frc.robot.subsystems.turret.commands.ManualHood;
 import frc.robot.subsystems.turret.commands.RotateTurret;
@@ -118,7 +119,7 @@ public class RobotContainer {
         ));
 
     // intake command
-    primary.leftTrigger().whileTrue(
+    primary.leftTrigger().toggleOnTrue(
       new IntakeIn(m_intake, -0.7)
     );
 
@@ -127,20 +128,22 @@ public class RobotContainer {
       new IntakeIn(m_intake, 1)
     );
 
-    primary.a().whileTrue(
-      new RotateTurret(m_turret, m_drivetrain)
-    );
+    // primary.a().whileTrue(
+    //   new RotateTurret(m_turret, m_drivetrain)
+    // );
 
     // primary.x().whileTrue(
     //   new SpinIndexer(m_intake)
     // );
+    primary.start().whileTrue(new SpinIndexer(m_intake));
+    // primary.back().whileTrue(new RotateTurret(m_turret, m_drivetrain));
 
     primary.x().whileTrue(
       new HoodTarget(m_turret, 20)
     );
 
     primary.rightTrigger().whileTrue(
-      new ShootTurret(m_turret, m_drivetrain)
+      new AimAndShootTurret(m_turret, m_drivetrain)
     );
 
   }

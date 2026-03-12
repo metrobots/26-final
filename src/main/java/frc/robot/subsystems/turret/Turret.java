@@ -32,7 +32,7 @@ public class Turret extends SubsystemBase {
 
     // ---------------- CONSTANTS ----------------
     private static final double GEAR_RATIO = 0.03659432;  // Motor:Turret
-    private static final double ABS_ENCODER_ZERO_OFFSET = 0.9970865249633789;
+    private static final double ABS_ENCODER_ZERO_OFFSET = 0; //0.9970865249633789
 
     // ---------------- CONSTRUCTOR ----------------
     @SuppressWarnings("removal")
@@ -50,7 +50,9 @@ public class Turret extends SubsystemBase {
 
         masterConfig
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(80);
+            .smartCurrentLimit(80)
+            .voltageCompensation(12);
+            
 
         masterConfig.encoder
             .positionConversionFactor(1.0)
