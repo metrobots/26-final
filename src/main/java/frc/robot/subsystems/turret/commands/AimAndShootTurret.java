@@ -20,7 +20,7 @@ public class AimAndShootTurret extends Command {
     private static final double TARGET_FEED_RPS = 100.0;
 
     // Flywheel PID
-    private final PIDController flywheelPID = new PIDController(0.35, 0.0, 0.0);
+    private final PIDController flywheelPID = new PIDController(0.5, 0.0, 0.0);
 
     // Feed PID
     private final PIDController feedPID = new PIDController(0.12, 0.0, 0.0);
