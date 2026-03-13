@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake.commands;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.intake.Intake;
 
@@ -7,6 +8,7 @@ public class IntakeIn extends Command {
 
   private final Intake intake;
   private final double speed;
+  private final PIDController intakePID = new PIDController(0.07, 0, 0);
 
   /**
    * @param intake Intake subsystem
@@ -21,6 +23,8 @@ public class IntakeIn extends Command {
   @Override
   public void execute() {
     intake.driveIntake(speed);
+    double output = intakePID.calculate(intake.getEncoder(), 0); // went to 5.5
+    intake.manualPivot(output);
     // intake.spinIndexer(-0.06); //0.052
     // intake.indexer(true);
   }

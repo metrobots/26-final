@@ -25,8 +25,7 @@ public class AimAndShootTurret extends Command {
     private int readyCount = 0;
 
     // Flywheel PID
-    // TODO: Replace kP with SysId-characterized value
-    private final PIDController flywheelPID = new PIDController(0.5, 0.0, 0.0);
+    private final PIDController flywheelPID = new PIDController(0.35, 0.0, 0.0);
 
     // Feed PID
     private final PIDController feedPID = new PIDController(0.12, 0.0, 0.0);
@@ -39,6 +38,10 @@ public class AimAndShootTurret extends Command {
 
     private static final double MAX_TURRET = 30.0;
     private static final double MIN_TURRET = -40.0;
+
+    // Distance-based angle compensation: adds 8 degrees per 3 units of distance
+    private static final double DISTANCE_ANGLE_COMP_DEGREES = 6.0;
+    private static final double DISTANCE_ANGLE_COMP_REF = 3.0;
 
     // Flywheel feedforward
     // TODO: Run SysId to characterize these — kA is unused without acceleration input
@@ -90,12 +93,28 @@ public class AimAndShootTurret extends Command {
 
         /*
         -------------------------
+        DISTANCE CALCULATION
+        -------------------------
+        */
+
+        double distance = drivetrain.getDistanceToCenter();
+
+        TurretHoodTable.HoodData data = table.get(distance);
+
+        double targetRPS = -data.speed;
+        double hoodAngle = data.angle;
+
+        /*
+        -------------------------
         TURRET AIMING
         -------------------------
         */
 
+        // Scale: at distance=3, adds 8 degrees; scales linearly with distance
+        double distanceAngleComp = (distance / DISTANCE_ANGLE_COMP_REF) * DISTANCE_ANGLE_COMP_DEGREES;
+
         double targetAngle =
-            MathUtil.clamp(-drivetrain.getAngleToCenter(), MIN_TURRET, MAX_TURRET);
+            MathUtil.clamp(-drivetrain.getAngleToCenter() + distanceAngleComp, MIN_TURRET, MAX_TURRET);
 
         double currentAngle = turret.getTurretAngleRelative();
 
@@ -115,19 +134,6 @@ public class AimAndShootTurret extends Command {
         } else {
             turret.manualTurret(-turretOutput);
         }
-
-        /*
-        -------------------------
-        DISTANCE CALCULATION
-        -------------------------
-        */
-
-        double distance = drivetrain.getDistanceToCenter();
-
-        TurretHoodTable.HoodData data = table.get(distance);
-
-        double targetRPS = -data.speed;
-        double hoodAngle = data.angle;
 
         /*
         -------------------------
@@ -186,18 +192,17 @@ public class AimAndShootTurret extends Command {
         -------------------------
         */
 
-        if (sustainedReady) {
+        double feedVelocity = turret.getFeedVelocity();
 
-            // Soft-start: scale voltage from 0 → full over FEED_RAMP_LOOPS loops.
-            // This prevents the first ball hitting a flywheel that's right at the
-            // edge of atSpeed, giving the flywheel a moment to absorb the load
-            // before full feed rate is applied.
-            feedRampCount = Math.min(feedRampCount + 1, FEED_RAMP_LOOPS);
-            double rampScale = (double) feedRampCount / FEED_RAMP_LOOPS;
+        boolean atSpeed = Math.abs(currentRPS - targetRPS) <= 2.5;
+        boolean aimed = (currentAngle >= targetAngle - 0.5) && (currentAngle <= targetAngle + 0.5);
+        boolean hoodReady = Math.abs(turret.hoodEncoder.getPosition() - hoodAngle) <= 0.3;
 
-            double feedVelocity = turret.getFeedVelocity();
-            double feedFFVolts  = feedFF.calculate(TARGET_FEED_RPS);
-            double feedPIDVolts = feedPID.calculate(feedVelocity, TARGET_FEED_RPS);
+        if (atSpeed && hoodReady) {
+
+            double feedFFVolts = feedFF.calculate(TARGET_FEED_RPS);
+            double feedPIDVolts =
+                feedPID.calculate(feedVelocity, TARGET_FEED_RPS);
 
             double feedVoltage =
                 MathUtil.clamp((feedFFVolts + feedPIDVolts) * rampScale, -12.0, 12.0);
@@ -221,6 +226,7 @@ public class AimAndShootTurret extends Command {
         */
 
         SmartDashboard.putNumber("DistanceToCenter", distance);
+        SmartDashboard.putNumber("Distance Angle Comp", distanceAngleComp);
         SmartDashboard.putNumber("Turret Target", targetAngle);
         SmartDashboard.putNumber("Turret Angle", currentAngle);
         SmartDashboard.putNumber("Flywheel RPS", currentRPS);

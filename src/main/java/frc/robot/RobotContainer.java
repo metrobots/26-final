@@ -55,11 +55,11 @@ public class RobotContainer {
 
     m_drivetrain.setDefaultCommand( // IF THE DRIVETRAIN ISN'T DOING ANYTHING ELSE, DO THIS. 
         new RunCommand(() -> {
-        m_drivetrain.drive(
-            -Math.copySign(Math.pow(MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband), 2), primary.getLeftY()),
-            -Math.copySign(Math.pow(MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband), 2), primary.getLeftX()),
-            Math.copySign(Math.pow(MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband), 2), primary.getRightX()),
-            true);
+            m_drivetrain.drive(
+                (-MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband)),
+                (-MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband)),
+                (MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband)),
+                true);
         }, m_drivetrain)
     );
 
