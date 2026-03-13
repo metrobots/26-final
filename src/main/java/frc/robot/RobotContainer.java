@@ -28,24 +28,32 @@ import frc.robot.utils.Constants.OIConstants;
 public class RobotContainer {
   // Auto SendableChooser
   // private final SendableChooser<Command> autoChooser;
+
   // Subsystem declarations
   final Drivetrain m_drivetrain;
   final Turret m_turret;
   final Intake m_intake;
   final Dashboard m_dashboard;
-  
+
+  // Command declarations — AimAndShootTurret is held as a field so SpinIndexer
+  // can reference its isSustainedReady() signal.
+  private final AimAndShootTurret m_aimAndShoot;
+  private final SpinIndexer m_spinIndexer;
+
   // The driver's controller
   private final CommandXboxController primary = Constants.primary;
 
-   public RobotContainer() {
+  public RobotContainer() {
 
-    
     m_turret = new Turret();
     m_drivetrain = new Drivetrain(m_turret);
     m_dashboard = new Dashboard();
     m_intake = new Intake();
-    
-    
+
+    // Instantiate commands after subsystems
+    m_aimAndShoot = new AimAndShootTurret(m_turret, m_drivetrain);
+    m_spinIndexer = new SpinIndexer(m_intake, m_aimAndShoot);
+
     registerNamedCommands();
 
     // autoChooser = AutoBuilder.buildAutoChooser();
@@ -53,7 +61,7 @@ public class RobotContainer {
     // Configure the button bindings
     configureButtonBindings();
 
-    m_drivetrain.setDefaultCommand( // IF THE DRIVETRAIN ISN'T DOING ANYTHING ELSE, DO THIS. 
+    m_drivetrain.setDefaultCommand(
         new RunCommand(() -> {
             m_drivetrain.drive(
                 (-MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband)),
@@ -63,89 +71,55 @@ public class RobotContainer {
         }, m_drivetrain)
     );
 
-    // SmartDashboard.putData("Auto Chooser", autoChooser); // Put the auto chooser on the dashboard
-  } 
-
+    // SmartDashboard.putData("Auto Chooser", autoChooser);
+  }
 
   private void registerNamedCommands() {
     // Register commands for auto
   }
 
   private void configureButtonBindings() {
-    //intake pivot command
-    // primary.a().whileTrue(
-    //   new IntakePosition(m_intake)
-    // );
 
-    // SYSID TUNING COMMANDS:
-
-    // primary.a().whileTrue(
-    // m_turret.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-
-    // primary.b().whileTrue(
-    //     m_turret.sysIdDynamic(SysIdRoutine.Direction.kForward));
-
-    // primary.x().whileTrue(
-    //     m_turret.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-
-    // primary.y().whileTrue(
-    //     m_turret.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-
-        m_turret.setDefaultCommand(
+    m_turret.setDefaultCommand(
         m_turret.run(() -> {
-            // ===== Turret rotation =====
-
             if (primary.povLeft().getAsBoolean()) {
                 m_turret.manualTurret(0.2);
-            } 
-            else if (primary.povRight().getAsBoolean()) {
+            } else if (primary.povRight().getAsBoolean()) {
                 m_turret.manualTurret(-0.2);
-            } 
-            else {
+            } else {
                 m_turret.manualTurret(0);
             }
 
             if (primary.povUp().getAsBoolean()) {
                 m_turret.manualHood(-0.06);
-            } 
-            else if (primary.povDown().getAsBoolean()) {
+            } else if (primary.povDown().getAsBoolean()) {
                 m_turret.manualHood(0.06);
-            } 
-            else {
+            } else {
                 m_turret.manualHood(0);
             }
+        })
+    );
 
-          }
-        ));
-
-    // intake command
+    // Intake in
     primary.leftTrigger().toggleOnTrue(
-      new IntakeIn(m_intake, -0.7)
+        new IntakeIn(m_intake, -0.7)
     );
 
-    // outtake command
+    // Outtake
     primary.leftBumper().whileTrue(
-      new IntakeIn(m_intake, 1)
+        new IntakeIn(m_intake, 1)
     );
 
-    // primary.a().whileTrue(
-    //   new RotateTurret(m_turret, m_drivetrain)
-    // );
-
-    // primary.x().whileTrue(
-    //   new SpinIndexer(m_intake)
-    // );
-    primary.start().whileTrue(new SpinIndexer(m_intake));
-    // primary.back().whileTrue(new RotateTurret(m_turret, m_drivetrain));
+    // Spin indexer — gated internally on AimAndShootTurret sustained readiness
+    primary.start().whileTrue(m_spinIndexer);
 
     primary.x().whileTrue(
-      new HoodTarget(m_turret, 20)
+        new HoodTarget(m_turret, 20)
     );
 
-    primary.rightTrigger().whileTrue(
-      new AimAndShootTurret(m_turret, m_drivetrain)
-    );
-
+    // Aim and shoot — right trigger holds both the turret command and the indexer
+    primary.rightTrigger().whileTrue(m_aimAndShoot);
+    primary.rightTrigger().whileTrue(m_spinIndexer);
   }
 
   /**
