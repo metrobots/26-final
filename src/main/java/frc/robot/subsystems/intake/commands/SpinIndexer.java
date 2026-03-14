@@ -8,39 +8,44 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.Intake.IndexerState;
+import frc.robot.subsystems.turret.commands.AimAndShootTurret;
 
-/* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
 public class SpinIndexer extends Command {
 
   private final Intake intake;
+  private final AimAndShootTurret aimAndShoot;
   private IndexerState pastState = IndexerState.ACTIVE;
 
-  /** Creates a new SpinIndexer. */
-  public SpinIndexer(Intake intake) {
-    // Use addRequirements() here to declare subsystem dependencies.
+  /**
+   * Creates a new SpinIndexer.
+   * Spins the indexer only when AimAndShootTurret reports sustained readiness,
+   * so balls are not fed into the flywheel during recovery between shots.
+   */
+  public SpinIndexer(Intake intake, AimAndShootTurret aimAndShoot) {
     this.intake = intake;
+    this.aimAndShoot = aimAndShoot;
     addRequirements(intake);
   }
 
-  // Called when the command is initially scheduled.
   @Override
   public void initialize() {
     this.pastState = intake.currentState;
   }
 
-  // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    intake.spinIndexer(-0.06);
+    if (aimAndShoot.isSustainedReady()) {
+      intake.spinIndexer(-0.06);
+    } else {
+      intake.spinIndexer(0.0);
+    }
   }
 
-  // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
     intake.spinIndexer(0.0);
   }
 
-  // Returns true when the command should end.
   @Override
   public boolean isFinished() {
     return false;
