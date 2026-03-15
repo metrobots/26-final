@@ -1,5 +1,6 @@
 package frc.robot;
 
+import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -77,6 +78,8 @@ public class RobotContainer {
 
   private void registerNamedCommands() {
     // Register commands for auto
+    NamedCommands.registerCommand("shoot", new AimAndShootTurret(m_turret, m_drivetrain));
+    NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.4));
   }
 
   private void configureButtonBindings() {
