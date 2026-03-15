@@ -5,6 +5,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.commands.turret.PurgeTurret;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.intake.Intake;
@@ -110,8 +111,19 @@ public class RobotContainer {
         new IntakeIn(m_intake, 1)
     );
 
-    // Spin indexer — gated internally on AimAndShootTurret sustained readiness
-    primary.start().whileTrue(m_spinIndexer);
+    primary.rightBumper().whileTrue(
+      new PurgeTurret(m_turret)
+    );
+
+    // primary.a().whileTrue(
+    //   new RotateTurret(m_turret, m_drivetrain)
+    // );
+
+    // primary.x().whileTrue(
+    //   new SpinIndexer(m_intake)
+    // );
+    primary.start().whileTrue(new SpinIndexer(m_intake));
+    // primary.back().whileTrue(new RotateTurret(m_turret, m_drivetrain));
 
     primary.x().whileTrue(
         new HoodTarget(m_turret, 20)

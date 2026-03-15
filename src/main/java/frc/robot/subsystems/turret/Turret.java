@@ -32,15 +32,8 @@ public class Turret extends SubsystemBase {
     public final RelativeEncoder feedEncoder;
 
     // ---------------- CONSTANTS ----------------
-    // Motor encoder sees the full chain: 8:1 gearbox + 28:100 external stage
-    // = 800/28 motor rotations per turret rotation
-    // GEAR_RATIO = motor rotations -> turret rotations
-    private static final double GEAR_RATIO = 28.0 / 800.0; // ~0.035
-
-    // Inverse: turret rotations -> motor rotations (used for calibration)
-    private static final double GEAR_RATIO_INV = 800.0 / 28.0; // ~28.5714
-
-    private static final double ABS_ENCODER_ZERO_OFFSET = 0.0; // update once true zero is measured
+    private static final double GEAR_RATIO = 0.035;  // Motor:Turret
+    private static final double ABS_ENCODER_ZERO_OFFSET = 0.0; //0.9970865249633789
 
     // ---------------- CONSTRUCTOR ----------------
     @SuppressWarnings("removal")
@@ -60,6 +53,7 @@ public class Turret extends SubsystemBase {
             .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(80)
             .voltageCompensation(12);
+            
 
         masterConfig.encoder
             .positionConversionFactor(1.0)
@@ -112,12 +106,12 @@ public class Turret extends SubsystemBase {
      * We negate to match the sign convention used in getTurretAngle().
      */
     public void calibrateTurretEncoder() {
-        Timer.delay(0.1);
         double absFraction = turretAbsoluteEncoder.getPosition();
         double correctedFraction = absFraction - ABS_ENCODER_ZERO_OFFSET;
-        // Convert turret fraction -> encoder shaft rotations
-        double encoderRotations = -correctedFraction * GEAR_RATIO_INV;
-        turretRelativeEncoder.setPosition(encoderRotations);
+        // Wrap to -0.5 to 0.5 so 0.996 becomes ~0
+        correctedFraction = ((correctedFraction + 0.5) % 1.0 + 1.0) % 1.0 - 0.5;
+        double motorRotations = -correctedFraction * 8.0;
+        turretRelativeEncoder.setPosition(motorRotations);
     }
 
     @Override
