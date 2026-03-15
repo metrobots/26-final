@@ -69,10 +69,10 @@ public final class Constants {
     public static final int kRearRightTurningCanId = 47;
 
     // Encoders
-    public static final int kFrontLeftEncoder = 1; 
-    public static final int kFrontRightEncoder = 0;
-    public static final int kRearLeftEncoder = 3; 
-    public static final int kRearRightEncoder = 2;
+    public static final int kFrontLeftEncoder = 2; 
+    public static final int kFrontRightEncoder = 3;
+    public static final int kRearLeftEncoder = 1; 
+    public static final int kRearRightEncoder = 0;
     // Encoder offsets
     public static final double kFrontLeftEncoderOffset = 6.0883963923748174;
     public static final double kFrontRightEncoderOffset = 0.9453248064299455;
@@ -99,7 +99,7 @@ public final class Constants {
 
   public static final class OIConstants {
     public static final int kDriverControllerPort = 0; // Controller port
-    public static final double kDriveDeadband = 0.1;
+    public static final double kDriveDeadband = 0.06;
   }
 
   public static final class AutoConstants {

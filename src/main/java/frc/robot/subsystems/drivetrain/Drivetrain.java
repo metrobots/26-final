@@ -275,7 +275,7 @@ public class Drivetrain extends SubsystemBase {
     /* ================= DASHBOARD ================= */
 
     private void updateDashboard() {
-        SmartDashboard.putNumber("Robot Heading", getGyroRotation().getDegrees());
+        SmartDashboard.putNumber("Robot Heading", getHeading());
         SmartDashboard.putNumber("test", getAngleToCenter());
         SmartDashboard.putNumber("Distance To Center", distanceToCenter);
     }

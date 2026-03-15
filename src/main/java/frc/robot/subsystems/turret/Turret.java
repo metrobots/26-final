@@ -32,8 +32,8 @@ public class Turret extends SubsystemBase {
     public final RelativeEncoder feedEncoder;
 
     // ---------------- CONSTANTS ----------------
-    private static final double GEAR_RATIO = 0.03659432;  // Motor:Turret
-    private static final double ABS_ENCODER_ZERO_OFFSET = 0; //0.9970865249633789
+    private static final double GEAR_RATIO = 0.035;  // Motor:Turret
+    private static final double ABS_ENCODER_ZERO_OFFSET = 0.0; //0.9970865249633789
 
     // ---------------- CONSTRUCTOR ----------------
     @SuppressWarnings("removal")
@@ -100,11 +100,12 @@ public class Turret extends SubsystemBase {
      * Syncs the relative encoder with the absolute encoder at startup.
      */
     public void calibrateTurretEncoder() {
-      Timer.delay(0.5);
-      double absFraction = turretAbsoluteEncoder.getPosition();
-      double correctedFraction = absFraction - ABS_ENCODER_ZERO_OFFSET;
-      double motorRotations = -correctedFraction * 8;
-      turretRelativeEncoder.setPosition(motorRotations);
+        double absFraction = turretAbsoluteEncoder.getPosition();
+        double correctedFraction = absFraction - ABS_ENCODER_ZERO_OFFSET;
+        // Wrap to -0.5 to 0.5 so 0.996 becomes ~0
+        correctedFraction = ((correctedFraction + 0.5) % 1.0 + 1.0) % 1.0 - 0.5;
+        double motorRotations = -correctedFraction * 8.0;
+        turretRelativeEncoder.setPosition(motorRotations);
     }
 
     @Override
