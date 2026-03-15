@@ -13,7 +13,6 @@ import frc.robot.subsystems.turret.commands.AimAndShootTurret;
 public class SpinIndexer extends Command {
 
   private final Intake intake;
-  private final AimAndShootTurret aimAndShoot;
   private IndexerState pastState = IndexerState.ACTIVE;
 
   /**
@@ -21,9 +20,8 @@ public class SpinIndexer extends Command {
    * Spins the indexer only when AimAndShootTurret reports sustained readiness,
    * so balls are not fed into the flywheel during recovery between shots.
    */
-  public SpinIndexer(Intake intake, AimAndShootTurret aimAndShoot) {
+  public SpinIndexer(Intake intake) {
     this.intake = intake;
-    this.aimAndShoot = aimAndShoot;
     addRequirements(intake);
   }
 
@@ -34,11 +32,8 @@ public class SpinIndexer extends Command {
 
   @Override
   public void execute() {
-    if (aimAndShoot.isSustainedReady()) {
       intake.spinIndexer(-0.06);
-    } else {
       intake.spinIndexer(0.0);
-    }
   }
 
   @Override

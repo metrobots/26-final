@@ -53,7 +53,7 @@ public class RobotContainer {
 
     // Instantiate commands after subsystems
     m_aimAndShoot = new AimAndShootTurret(m_turret, m_drivetrain);
-    m_spinIndexer = new SpinIndexer(m_intake, m_aimAndShoot);
+    m_spinIndexer = new SpinIndexer(m_intake);
 
     registerNamedCommands();
 
