@@ -32,9 +32,9 @@ public class TurretHoodTable {
         table.put(2.75, new HoodData(0, 21));
         table.put(3.0, new HoodData(0, 21));
         table.put(3.25, new HoodData(0, 21));
-        table.put(3.5, new HoodData(0.5, 21));
+        table.put(3.5, new HoodData(0, 21));
         table.put(3.75, new HoodData(0, 21));
-        table.put(4.0, new HoodData(1.5, 21)); // NEED A HOOD ANGLE FOR THIS ONE
+        table.put(4.0, new HoodData(0, 21)); // NEED A HOOD ANGLE FOR THIS ONE
         table.put(4.25, new HoodData(0, 21));
         
     }
