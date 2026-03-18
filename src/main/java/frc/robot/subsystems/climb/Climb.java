@@ -26,9 +26,9 @@ public class Climb extends SubsystemBase {
     private static final double gearRatio = 64.0;
     // The climb motor has a drum radius of 2 inches.
     private static final double circumeference = 4 * Math.PI;
-    // Convert from rotations to meters.
+    // Convert from rotations to inches.
     private static final double positionConversionFactor = circumeference / gearRatio;
-    // Convert from rpm to in/s.
+    // Convert from rpm to inches per second.
     private static final double velocityConversionFactor = positionConversionFactor / 60;
 
     /* Climb mechanism constants. */
@@ -39,7 +39,6 @@ public class Climb extends SubsystemBase {
         encoder = climbMotor.getEncoder();
         closedLoopController = climbMotor.getClosedLoopController();
         configure();
-        // TODO: Check this.
         //  When the robot is turned on, the climb mechanism is completely collapsed.
         encoder.setPosition(0);
     }
@@ -78,30 +77,6 @@ public class Climb extends SubsystemBase {
     public void setDesiredExtension(double target) {
         closedLoopController.setSetpoint(target, ControlType.kPosition);
     }
-
-    // public void getEncoder() {
-    //     // return encoder;
-    // }
-
-    // public double getMaxHeight() {
-    //     return maxHeight;
-    // }
-
-    // public double getMinHeight() {
-    //     return minHeight;
-    // }
-
-    // public double getMaxExtension() {
-    //     return maxExtension;
-    // }
-
-    // // Positional movement
-    // public void positionalMove(double setpoint, double speed) {
-
-    //     // climbMotor.set(climbPID.calculate(speed, setpoint));
-
-    //     return;
-    // }
 
     /**
      * Manually move the climb.
