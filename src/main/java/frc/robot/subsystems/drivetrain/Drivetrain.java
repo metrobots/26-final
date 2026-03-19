@@ -37,8 +37,8 @@ public class Drivetrain extends SubsystemBase {
     private static final double FIELD_LENGTH = 16.54;
     private static final double FIELD_WIDTH  = 8.21;
 
-    private static final Translation2d FIELD_CENTER =
-            new Translation2d((FIELD_LENGTH / 3.0) - 1, FIELD_WIDTH / 2.0);
+    /** Base X for the red-side field center target. Mirrored for blue alliance. */
+    private static final double FIELD_CENTER_X = (FIELD_LENGTH / 3.0) - 1;
 
     /* ================= TURRET / CAMERA GEOMETRY ================= */
 
@@ -236,6 +236,20 @@ public class Drivetrain extends SubsystemBase {
 
     /* ================= FIELD CALCULATIONS ================= */
 
+    /**
+     * Returns the alliance-aware field center target.
+     * Red alliance uses the base X; blue alliance mirrors it across the field midline.
+     */
+    private Translation2d getFieldCenter() {
+        double x = FIELD_CENTER_X;
+        boolean isBlue = DriverStation.getAlliance().isPresent()
+                && DriverStation.getAlliance().get() == DriverStation.Alliance.Blue;
+        if (isBlue) {
+            x = FIELD_LENGTH - x;
+        }
+        return new Translation2d(x, FIELD_WIDTH / 2.0);
+    }
+
     private void updateFieldCalculations() {
 
         Pose2d pose = poseEstimator.getEstimatedPosition();
@@ -252,23 +266,24 @@ public class Drivetrain extends SubsystemBase {
                 + TURRET_PIVOT_SIDE   * Math.cos(robotHeading);
 
         Translation2d turretPivot = new Translation2d(turretWorldX, turretWorldY);
+        Translation2d fieldCenter = getFieldCenter();
 
-        distanceToCenter = turretPivot.getDistance(FIELD_CENTER);
+        distanceToCenter = turretPivot.getDistance(fieldCenter);
 
-        double dx = FIELD_CENTER.getX() - turretPivot.getX();
-        double dy = FIELD_CENTER.getY() - turretPivot.getY();
+        double dx = fieldCenter.getX() - turretPivot.getX();
+        double dy = fieldCenter.getY() - turretPivot.getY();
 
         double fieldAngle = Math.toDegrees(Math.atan2(dy, dx));
         angleToCenter = MathUtil.inputModulus(getGyroRotation().getDegrees() - fieldAngle, -180, 180);
 
         // Draw the field center marker, turret pivot marker, and a line between them
         field.getObject("FieldCenter").setPose(
-                new Pose2d(FIELD_CENTER, new Rotation2d()));
+                new Pose2d(fieldCenter, new Rotation2d()));
         field.getObject("TurretPivot").setPose(
                 new Pose2d(turretPivot, getGyroRotation()));
         field.getObject("ToCenter").setPoses(List.of(
                 new Pose2d(turretPivot, new Rotation2d()),
-                new Pose2d(FIELD_CENTER, new Rotation2d())));
+                new Pose2d(fieldCenter, new Rotation2d())));
     }
 
     /* ================= DASHBOARD ================= */
