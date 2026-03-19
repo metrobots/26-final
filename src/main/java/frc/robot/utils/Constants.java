@@ -135,4 +135,17 @@ public final class Constants {
     public static final PIDController yPID = new PIDController(0.5, 0.0, 0.00); 
     public static final PIDController xPID = new PIDController(0.5, 0.0, 0.00); 
   }
+
+  public static class ClimbConstants {
+    // The climb motor has a gear ratio of 64:1 (4:1 -> 4:1 -> 4:1).
+    public static final double gearRatio = 64.0;
+    // The climb motor has a drum radius of 2 inches.
+    public static final double circumeference = 4 * Math.PI;
+    // Convert from rotations to meters.
+    public static final double positionConversionFactor = circumeference / gearRatio;
+    // Convert from rpm to in/s.
+    public static final double velocityConversionFactor = positionConversionFactor / 60;
+    // Maximum extension of the climb mechanism (in inches).
+    public static final double maxExtensionInInches = 8;
+  }
 }

@@ -6,10 +6,8 @@ import frc.robot.subsystems.climb.Climb;
 public class ClimbDown extends Command {
     private final Climb climb;
 
-    /** 
-     * Move the climb down at a given speed while the command is active. 
-     * @param climbSubsystem the climb subsystem
-     * @param speed negative value (-1-0) for downward movement
+    /**
+     * Move climb mechanism to minimum extension.
      */
     public ClimbDown(Climb climbSubsystem) {
         this.climb = climbSubsystem;
