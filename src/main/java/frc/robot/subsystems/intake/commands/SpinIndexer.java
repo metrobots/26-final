@@ -8,11 +8,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.Intake.IndexerState;
+import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.commands.AimAndShootTurret;
 
 public class SpinIndexer extends Command {
 
   private final Intake intake;
+  private final Turret turret;
   private IndexerState pastState = IndexerState.ACTIVE;
 
   /**
@@ -20,8 +22,9 @@ public class SpinIndexer extends Command {
    * Spins the indexer only when AimAndShootTurret reports sustained readiness,
    * so balls are not fed into the flywheel during recovery between shots.
    */
-  public SpinIndexer(Intake intake) {
+  public SpinIndexer(Intake intake, Turret turret) {
     this.intake = intake;
+    this.turret = turret;
     addRequirements(intake);
   }
 
@@ -33,7 +36,8 @@ public class SpinIndexer extends Command {
   @Override
   public void execute() {
       intake.spinIndexer(-0.06);
-      intake.spinIndexer(0.0);
+      turret.spinFeed(6);
+      // intake.spinIndexer(0.0);
   }
 
   @Override

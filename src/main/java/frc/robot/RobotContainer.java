@@ -54,7 +54,7 @@ public class RobotContainer {
 
     // Instantiate commands after subsystems
     m_aimAndShoot = new AimAndShootTurret(m_turret, m_drivetrain);
-    m_spinIndexer = new SpinIndexer(m_intake);
+    m_spinIndexer = new SpinIndexer(m_intake, m_turret);
 
     registerNamedCommands();
 
@@ -125,7 +125,7 @@ public class RobotContainer {
     // primary.x().whileTrue(
     //   new SpinIndexer(m_intake)
     // );
-    primary.start().whileTrue(new SpinIndexer(m_intake));
+    primary.start().whileTrue(new SpinIndexer(m_intake, m_turret));
     // primary.back().whileTrue(new RotateTurret(m_turret, m_drivetrain));
 
     primary.x().whileTrue(
@@ -134,7 +134,6 @@ public class RobotContainer {
 
     // Aim and shoot — right trigger holds both the turret command and the indexer
     primary.rightTrigger().whileTrue(m_aimAndShoot);
-    primary.rightTrigger().whileTrue(m_spinIndexer);
   }
 
   /**

@@ -93,6 +93,8 @@ public class AimAndShootTurret extends Command {
         double targetAngle =
             MathUtil.clamp(-drivetrain.getAngleToCenter(), MIN_TURRET, MAX_TURRET);
 
+        targetAngle += 1; // TUNE THIS OFFSET TO COMPENSATE FOR  SYSTEMATIC ERROR
+
         double currentAngle = turret.getTurretAngleRelative();
 
         double angularVelocity = drivetrain.getTurnRate();

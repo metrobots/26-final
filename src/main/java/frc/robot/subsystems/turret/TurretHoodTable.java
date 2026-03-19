@@ -24,18 +24,18 @@ public class TurretHoodTable {
     public TurretHoodTable() {
 
         // distance (meters) → hood angle + shooter speed
-        table.put(1.5, new HoodData(0, 21));
-        table.put(1.75, new HoodData(0, 21));
-        table.put(2.0, new HoodData(0, 21));
-        table.put(2.25, new HoodData(0, 21));
-        table.put(2.5, new HoodData(0, 21));
-        table.put(2.75, new HoodData(0, 21));
-        table.put(3.0, new HoodData(0, 21));
-        table.put(3.25, new HoodData(0, 21));
-        table.put(3.5, new HoodData(0, 21));
-        table.put(3.75, new HoodData(0, 21));
-        table.put(4.0, new HoodData(0, 21)); // NEED A HOOD ANGLE FOR THIS ONE
-        table.put(4.25, new HoodData(0, 21));
+        table.put(1.5, new HoodData(0, 19));
+        table.put(1.75, new HoodData(0, 19));
+        table.put(2.0, new HoodData(0, 19));
+        table.put(2.25, new HoodData(0, 21.6));
+        table.put(2.5, new HoodData(0, 22));
+        table.put(2.75, new HoodData(0, 22.5));
+        table.put(3.0, new HoodData(0, 23));
+        table.put(3.25, new HoodData(0, 24));
+        table.put(3.5, new HoodData(0, 26));
+        table.put(3.75, new HoodData(0, 28));
+        table.put(4.0, new HoodData(0, 29)); // NEED A HOOD ANGLE FOR THIS ONE
+        table.put(4.25, new HoodData(0, 30));
         
     }
 
