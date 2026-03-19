@@ -14,7 +14,8 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.*;
-
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.*;
 
@@ -23,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.utils.Constants.AutoConstants;
 import frc.robot.utils.Constants.DriveConstants;
+import frc.robot.utils.Elastic;
 import frc.robot.utils.LimelightLib;
 import frc.robot.utils.LimelightLib.PoseEstimate;
 
@@ -31,6 +33,7 @@ import java.util.List;
 public class Drivetrain extends SubsystemBase {
     private final Turret turret;
     private static final String LIMELIGHT = "limelight-front";
+    private boolean endgame = false;
 
     /* ================= FIELD CONSTANTS ================= */
 
@@ -133,6 +136,7 @@ public class Drivetrain extends SubsystemBase {
     public Drivetrain(Turret turret) {
         this.turret = turret;
         SmartDashboard.putData("Field", field);
+        endgame = false;
         configureAutoBuilder();
     }
 
@@ -168,6 +172,11 @@ public class Drivetrain extends SubsystemBase {
         updateVision();
         updateFieldCalculations();
         updateDashboard();
+
+        if (DriverStation.getMatchTime() < 20 && !endgame) {
+                Elastic.selectTab(2);
+                endgame = true;
+        }
     }
 
     /* ================= ODOMETRY ================= */
@@ -288,11 +297,26 @@ public class Drivetrain extends SubsystemBase {
 
     /* ================= DASHBOARD ================= */
 
-    private void updateDashboard() {
+        private void updateDashboard() {
         SmartDashboard.putNumber("Robot Heading", getHeading());
         SmartDashboard.putNumber("test", getAngleToCenter());
         SmartDashboard.putNumber("Distance To Center", distanceToCenter);
-    }
+        SmartDashboard.putData("Swerve Drive", new Sendable() {
+                @Override
+                public void initSendable(SendableBuilder builder) {
+                builder.setSmartDashboardType("SwerveDrive");
+                builder.addDoubleProperty("Front Left Angle",    () -> frontLeft.getState().angle.getRadians(),  null);
+                builder.addDoubleProperty("Front Left Velocity", () -> frontLeft.getState().speedMetersPerSecond, null);
+                builder.addDoubleProperty("Front Right Angle",    () -> frontRight.getState().angle.getRadians(),  null);
+                builder.addDoubleProperty("Front Right Velocity", () -> frontRight.getState().speedMetersPerSecond, null);
+                builder.addDoubleProperty("Back Left Angle",    () -> rearLeft.getState().angle.getRadians(),  null);
+                builder.addDoubleProperty("Back Left Velocity", () -> rearLeft.getState().speedMetersPerSecond, null);
+                builder.addDoubleProperty("Back Right Angle",    () -> rearRight.getState().angle.getRadians(),  null);
+                builder.addDoubleProperty("Back Right Velocity", () -> rearRight.getState().speedMetersPerSecond, null);
+                builder.addDoubleProperty("Robot Angle", () -> getGyroRotation().getRadians(), null);
+                }
+        });
+        }
 
     /* ================= POSE METHODS ================= */
 
