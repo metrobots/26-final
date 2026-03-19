@@ -76,8 +76,8 @@ public final class Constants {
     // Encoder offsets
     public static final double kFrontLeftEncoderOffset = 6.0883963923748174;
     public static final double kFrontRightEncoderOffset = 0.9453248064299455;
-    public static final double kRearLeftEncoderOffset = 5.155718208517749;
-    public static final double kRearRightEncoderOffset = 4.432023631580357;
+    public static final double kRearLeftEncoderOffset = 4.282046414524278;
+    public static final double kRearRightEncoderOffset = 4.55277141597666;
 
 
 

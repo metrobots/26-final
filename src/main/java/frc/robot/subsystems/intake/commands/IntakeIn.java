@@ -23,8 +23,9 @@ public class IntakeIn extends Command {
   @Override
   public void execute() {
     intake.driveIntake(speed);
-    double output = intakePID.calculate(intake.getEncoder(), 0); // went to 5.5
-    intake.manualPivot(output);
+    intake.intakePivot.set(-0.3);
+    // double output = intakePID.calculate(intake.getEncoder(), 0); // went to 5.5
+    // intake.manualPivot(output);
     // intake.spinIndexer(-0.06); //0.052
     // intake.indexer(true);
   }

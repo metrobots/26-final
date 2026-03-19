@@ -1,14 +1,18 @@
 package frc.robot;
 
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.commands.IntakeDown;
 import frc.robot.subsystems.intake.commands.IntakeIn;
 import frc.robot.subsystems.intake.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
@@ -29,7 +33,7 @@ import frc.robot.utils.Constants.OIConstants;
  */
 public class RobotContainer {
   // Auto SendableChooser
-  // private final SendableChooser<Command> autoChooser;
+  private final SendableChooser<Command> autoChooser;
 
   // Subsystem declarations
   final Drivetrain m_drivetrain;
@@ -58,7 +62,7 @@ public class RobotContainer {
 
     registerNamedCommands();
 
-    // autoChooser = AutoBuilder.buildAutoChooser();
+    autoChooser = AutoBuilder.buildAutoChooser();
 
     // Configure the button bindings
     configureButtonBindings();
@@ -73,7 +77,7 @@ public class RobotContainer {
         }, m_drivetrain)
     );
 
-    // SmartDashboard.putData("Auto Chooser", autoChooser);
+    SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
   private void registerNamedCommands() {
@@ -106,12 +110,15 @@ public class RobotContainer {
 
     // Intake in
     primary.leftTrigger().toggleOnTrue(
-        new IntakeIn(m_intake, -0.7)
+        new IntakeIn(m_intake, -0.9)
     );
 
     // Outtake
     primary.leftBumper().whileTrue(
         new IntakeIn(m_intake, 1)
+    );
+    primary.a().whileTrue(
+        new IntakeDown(m_intake)
     );
 
     primary.rightBumper().whileTrue(
@@ -142,6 +149,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return new PathPlannerAuto("Example Auto");
+    return autoChooser.getSelected();
   }
 }

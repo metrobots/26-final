@@ -35,6 +35,13 @@ public class Drivetrain extends SubsystemBase {
     private static final String LIMELIGHT = "limelight-front";
     private boolean endgame = false;
 
+    /* ================= HUB STATUS ================= */
+
+    private boolean hubActive          = true;
+    private String  hubStatus          = "Unknown";
+    private int     currentShift       = 0;
+    private double  shiftTimeRemaining = 0;
+
     /* ================= FIELD CONSTANTS ================= */
 
     private static final double FIELD_LENGTH = 16.54;
@@ -138,6 +145,26 @@ public class Drivetrain extends SubsystemBase {
         SmartDashboard.putData("Field", field);
         endgame = false;
         configureAutoBuilder();
+
+        // Register the Sendable once here so WPILib wires up the lambda
+        // callbacks at startup and polls them automatically each loop.
+        // Calling putData() every periodic() would create a new publisher
+        // each iteration and quickly exhaust the NetworkTables publisher limit.
+        SmartDashboard.putData("Swerve Drive", new Sendable() {
+            @Override
+            public void initSendable(SendableBuilder builder) {
+                builder.setSmartDashboardType("SwerveDrive");
+                builder.addDoubleProperty("Front Left Angle",    () -> frontLeft.getState().angle.getRadians(),   null);
+                builder.addDoubleProperty("Front Left Velocity", () -> frontLeft.getState().speedMetersPerSecond,  null);
+                builder.addDoubleProperty("Front Right Angle",   () -> frontRight.getState().angle.getRadians(),  null);
+                builder.addDoubleProperty("Front Right Velocity",() -> frontRight.getState().speedMetersPerSecond, null);
+                builder.addDoubleProperty("Back Left Angle",     () -> rearLeft.getState().angle.getRadians(),    null);
+                builder.addDoubleProperty("Back Left Velocity",  () -> rearLeft.getState().speedMetersPerSecond,   null);
+                builder.addDoubleProperty("Back Right Angle",    () -> rearRight.getState().angle.getRadians(),   null);
+                builder.addDoubleProperty("Back Right Velocity", () -> rearRight.getState().speedMetersPerSecond,  null);
+                builder.addDoubleProperty("Robot Angle",         () -> getGyroRotation().getRadians(),             null);
+            }
+        });
     }
 
     /* ================= AUTO BUILDER ================= */
@@ -171,11 +198,12 @@ public class Drivetrain extends SubsystemBase {
         updateOdometry();
         updateVision();
         updateFieldCalculations();
+        updateHubStatus();
         updateDashboard();
 
         if (DriverStation.getMatchTime() < 20 && !endgame) {
-                Elastic.selectTab(2);
-                endgame = true;
+            Elastic.selectTab(2);
+            endgame = true;
         }
     }
 
@@ -295,28 +323,97 @@ public class Drivetrain extends SubsystemBase {
                 new Pose2d(fieldCenter, new Rotation2d())));
     }
 
+    /* ================= HUB STATUS ================= */
+
+    private void updateHubStatus() {
+        var alliance = DriverStation.getAlliance();
+
+        if (alliance.isEmpty()) {
+            hubActive = false;
+            hubStatus = "Unknown";
+            return;
+        }
+
+        if (DriverStation.isAutonomousEnabled()) {
+            hubActive = true;
+            hubStatus = "Active (Auto)";
+            currentShift = 0;
+            shiftTimeRemaining = DriverStation.getMatchTime();
+            return;
+        }
+
+        if (!DriverStation.isTeleopEnabled()) {
+            hubActive = false;
+            hubStatus = "Inactive";
+            currentShift = 0;
+            shiftTimeRemaining = 0;
+            return;
+        }
+
+        double t = DriverStation.getMatchTime();
+        String gameData = DriverStation.getGameSpecificMessage();
+
+        // No game data yet — early teleop, assume active
+        if (gameData.isEmpty()) {
+            hubActive = true;
+            hubStatus = "Active";
+            return;
+        }
+
+        boolean redInactiveFirst = gameData.charAt(0) == 'R';
+        boolean isRed = alliance.get() == DriverStation.Alliance.Red;
+
+        // Our hub is active in Shifts 1 & 3 if the opponent went inactive first
+        boolean shift1Active = isRed ? !redInactiveFirst : redInactiveFirst;
+
+        if (t > 130) {
+            // Transition period at start of teleop — hub always active
+            hubActive = true;
+            currentShift = 0;
+            shiftTimeRemaining = t - 130;
+        } else if (t > 105) {
+            hubActive = shift1Active;
+            currentShift = 1;
+            shiftTimeRemaining = t - 105;
+        } else if (t > 80) {
+            hubActive = !shift1Active;
+            currentShift = 2;
+            shiftTimeRemaining = t - 80;
+        } else if (t > 55) {
+            hubActive = shift1Active;
+            currentShift = 3;
+            shiftTimeRemaining = t - 55;
+        } else if (t > 30) {
+            hubActive = !shift1Active;
+            currentShift = 4;
+            shiftTimeRemaining = t - 30;
+        } else {
+            // Endgame — hub always active
+            hubActive = true;
+            currentShift = 5;
+            shiftTimeRemaining = t;
+        }
+
+        hubStatus = hubActive ? "Active" : "Inactive";
+    }
+
     /* ================= DASHBOARD ================= */
 
-        private void updateDashboard() {
+    private void updateDashboard() {
+        // putNumber() updates existing NT entries — safe to call every loop.
+        // The Swerve Drive Sendable is registered once in the constructor instead.
         SmartDashboard.putNumber("Robot Heading", getHeading());
         SmartDashboard.putNumber("test", getAngleToCenter());
         SmartDashboard.putNumber("Distance To Center", distanceToCenter);
-        SmartDashboard.putData("Swerve Drive", new Sendable() {
-                @Override
-                public void initSendable(SendableBuilder builder) {
-                builder.setSmartDashboardType("SwerveDrive");
-                builder.addDoubleProperty("Front Left Angle",    () -> frontLeft.getState().angle.getRadians(),  null);
-                builder.addDoubleProperty("Front Left Velocity", () -> frontLeft.getState().speedMetersPerSecond, null);
-                builder.addDoubleProperty("Front Right Angle",    () -> frontRight.getState().angle.getRadians(),  null);
-                builder.addDoubleProperty("Front Right Velocity", () -> frontRight.getState().speedMetersPerSecond, null);
-                builder.addDoubleProperty("Back Left Angle",    () -> rearLeft.getState().angle.getRadians(),  null);
-                builder.addDoubleProperty("Back Left Velocity", () -> rearLeft.getState().speedMetersPerSecond, null);
-                builder.addDoubleProperty("Back Right Angle",    () -> rearRight.getState().angle.getRadians(),  null);
-                builder.addDoubleProperty("Back Right Velocity", () -> rearRight.getState().speedMetersPerSecond, null);
-                builder.addDoubleProperty("Robot Angle", () -> getGyroRotation().getRadians(), null);
-                }
-        });
-        }
+        SmartDashboard.putNumber("RR", rearRight.getAngle());
+        SmartDashboard.putNumber("RL", rearLeft.getAngle());
+        SmartDashboard.putNumber("RRoffset", rearRight.getAngleFull());
+        SmartDashboard.putNumber("RLoffset", rearLeft.getAngleFull());
+        SmartDashboard.putBoolean("Hub Active",           hubActive);
+        SmartDashboard.putString("Hub Status",            hubStatus);
+        SmartDashboard.putNumber("Hub Shift",             currentShift);
+        SmartDashboard.putNumber("Shift Time Remaining",  shiftTimeRemaining);
+    }
 
     /* ================= POSE METHODS ================= */
 

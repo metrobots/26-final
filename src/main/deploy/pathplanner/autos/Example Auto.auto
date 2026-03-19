@@ -7,19 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "L-CT"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "CT-L"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "L-Shoot"
+            "pathName": "USE THIS"
           }
         }
       ]
