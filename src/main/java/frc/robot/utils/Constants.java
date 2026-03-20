@@ -41,9 +41,9 @@ public final class Constants {
     // Chassis Config
 
     // Distance between the center of right and left modules 
-    public static final double kTrackWidth = Units.inchesToMeters(23); // This is correct for 2025 drivetrain
+    public static final double kTrackWidth = Units.inchesToMeters(21.25); // This is correct for 2026 drivetrain
     // Distance between the center of the front and back modules
-    public static final double kWheelBase = Units.inchesToMeters(23);
+    public static final double kWheelBase = Units.inchesToMeters(21.25);
 
     // IF IT DOES NOT WORK REVERT THE KINEMATICS
     public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
