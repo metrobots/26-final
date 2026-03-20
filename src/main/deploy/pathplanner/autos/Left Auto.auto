@@ -21,6 +21,12 @@
           "data": {
             "pathName": "Left-HP"
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shoot"
+          }
         }
       ]
     }

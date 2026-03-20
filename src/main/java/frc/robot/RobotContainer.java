@@ -88,9 +88,9 @@ public class RobotContainer {
             new WaitCommand(2.0),
             new SpinIndexer(m_intake, m_turret)
         )
-    ).withTimeout(10.0));
+    ).withTimeout(8.0));
 
-    NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.7).withTimeout(6.0));
+    NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.7));
   }
 
   private void configureButtonBindings() {
