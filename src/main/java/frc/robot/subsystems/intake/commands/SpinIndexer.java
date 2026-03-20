@@ -36,13 +36,14 @@ public class SpinIndexer extends Command {
   @Override
   public void execute() {
       intake.spinIndexer(-0.06);
-      turret.spinFeed(6);
+      turret.feedSpark.set(0.5);
       // intake.spinIndexer(0.0);
   }
 
   @Override
   public void end(boolean interrupted) {
     intake.spinIndexer(0.0);
+    turret.feedSpark.set(0);
   }
 
   @Override

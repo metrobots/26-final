@@ -113,7 +113,7 @@ public class Drivetrain extends SubsystemBase {
 
     /* ================= SENSORS ================= */
 
-    private final AHRS gyro = new AHRS(NavXComType.kMXP_SPI);
+    private final AHRS gyro = new AHRS(NavXComType.kUSB1);
 
     /* ================= CONTROL ================= */
 

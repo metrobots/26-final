@@ -91,6 +91,7 @@ public class RobotContainer {
     ).withTimeout(8.0));
 
     NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.7));
+    NamedCommands.registerCommand("down", new IntakeDown(m_intake).withTimeout(3));
   }
 
   private void configureButtonBindings() {
@@ -102,6 +103,7 @@ public class RobotContainer {
             } else if (primary.povRight().getAsBoolean()) {
                 m_turret.manualTurret(-0.2);
             } else {
+                
                 m_turret.manualTurret(0);
             }
 

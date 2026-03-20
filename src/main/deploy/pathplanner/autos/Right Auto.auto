@@ -36,6 +36,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "down"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "Depot-Shot"
