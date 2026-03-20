@@ -3,9 +3,10 @@ package frc.robot.subsystems.turret.commands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretHoodTable;
 import frc.robot.subsystems.drivetrain.Drivetrain;
@@ -14,6 +15,7 @@ public class AimAndShootTurret extends Command {
 
     private final Turret turret;
     private final Drivetrain drivetrain;
+    private final CommandXboxController prim;
 
     private final TurretHoodTable table = new TurretHoodTable();
 
@@ -50,10 +52,11 @@ public class AimAndShootTurret extends Command {
     private final SimpleMotorFeedforward feedFF =
         new SimpleMotorFeedforward(feedkS, feedkV, feedkA);
 
-    public AimAndShootTurret(Turret turret, Drivetrain drivetrain) {
+    public AimAndShootTurret(Turret turret, Drivetrain drivetrain, CommandXboxController prim) {
 
         this.turret = turret;
         this.drivetrain = drivetrain;
+        this.prim = prim;
 
         addRequirements(turret);
 
@@ -154,6 +157,8 @@ public class AimAndShootTurret extends Command {
 
         if (atSpeed && aimed && hoodReady) {
 
+            prim.getHID().setRumble(RumbleType.kBothRumble, 0.5);
+
             double feedFFVolts = feedFF.calculate(TARGET_FEED_RPS);
             double feedPIDVolts =
                 feedPID.calculate(feedVelocity, TARGET_FEED_RPS);
@@ -166,6 +171,8 @@ public class AimAndShootTurret extends Command {
             SmartDashboard.putNumber("Feed Voltage", feedVoltage);
 
         } else {
+
+            prim.getHID().setRumble(RumbleType.kBothRumble, 0);
 
             turret.spinFeed(0.0);
         }

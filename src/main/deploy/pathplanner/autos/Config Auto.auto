@@ -7,7 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "USE THIS"
+            "pathName": "Left-Shot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "shoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Left-HP"
           }
         }
       ]

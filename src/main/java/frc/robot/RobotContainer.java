@@ -2,12 +2,15 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.commands.PathPlannerAuto;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
@@ -18,10 +21,7 @@ import frc.robot.subsystems.intake.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.commands.AimAndShootTurret;
 import frc.robot.subsystems.turret.commands.HoodTarget;
-import frc.robot.subsystems.turret.commands.ManualHood;
 import frc.robot.subsystems.turret.commands.PurgeTurret;
-import frc.robot.subsystems.turret.commands.RotateTurret;
-import frc.robot.subsystems.turret.commands.ShootTurret;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
 
@@ -57,7 +57,7 @@ public class RobotContainer {
     m_intake = new Intake();
 
     // Instantiate commands after subsystems
-    m_aimAndShoot = new AimAndShootTurret(m_turret, m_drivetrain);
+    m_aimAndShoot = new AimAndShootTurret(m_turret, m_drivetrain, primary);
     m_spinIndexer = new SpinIndexer(m_intake, m_turret);
 
     registerNamedCommands();
@@ -82,8 +82,15 @@ public class RobotContainer {
 
   private void registerNamedCommands() {
     // Register commands for auto
-    NamedCommands.registerCommand("shoot", new AimAndShootTurret(m_turret, m_drivetrain));
-    NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.4));
+    NamedCommands.registerCommand("shoot", new ParallelDeadlineGroup(
+        new AimAndShootTurret(m_turret, m_drivetrain, primary),
+        new SequentialCommandGroup(
+            new WaitCommand(2.0),
+            new SpinIndexer(m_intake, m_turret)
+        )
+    ).withTimeout(10.0));
+
+    NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.7).withTimeout(6.0));
   }
 
   private void configureButtonBindings() {
@@ -125,13 +132,6 @@ public class RobotContainer {
       new PurgeTurret(m_turret)
     );
 
-    // primary.a().whileTrue(
-    //   new RotateTurret(m_turret, m_drivetrain)
-    // );
-
-    // primary.x().whileTrue(
-    //   new SpinIndexer(m_intake)
-    // );
     primary.start().whileTrue(new SpinIndexer(m_intake, m_turret));
     // primary.back().whileTrue(new RotateTurret(m_turret, m_drivetrain));
 
