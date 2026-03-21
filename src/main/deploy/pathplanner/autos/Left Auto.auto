@@ -31,12 +31,6 @@
         {
           "type": "named",
           "data": {
-            "name": "down"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
             "name": "shoot"
           }
         }

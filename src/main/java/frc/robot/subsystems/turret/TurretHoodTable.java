@@ -1,12 +1,13 @@
 package frc.robot.subsystems.turret;
 
 import java.util.TreeMap;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class TurretHoodTable {
 
     public static class HoodData {
-        public final double angle;   // degrees
-        public final double speed;   // RPS
+        public final double angle;
+        public final double speed;
 
         public HoodData(double angle, double speed) {
             this.angle = angle;
@@ -19,36 +20,38 @@ public class TurretHoodTable {
         }
     }
 
+    private static final String SPEED_SCALE_KEY = "Hood/SpeedScale";
+    private static final String ANGLE_OFFSET_KEY = "Hood/AngleOffset";
+
     private final TreeMap<Double, HoodData> table = new TreeMap<>();
 
     public TurretHoodTable() {
+        SmartDashboard.putNumber(SPEED_SCALE_KEY, 1.0);
+        SmartDashboard.putNumber(ANGLE_OFFSET_KEY, 0.0);
 
-        // distance (meters) → hood angle + shooter speed
-        table.put(1.5, new HoodData(0, 18));
-        table.put(1.75, new HoodData(0, 18));
-        table.put(2.0, new HoodData(0, 18));
-        table.put(2.25, new HoodData(0, 20.6));
-        table.put(2.5, new HoodData(0, 21));
-        table.put(2.75, new HoodData(0, 21.5));
-        table.put(3.0, new HoodData(0, 22));
-        table.put(3.25, new HoodData(0, 23));
-        table.put(3.5, new HoodData(0, 25));
-        table.put(3.75, new HoodData(0, 27));
-        table.put(4.0, new HoodData(0, 28)); // NEED A HOOD ANGLE FOR THIS ONE
-        table.put(4.25, new HoodData(0, 29));
-        
+        table.put(1.5,  new HoodData(0, 22));
+        table.put(1.75, new HoodData(0, 22));
+        table.put(2.0,  new HoodData(0, 22));
+        table.put(2.25, new HoodData(0, 22));
+        table.put(2.5,  new HoodData(0, 22));
+        table.put(2.75, new HoodData(0, 22.5));
+        table.put(3.0,  new HoodData(0, 23));
+        table.put(3.25, new HoodData(0, 24));
+        table.put(3.5,  new HoodData(0, 26));
+        table.put(3.75, new HoodData(0, 28));
+        table.put(4.0,  new HoodData(0, 29));
+        table.put(4.25, new HoodData(0, 30));
     }
 
     public HoodData get(double distance) {
-
         var lower = table.floorEntry(distance);
         var upper = table.ceilingEntry(distance);
 
-        if (lower == null) return upper.getValue();
-        if (upper == null) return lower.getValue();
+        if (lower == null) return applyScale(upper.getValue());
+        if (upper == null) return applyScale(lower.getValue());
 
         if (lower.getKey().equals(upper.getKey()))
-            return lower.getValue();
+            return applyScale(lower.getValue());
 
         double ratio =
             (distance - lower.getKey()) /
@@ -62,6 +65,12 @@ public class TurretHoodTable {
             lower.getValue().speed +
             ratio * (upper.getValue().speed - lower.getValue().speed);
 
-        return new HoodData(angle, speed);
+        return applyScale(new HoodData(angle, speed));
+    }
+
+    private HoodData applyScale(HoodData raw) {
+        double speedScale  = SmartDashboard.getNumber(SPEED_SCALE_KEY, 1.0);
+        double angleOffset = SmartDashboard.getNumber(ANGLE_OFFSET_KEY, 0.0);
+        return new HoodData(raw.angle + angleOffset, raw.speed * speedScale);
     }
 }

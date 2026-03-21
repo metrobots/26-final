@@ -277,15 +277,15 @@ public class Drivetrain extends SubsystemBase {
      * Returns the alliance-aware field center target.
      * Red alliance uses the base X; blue alliance mirrors it across the field midline.
      */
-    private Translation2d getFieldCenter() {
-        double x = FIELD_CENTER_X;
-        boolean isBlue = DriverStation.getAlliance().isPresent()
-                && DriverStation.getAlliance().get() == DriverStation.Alliance.Blue;
-        if (isBlue) {
-            x = FIELD_LENGTH - x;
-        }
-        return new Translation2d(x, FIELD_WIDTH / 2.0);
+private Translation2d getFieldCenter() {
+    double x = FIELD_CENTER_X;
+    boolean isRed = DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+    if (isRed) {
+        x = FIELD_LENGTH - x;
     }
+    return new Translation2d(x, FIELD_WIDTH / 2.0);
+}
 
     private void updateFieldCalculations() {
 
@@ -436,8 +436,10 @@ public class Drivetrain extends SubsystemBase {
         double y = yLimiter.calculate(ySpeed)  * DriveConstants.kMaxSpeedMetersPerSecond;
         double r = rotLimiter.calculate(rot)   * DriveConstants.kMaxAngularSpeed;
 
+        // Use raw gyro (no alliance offset) for field-relative driving so that
+        // "forward on the stick" always means away from the driver regardless of alliance.
         ChassisSpeeds speeds = fieldRelative
-                ? ChassisSpeeds.fromFieldRelativeSpeeds(x, y, r, getGyroRotation())
+                ? ChassisSpeeds.fromFieldRelativeSpeeds(x, y, r, getGyroRotationRaw())
                 : new ChassisSpeeds(x, y, r);
 
         setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds));
@@ -476,11 +478,25 @@ public class Drivetrain extends SubsystemBase {
     public void zeroHeading() { gyro.reset(); }
 
     public double getHeading() {
-        return MathUtil.inputModulus(-gyro.getAngle(), -180, 180);
+        return MathUtil.inputModulus(getGyroRotation().getDegrees(), -180, 180);
     }
 
-    public double getTurnRate()         { return -gyro.getRate(); }
-    public Rotation2d getGyroRotation() { return Rotation2d.fromDegrees(-gyro.getAngle()); }
+    public double getTurnRate() { return -gyro.getRate(); }
+
+    /** Raw gyro — used ONLY for field-relative driving. No alliance offset. */
+    public Rotation2d getGyroRotationRaw() {
+        return Rotation2d.fromDegrees(-gyro.getAngle());
+    }
+
+    /** Alliance-offset gyro — used for pose estimation, vision, and dashboard. */
+    public Rotation2d getGyroRotation() {
+        double angle = -gyro.getAngle();
+        if (DriverStation.getAlliance().isPresent()
+                && DriverStation.getAlliance().get() == DriverStation.Alliance.Red) {
+            angle += 180;
+        }
+        return Rotation2d.fromDegrees(angle);
+    }
 
     /* ================= UTIL ================= */
 

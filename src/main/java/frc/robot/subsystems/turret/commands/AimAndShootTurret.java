@@ -41,7 +41,7 @@ public class AimAndShootTurret extends Command {
     private static final double kV = 0.13;
     private static final double kA = 1.2;
 
-    // Feed motor feedforward (SysId-characterized)
+    // Feed motor feedforward
     private static final double feedkS = 0.15;
     private static final double feedkV = 0.12;
     private static final double feedkA = 1.2;
