@@ -5,7 +5,7 @@ import frc.robot.subsystems.turret.Turret;
 
 public class PurgeTurret extends Command {
 
-    private static final double FEED_PURGE_VOLTAGE    = -6.0;
+    private static final double FEED_PURGE_VOLTAGE     = -6.0;
     private static final double FLYWHEEL_PURGE_VOLTAGE = -4.0;
 
     private final Turret turret;
@@ -21,13 +21,13 @@ public class PurgeTurret extends Command {
     @Override
     public void execute() {
         turret.spinFeed(FEED_PURGE_VOLTAGE);
-        turret.setFlywheelVoltage(FLYWHEEL_PURGE_VOLTAGE);
+        turret.flywheelSpark1.set(FLYWHEEL_PURGE_VOLTAGE);
     }
 
     @Override
     public void end(boolean interrupted) {
         turret.spinFeed(0);
-        turret.setFlywheelVoltage(0);
+        turret.stopFlywheel();
     }
 
     @Override

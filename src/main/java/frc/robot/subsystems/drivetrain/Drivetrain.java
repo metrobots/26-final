@@ -31,6 +31,7 @@ import frc.robot.utils.LimelightLib.PoseEstimate;
 import java.util.List;
 
 public class Drivetrain extends SubsystemBase {
+
     private final Turret turret;
     private static final String LIMELIGHT = "limelight-front";
     private boolean endgame = false;
@@ -56,25 +57,23 @@ public class Drivetrain extends SubsystemBase {
      * Vector from robot center to turret pivot, expressed in robot frame.
      * +X = forward, +Y = left.
      */
-    private static final double TURRET_PIVOT_FORWARD = 0.228;  // meters
-    private static final double TURRET_PIVOT_SIDE    = 0.061; // meters (negative = right)
+    private static final double TURRET_PIVOT_FORWARD       =  0.228;  // meters
+    private static final double TURRET_PIVOT_SIDE          =  0.061;  // meters (negative = right)
 
     /**
      * Distance from turret pivot to camera lens along the turret's forward axis.
      * Negative because camera is behind the pivot.
      */
-    private static final double CAMERA_FROM_PIVOT_AXIAL = -0.147; // meters
+    private static final double CAMERA_FROM_PIVOT_AXIAL    = -0.147;  // meters
+
+    /** Camera height from ground: 21 inches converted to meters. */
+    private static final double CAMERA_HEIGHT               = 21.0 * 0.0254; // 0.5334 m
 
     /**
-     * Camera height from ground: 21 inches converted to meters.
-     */
-    private static final double CAMERA_HEIGHT = 21.0 * 0.0254; // 0.5334 meters
-
-    /**
-     * Camera pitch: 30 degrees upward from horizontal.
+     * Camera pitch: upward from horizontal.
      * Negative sign because Limelight uses negative pitch for upward tilt.
      */
-    private static final double CAMERA_PITCH = 30.632901; // degrees
+    private static final double CAMERA_PITCH                = 30.632901; // degrees
 
     /* ================= FIELD DISPLAY ================= */
 
@@ -84,6 +83,10 @@ public class Drivetrain extends SubsystemBase {
 
     private double angleToCenter    = 0;
     private double distanceToCenter = 0;
+
+    // Cached field-relative chassis speeds, updated every loop.
+    // Used by getLateralVelocityToTarget() for shoot-on-the-move lead compensation.
+    private ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds();
 
     /* ================= MODULES ================= */
 
@@ -154,15 +157,15 @@ public class Drivetrain extends SubsystemBase {
             @Override
             public void initSendable(SendableBuilder builder) {
                 builder.setSmartDashboardType("SwerveDrive");
-                builder.addDoubleProperty("Front Left Angle",    () -> frontLeft.getState().angle.getRadians(),   null);
-                builder.addDoubleProperty("Front Left Velocity", () -> frontLeft.getState().speedMetersPerSecond,  null);
-                builder.addDoubleProperty("Front Right Angle",   () -> frontRight.getState().angle.getRadians(),  null);
-                builder.addDoubleProperty("Front Right Velocity",() -> frontRight.getState().speedMetersPerSecond, null);
-                builder.addDoubleProperty("Back Left Angle",     () -> rearLeft.getState().angle.getRadians(),    null);
-                builder.addDoubleProperty("Back Left Velocity",  () -> rearLeft.getState().speedMetersPerSecond,   null);
-                builder.addDoubleProperty("Back Right Angle",    () -> rearRight.getState().angle.getRadians(),   null);
-                builder.addDoubleProperty("Back Right Velocity", () -> rearRight.getState().speedMetersPerSecond,  null);
-                builder.addDoubleProperty("Robot Angle",         () -> getGyroRotation().getRadians(),             null);
+                builder.addDoubleProperty("Front Left Angle",     () -> frontLeft.getState().angle.getRadians(),    null);
+                builder.addDoubleProperty("Front Left Velocity",  () -> frontLeft.getState().speedMetersPerSecond,   null);
+                builder.addDoubleProperty("Front Right Angle",    () -> frontRight.getState().angle.getRadians(),   null);
+                builder.addDoubleProperty("Front Right Velocity", () -> frontRight.getState().speedMetersPerSecond,  null);
+                builder.addDoubleProperty("Back Left Angle",      () -> rearLeft.getState().angle.getRadians(),     null);
+                builder.addDoubleProperty("Back Left Velocity",   () -> rearLeft.getState().speedMetersPerSecond,    null);
+                builder.addDoubleProperty("Back Right Angle",     () -> rearRight.getState().angle.getRadians(),    null);
+                builder.addDoubleProperty("Back Right Velocity",  () -> rearRight.getState().speedMetersPerSecond,  null);
+                builder.addDoubleProperty("Robot Angle",          () -> getGyroRotation().getRadians(),              null);
             }
         });
     }
@@ -196,6 +199,7 @@ public class Drivetrain extends SubsystemBase {
     @Override
     public void periodic() {
         updateOdometry();
+        updateFieldRelativeSpeeds();
         updateVision();
         updateFieldCalculations();
         updateHubStatus();
@@ -211,6 +215,48 @@ public class Drivetrain extends SubsystemBase {
 
     private void updateOdometry() {
         poseEstimator.update(getGyroRotation(), getModulePositions());
+    }
+
+    /* ================= FIELD-RELATIVE SPEEDS ================= */
+
+    /**
+     * Converts robot-relative module states into field-relative chassis speeds
+     * and caches them for use by getLateralVelocityToTarget().
+     *
+     * Called every loop before vision and field calculations so the value is
+     * always fresh when AimAndShootTurret reads it.
+     */
+    private void updateFieldRelativeSpeeds() {
+        ChassisSpeeds robotRelative = getRobotRelativeSpeeds();
+        fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
+                robotRelative, getGyroRotation());
+    }
+
+    /* ================= SHOOT-ON-THE-MOVE ================= */
+
+    /**
+     * Returns the robot's lateral velocity (m/s) relative to the target direction.
+     *
+     * "Lateral" means perpendicular to the straight line from the turret pivot
+     * to the field center. Positive = moving right relative to that line
+     * (i.e., the note needs to lead left, so the turret swings CCW).
+     *
+     * Used by AimAndShootTurret to compute a lead angle so shots land on target
+     * while the robot is moving.
+     *
+     * Math:
+     *   angleToCenter is the bearing FROM the robot TO the target, measured in
+     *   the robot's own frame (0 = forward, CCW positive). We negate it to get
+     *   the field bearing FROM the target TO the robot, then project the
+     *   field-relative velocity onto the axis 90° to that bearing.
+     *
+     *   lateralVelocity =  -vx * sin(θ) + vy * cos(θ)
+     *   where θ = angleToCenter in radians (already computed each loop).
+     */
+    public double getLateralVelocityToTarget() {
+        double angleRad = Math.toRadians(angleToCenter);
+        return -fieldRelativeSpeeds.vxMetersPerSecond * Math.sin(angleRad)
+                + fieldRelativeSpeeds.vyMetersPerSecond * Math.cos(angleRad);
     }
 
     /* ================= VISION ================= */
@@ -277,15 +323,15 @@ public class Drivetrain extends SubsystemBase {
      * Returns the alliance-aware field center target.
      * Red alliance uses the base X; blue alliance mirrors it across the field midline.
      */
-private Translation2d getFieldCenter() {
-    double x = FIELD_CENTER_X;
-    boolean isRed = DriverStation.getAlliance().isPresent()
-            && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
-    if (isRed) {
-        x = FIELD_LENGTH - x;
+    private Translation2d getFieldCenter() {
+        double x = FIELD_CENTER_X;
+        boolean isRed = DriverStation.getAlliance().isPresent()
+                && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+        if (isRed) {
+            x = FIELD_LENGTH - x;
+        }
+        return new Translation2d(x, FIELD_WIDTH / 2.0);
     }
-    return new Translation2d(x, FIELD_WIDTH / 2.0);
-}
 
     private void updateFieldCalculations() {
 
@@ -314,10 +360,8 @@ private Translation2d getFieldCenter() {
         angleToCenter = MathUtil.inputModulus(getGyroRotation().getDegrees() - fieldAngle, -180, 180);
 
         // Draw the field center marker, turret pivot marker, and a line between them
-        field.getObject("FieldCenter").setPose(
-                new Pose2d(fieldCenter, new Rotation2d()));
-        field.getObject("TurretPivot").setPose(
-                new Pose2d(turretPivot, getGyroRotation()));
+        field.getObject("FieldCenter").setPose(new Pose2d(fieldCenter, new Rotation2d()));
+        field.getObject("TurretPivot").setPose(new Pose2d(turretPivot, getGyroRotation()));
         field.getObject("ToCenter").setPoses(List.of(
                 new Pose2d(turretPivot, new Rotation2d()),
                 new Pose2d(fieldCenter, new Rotation2d())));
@@ -367,7 +411,6 @@ private Translation2d getFieldCenter() {
         boolean shift1Active = isRed ? !redInactiveFirst : redInactiveFirst;
 
         if (t > 130) {
-            // Transition period at start of teleop — hub always active
             hubActive = true;
             currentShift = 0;
             shiftTimeRemaining = t - 130;
@@ -388,7 +431,6 @@ private Translation2d getFieldCenter() {
             currentShift = 4;
             shiftTimeRemaining = t - 30;
         } else {
-            // Endgame — hub always active
             hubActive = true;
             currentShift = 5;
             shiftTimeRemaining = t;
@@ -400,19 +442,18 @@ private Translation2d getFieldCenter() {
     /* ================= DASHBOARD ================= */
 
     private void updateDashboard() {
-        // putNumber() updates existing NT entries — safe to call every loop.
-        // The Swerve Drive Sendable is registered once in the constructor instead.
-        SmartDashboard.putNumber("Robot Heading", getHeading());
-        SmartDashboard.putNumber("test", getAngleToCenter());
-        SmartDashboard.putNumber("Distance To Center", distanceToCenter);
-        SmartDashboard.putNumber("RR", rearRight.getAngle());
-        SmartDashboard.putNumber("RL", rearLeft.getAngle());
-        SmartDashboard.putNumber("RRoffset", rearRight.getAngleFull());
-        SmartDashboard.putNumber("RLoffset", rearLeft.getAngleFull());
-        SmartDashboard.putBoolean("Hub Active",           hubActive);
-        SmartDashboard.putString("Hub Status",            hubStatus);
-        SmartDashboard.putNumber("Hub Shift",             currentShift);
-        SmartDashboard.putNumber("Shift Time Remaining",  shiftTimeRemaining);
+        SmartDashboard.putNumber("Robot Heading",        getHeading());
+        SmartDashboard.putNumber("Angle To Center",      angleToCenter);
+        SmartDashboard.putNumber("Distance To Center",   distanceToCenter);
+        SmartDashboard.putNumber("Lateral Velocity",     getLateralVelocityToTarget());
+        SmartDashboard.putNumber("RR",                   rearRight.getAngle());
+        SmartDashboard.putNumber("RL",                   rearLeft.getAngle());
+        SmartDashboard.putNumber("RRoffset",             rearRight.getAngleFull());
+        SmartDashboard.putNumber("RLoffset",             rearLeft.getAngleFull());
+        SmartDashboard.putBoolean("Hub Active",          hubActive);
+        SmartDashboard.putString("Hub Status",           hubStatus);
+        SmartDashboard.putNumber("Hub Shift",            currentShift);
+        SmartDashboard.putNumber("Shift Time Remaining", shiftTimeRemaining);
     }
 
     /* ================= POSE METHODS ================= */
