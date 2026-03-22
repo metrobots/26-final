@@ -10,12 +10,14 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretHoodTable;
 import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.intake.Intake;
 
 public class AimAndShootTurret extends Command {
 
     private final Turret turret;
     private final Drivetrain drivetrain;
     private final CommandXboxController prim;
+    private final Intake intake;
 
     private final TurretHoodTable table = new TurretHoodTable();
 
@@ -62,12 +64,13 @@ public class AimAndShootTurret extends Command {
     // CONSTRUCTOR
     // -----------------------------------------------------------------------
 
-    public AimAndShootTurret(Turret turret, Drivetrain drivetrain, CommandXboxController prim) {
+    public AimAndShootTurret(Turret turret, Drivetrain drivetrain, CommandXboxController prim, Intake intake) {
         this.turret     = turret;
         this.drivetrain = drivetrain;
         this.prim       = prim;
+        this.intake     = intake;
 
-        addRequirements(turret);
+        addRequirements(turret, intake);
 
         turretPID.setTolerance(0.5);
     }
@@ -151,7 +154,7 @@ public class AimAndShootTurret extends Command {
         turret.setFlywheelVelocity(targetRPS);
 
         // -------------------------------------------------------------------
-        // 5. FEEDER CONTROL  (only fires when all systems are ready)
+        // 5. FEEDER + INDEXER CONTROL  (only fires when all systems are ready)
         // -------------------------------------------------------------------
 
         boolean atSpeed      = Math.abs(currentRPS - targetRPS) <= FLYWHEEL_TOLERANCE_RPS;
@@ -168,9 +171,11 @@ public class AimAndShootTurret extends Command {
                 -12.0, 12.0
             );
             turret.spinFeed(feedVoltage);
+            intake.spinIndexer(-0.06);
             SmartDashboard.putNumber("Feed Voltage", feedVoltage);
         } else {
             turret.spinFeed(0.0);
+            intake.spinIndexer(0.0);
         }
 
         // -------------------------------------------------------------------
@@ -195,6 +200,7 @@ public class AimAndShootTurret extends Command {
         turret.manualTurret(0);
         turret.stopFlywheel();
         turret.spinFeed(0);
+        intake.spinIndexer(0.0);
         prim.getHID().setRumble(RumbleType.kBothRumble, 0);
     }
 
