@@ -94,6 +94,10 @@ public class Intake extends SubsystemBase {
         return intakePivot.getEncoder().getPosition();
     }
 
+    public double getIndexerCurrent() {
+        return indexer.getOutputCurrent();
+    }
+
     // Define methods to move the motors forwards and backwards
     public void spinIndexer(double speed) {
         indexer.set(speed);

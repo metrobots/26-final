@@ -42,10 +42,10 @@ public class Turret extends SubsystemBase {
     // Start with these and adjust kP until you get fast recovery without oscillation.
     // kFF replaces the software SimpleMotorFeedforward: kFF = 1 / (free-speed RPS).
     // For a NEO Vortex free speed ~94 RPS: kFF ≈ 1/94 ≈ 0.0106. Tune from there.
-    private static final double FLYWHEEL_kP  = 0.35;   // TUNE — same starting point as before
+    private static final double FLYWHEEL_kP  = 0.05;   // TUNE — same starting point as before
     private static final double FLYWHEEL_kI  = 0.0;
     private static final double FLYWHEEL_kD  = 0.0;
-    private static final double FLYWHEEL_kFF = 0.0106; // TUNE — replaces SimpleMotorFeedforward
+    private static final double FLYWHEEL_kFF = 0.011; // TUNE — replaces SimpleMotorFeedforward
 
     // ---------------- TURRET CONSTANTS ----------------
     private static final double GEAR_RATIO          = 0.035;  // Motor:Turret
@@ -153,6 +153,14 @@ public class Turret extends SubsystemBase {
      */
     public void setFlywheelVelocity(double targetRPS) {
         flywheelController.setReference(targetRPS, ControlType.kVelocity);
+    }
+
+    /**
+     * Drives the flywheel at a raw voltage, bypassing the onboard PID entirely.
+     * Used by TuneFeedforwards to isolate FF response without PID correction.
+     */
+    public void setFlywheelVoltage(double volts) {
+        flywheelSpark1.setVoltage(volts);
     }
 
     /** Stop the flywheel immediately by commanding 0 V. */

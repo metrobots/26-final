@@ -25,7 +25,7 @@ public class AimAndShootTurret extends Command {
     // CONSTANTS
     // -----------------------------------------------------------------------
 
-    private static final double TARGET_FEED_RPS = 100.0;
+    private static final double TARGET_FEED_RPS = 110.0;
 
     private static final double MAX_TURRET = 40.0;
     private static final double MIN_TURRET = -40.0;
@@ -43,7 +43,7 @@ public class AimAndShootTurret extends Command {
     private static final double TURRET_VEL_FF_SCALAR = 0.005; // TUNE
 
     // Turret angle offset to compensate for systematic aiming error
-    private static final double TURRET_ANGLE_OFFSET = 1.0; // degrees — TUNE
+    private static final double TURRET_ANGLE_OFFSET = 3.0; // degrees — TUNE
 
     // Flywheel at-speed threshold (RPS). Onboard PID holds tighter so
     // you can tighten this from 2.5 → 1.5 once gains are dialled in.
@@ -160,7 +160,7 @@ public class AimAndShootTurret extends Command {
         boolean atSpeed      = Math.abs(currentRPS - targetRPS) <= FLYWHEEL_TOLERANCE_RPS;
         boolean aimed        = Math.abs(currentAngle - targetAngle) <= 0.5;
         boolean hoodReady    = Math.abs(turret.hoodEncoder.getPosition() - hoodAngle) <= 0.3;
-        boolean readyToShoot = atSpeed && aimed && hoodReady;
+        boolean readyToShoot = atSpeed && hoodReady;
 
         prim.getHID().setRumble(RumbleType.kBothRumble, readyToShoot ? 0.5 : 0.0);
 
@@ -170,8 +170,8 @@ public class AimAndShootTurret extends Command {
                     + feedPID.calculate(turret.getFeedVelocity(), TARGET_FEED_RPS),
                 -12.0, 12.0
             );
-            turret.spinFeed(feedVoltage);
-            intake.spinIndexer(-0.06);
+            turret.feedSpark.setVoltage(feedVoltage);
+            intake.spinIndexer(-0.1);
             SmartDashboard.putNumber("Feed Voltage", feedVoltage);
         } else {
             turret.spinFeed(0.0);
@@ -193,6 +193,8 @@ public class AimAndShootTurret extends Command {
         SmartDashboard.putBoolean("Flywheel Ready",    atSpeed);
         SmartDashboard.putBoolean("Hood Ready",        hoodReady);
         SmartDashboard.putBoolean("Ready To Shoot",    readyToShoot);
+        SmartDashboard.putNumber("feed Velocity",     turret.getFeedVelocity());
+        SmartDashboard.putNumber("Indexer Current",     intake.getIndexerCurrent());
     }
 
     @Override
