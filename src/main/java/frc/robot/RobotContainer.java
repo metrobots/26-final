@@ -8,14 +8,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeDown;
 import frc.robot.subsystems.intake.commands.IntakeIn;
-import frc.robot.subsystems.intake.commands.SpinIndexer;
+import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.spindexer.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.commands.AimAndShootTurret;
 import frc.robot.subsystems.turret.commands.HoodTarget;
@@ -38,10 +38,7 @@ public class RobotContainer {
   final Turret m_turret;
   final Intake m_intake;
   final Dashboard m_dashboard;
-
-  // AimAndShootTurret now owns both the turret and indexer — no separate SpinIndexer needed
-  // for the shoot binding. SpinIndexer is kept only for the manual start button.
-  private final AimAndShootTurret m_aimAndShoot;
+  final Spindexer m_spindexer;
 
   // The driver's controller
   private final CommandXboxController primary = Constants.primary;
@@ -52,9 +49,7 @@ public class RobotContainer {
     m_drivetrain = new Drivetrain(m_turret);
     m_dashboard = new Dashboard();
     m_intake = new Intake();
-
-    // Intake is now passed into AimAndShootTurret — indexer is driven from within
-    m_aimAndShoot = new AimAndShootTurret(m_turret, m_drivetrain, primary, m_intake);
+    m_spindexer = new Spindexer();
 
     registerNamedCommands();
 
@@ -80,7 +75,7 @@ public class RobotContainer {
     // AimAndShootTurret now handles the indexer internally after the wait,
     // so no ParallelDeadlineGroup + SpinIndexer wrapper is needed.
     NamedCommands.registerCommand("shoot",
-        new AimAndShootTurret(m_turret, m_drivetrain, primary, m_intake)
+        new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer)
             .withTimeout(8.0));
 
     NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.7));
@@ -128,14 +123,16 @@ public class RobotContainer {
     );
 
     // Manual indexer override — kept for use independent of shooting
-    primary.start().whileTrue(new SpinIndexer(m_intake, m_turret));
+    primary.start().whileTrue(new SpinIndexer(m_spindexer));
 
     primary.x().whileTrue(
         new HoodTarget(m_turret, 20)
     );
 
     // Aim and shoot — AimAndShootTurret now internally gates the indexer via readyToShoot
-    primary.rightTrigger().whileTrue(m_aimAndShoot);
+    primary.rightTrigger().whileTrue(
+        new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer)
+    );
   }
 
   /**

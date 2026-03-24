@@ -10,14 +10,14 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretHoodTable;
 import frc.robot.subsystems.drivetrain.Drivetrain;
-import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.spindexer.Spindexer;
 
 public class AimAndShootTurret extends Command {
 
     private final Turret turret;
     private final Drivetrain drivetrain;
     private final CommandXboxController prim;
-    private final Intake intake;
+    private final Spindexer indexer;
 
     private final TurretHoodTable table = new TurretHoodTable();
 
@@ -64,13 +64,13 @@ public class AimAndShootTurret extends Command {
     // CONSTRUCTOR
     // -----------------------------------------------------------------------
 
-    public AimAndShootTurret(Turret turret, Drivetrain drivetrain, CommandXboxController prim, Intake intake) {
+    public AimAndShootTurret(Turret turret, Drivetrain drivetrain, CommandXboxController prim, Spindexer indexer) {
         this.turret     = turret;
         this.drivetrain = drivetrain;
         this.prim       = prim;
-        this.intake     = intake;
+        this.indexer     = indexer;
 
-        addRequirements(turret, intake);
+        addRequirements(turret, indexer);
 
         turretPID.setTolerance(0.5);
     }
@@ -171,11 +171,11 @@ public class AimAndShootTurret extends Command {
                 -12.0, 12.0
             );
             turret.feedSpark.setVoltage(feedVoltage);
-            intake.spinIndexer(-0.1);
+            indexer.spinIndexer(-0.1);
             SmartDashboard.putNumber("Feed Voltage", feedVoltage);
         } else {
             turret.spinFeed(0.0);
-            intake.spinIndexer(0.0);
+            indexer.spinIndexer(0.0);
         }
 
         // -------------------------------------------------------------------
@@ -194,7 +194,7 @@ public class AimAndShootTurret extends Command {
         SmartDashboard.putBoolean("Hood Ready",        hoodReady);
         SmartDashboard.putBoolean("Ready To Shoot",    readyToShoot);
         SmartDashboard.putNumber("feed Velocity",     turret.getFeedVelocity());
-        SmartDashboard.putNumber("Indexer Current",     intake.getIndexerCurrent());
+        SmartDashboard.putNumber("Indexer Current",     indexer.getIndexerCurrent());
     }
 
     @Override
@@ -202,7 +202,7 @@ public class AimAndShootTurret extends Command {
         turret.manualTurret(0);
         turret.stopFlywheel();
         turret.spinFeed(0);
-        intake.spinIndexer(0.0);
+        indexer.spinIndexer(0.0);
         prim.getHID().setRumble(RumbleType.kBothRumble, 0);
     }
 

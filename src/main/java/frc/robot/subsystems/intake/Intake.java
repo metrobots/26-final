@@ -2,13 +2,10 @@ package frc.robot.subsystems.intake;
 
 import edu.wpi.first.math.controller.PIDController;
 
-import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.utils.Constants;
 import frc.robot.subsystems.dashboard.Dashboard;
 
@@ -20,7 +17,6 @@ public class Intake extends SubsystemBase {
     // Create the intake motors
     public SparkMax intakePivot = new SparkMax(Constants.kIntakePivotCanId, MotorType.kBrushless);
     public SparkMax intakeDrive = new SparkMax(Constants.kIntakeDriveCanId, MotorType.kBrushless);
-    public SparkFlex indexer = new SparkFlex(Constants.kIndexerCanId, MotorType.kBrushless);
 
     double kP = 0.000001;
     double kI = 0;
@@ -92,15 +88,6 @@ public class Intake extends SubsystemBase {
 
     public double getEncoder() {
         return intakePivot.getEncoder().getPosition();
-    }
-
-    public double getIndexerCurrent() {
-        return indexer.getOutputCurrent();
-    }
-
-    // Define methods to move the motors forwards and backwards
-    public void spinIndexer(double speed) {
-        indexer.set(speed);
     }
 
     public void toAngle(double setpoint) {
