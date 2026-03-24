@@ -72,12 +72,7 @@ public class RobotContainer {
   }
 
   private void registerNamedCommands() {
-    // AimAndShootTurret now handles the indexer internally after the wait,
-    // so no ParallelDeadlineGroup + SpinIndexer wrapper is needed.
-    NamedCommands.registerCommand("shoot",
-        new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer)
-            .withTimeout(8.0));
-
+    NamedCommands.registerCommand("shoot", new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer).withTimeout(8.0));
     NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.7));
     NamedCommands.registerCommand("down", new IntakeDown(m_intake).withTimeout(3));
   }
