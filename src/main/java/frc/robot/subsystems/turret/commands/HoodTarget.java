@@ -36,7 +36,7 @@ public class HoodTarget extends Command {
 
   SmartDashboard.putNumber("MATEO", angle);
 
-  double output = control.calculate(angle, 3);
+  double output = control.calculate(angle, input);
 
   turret.hoodSpark.set(output);
 

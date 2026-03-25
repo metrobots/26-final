@@ -183,6 +183,7 @@ public class AimAndShootTurret extends Command {
         // -------------------------------------------------------------------
 
         SmartDashboard.putNumber("Distance To Center", distance);
+        SmartDashboard.putNumber("hood angle", turret.hoodEncoder.getPosition());
         SmartDashboard.putNumber("Lateral Velocity",   lateralVelocity);
         SmartDashboard.putNumber("Lead Angle (deg)",   leadAngle);
         SmartDashboard.putNumber("Turret Target",      targetAngle);

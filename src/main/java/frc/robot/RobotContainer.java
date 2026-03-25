@@ -121,7 +121,7 @@ public class RobotContainer {
     primary.start().whileTrue(new SpinIndexer(m_spindexer));
 
     primary.x().whileTrue(
-        new HoodTarget(m_turret, 20)
+        new HoodTarget(m_turret, 0)
     );
 
     // Aim and shoot — AimAndShootTurret now internally gates the indexer via readyToShoot
