@@ -4,6 +4,8 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -11,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.commands.DriveToPose;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeDown;
 import frc.robot.subsystems.intake.commands.IntakeIn;
@@ -23,119 +26,118 @@ import frc.robot.subsystems.turret.commands.PurgeTurret;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
 
-/*
- * This class is where the bulk of the robot should be declared.  Since Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
- * periodic methods (other than the scheduler calls).  Instead, the structure of the robot
- * (including subsystems, commands, and button mappings) should be declared here.
- */
 public class RobotContainer {
-  // Auto SendableChooser
-  private final SendableChooser<Command> autoChooser;
 
-  // Subsystem declarations
-  final Drivetrain m_drivetrain;
-  final Turret m_turret;
-  final Intake m_intake;
-  final Dashboard m_dashboard;
-  final Spindexer m_spindexer;
+    // Auto SendableChooser
+    private final SendableChooser<Command> autoChooser;
 
-  // The driver's controller
-  private final CommandXboxController primary = Constants.primary;
+    // Subsystem declarations
+    final Drivetrain  m_drivetrain;
+    final Turret      m_turret;
+    final Intake      m_intake;
+    final Dashboard   m_dashboard;
+    final Spindexer   m_spindexer;
 
-  public RobotContainer() {
+    // The driver's controller
+    private final CommandXboxController primary = Constants.primary;
 
-    m_turret = new Turret();
-    m_drivetrain = new Drivetrain(m_turret);
-    m_dashboard = new Dashboard();
-    m_intake = new Intake();
-    m_spindexer = new Spindexer();
+    public RobotContainer() {
 
-    registerNamedCommands();
+        m_turret     = new Turret();
+        m_drivetrain = new Drivetrain(m_turret);
+        m_dashboard  = new Dashboard();
+        m_intake     = new Intake();
+        m_spindexer  = new Spindexer();
 
-    autoChooser = AutoBuilder.buildAutoChooser();
+        registerNamedCommands();
 
-    // Configure the button bindings
-    configureButtonBindings();
+        autoChooser = AutoBuilder.buildAutoChooser();
 
-    m_drivetrain.setDefaultCommand(
-        new RunCommand(() -> {
-            m_drivetrain.drive(
-                (-MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband)),
-                (-MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband)),
-                (MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband)),
-                true);
-        }, m_drivetrain)
-    );
+        configureButtonBindings();
 
-    SmartDashboard.putData("Auto Chooser", autoChooser);
-  }
+        m_drivetrain.setDefaultCommand(
+            new RunCommand(() -> {
+                m_drivetrain.drive(
+                    (-MathUtil.applyDeadband(primary.getLeftY(),  OIConstants.kDriveDeadband)),
+                    (-MathUtil.applyDeadband(primary.getLeftX(),  OIConstants.kDriveDeadband)),
+                    ( MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband)),
+                    true);
+            }, m_drivetrain)
+        );
 
-  private void registerNamedCommands() {
-    NamedCommands.registerCommand("shoot", new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer).withTimeout(8.0));
-    NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.7));
-    NamedCommands.registerCommand("down", new IntakeDown(m_intake).withTimeout(3));
-  }
+        SmartDashboard.putData("Auto Chooser", autoChooser);
+    }
 
-  private void configureButtonBindings() {
+    private void registerNamedCommands() {
+        NamedCommands.registerCommand("shoot",  new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer).withTimeout(8.0));
+        NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.7));
+        NamedCommands.registerCommand("down",   new IntakeDown(m_intake).withTimeout(3));
+    }
 
-    m_turret.setDefaultCommand(
-        m_turret.run(() -> {
-            if (primary.povLeft().getAsBoolean()) {
-                m_turret.manualTurret(0.2);
-            } else if (primary.povRight().getAsBoolean()) {
-                m_turret.manualTurret(-0.2);
-            } else {
-                m_turret.manualTurret(0);
-            }
+    private void configureButtonBindings() {
 
-            if (primary.povUp().getAsBoolean()) {
-                m_turret.manualHood(-0.06);
-            } else if (primary.povDown().getAsBoolean()) {
-                m_turret.manualHood(0.06);
-            } else {
-                m_turret.manualHood(0);
-            }
-        })
-    );
+        m_turret.setDefaultCommand(
+            m_turret.run(() -> {
+                if (primary.povLeft().getAsBoolean()) {
+                    m_turret.manualTurret(0.2);
+                } else if (primary.povRight().getAsBoolean()) {
+                    m_turret.manualTurret(-0.2);
+                } else {
+                    m_turret.manualTurret(0);
+                }
 
-    // Intake in
-    primary.leftTrigger().toggleOnTrue(
-        new IntakeIn(m_intake, -0.9)
-    );
+                if (primary.povUp().getAsBoolean()) {
+                    m_turret.manualHood(-0.06);
+                } else if (primary.povDown().getAsBoolean()) {
+                    m_turret.manualHood(0.06);
+                } else {
+                    m_turret.manualHood(0);
+                }
+            })
+        );
 
-    // Outtake
-    primary.leftBumper().whileTrue(
-        new IntakeIn(m_intake, 1)
-    );
+        // Intake in
+        primary.leftTrigger().toggleOnTrue(
+            new IntakeIn(m_intake, -0.9)
+        );
 
-    primary.a().whileTrue(
-        new IntakeDown(m_intake)
-    );
+        // Outtake
+        primary.leftBumper().whileTrue(
+            new IntakeIn(m_intake, 1)
+        );
 
-    primary.rightBumper().whileTrue(
-        new PurgeTurret(m_turret)
-    );
+        primary.a().whileTrue(
+            new IntakeDown(m_intake)
+        );
 
-    // Manual indexer override — kept for use independent of shooting
-    primary.start().whileTrue(new SpinIndexer(m_spindexer));
+        primary.rightBumper().whileTrue(
+            new PurgeTurret(m_turret)
+        );
 
-    primary.x().whileTrue(
-        new HoodTarget(m_turret, 0)
-    );
+        // Manual indexer override
+        primary.start().whileTrue(
+            new SpinIndexer(m_spindexer)
+        );
 
-    // Aim and shoot — AimAndShootTurret now internally gates the indexer via readyToShoot
-    primary.rightTrigger().whileTrue(
-        new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer)
-    );
-  }
+        primary.x().whileTrue(
+            new HoodTarget(m_turret, 0)
+        );
 
-  /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
-   *
-   * @return the command to run in autonomous
-   */
-  public Command getAutonomousCommand() {
-    return autoChooser.getSelected();
-  }
+        // Aim and shoot
+        primary.rightTrigger().whileTrue(
+            new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer)
+        );
+
+        primary.start().whileTrue(
+            new DriveToPose(
+                m_drivetrain,
+                new Pose2d(3.0, 2.0, Rotation2d.fromDegrees(0)),
+                primary
+            )
+        );
+    }
+
+    public Command getAutonomousCommand() {
+        return autoChooser.getSelected();
+    }
 }
