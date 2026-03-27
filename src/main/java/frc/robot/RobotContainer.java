@@ -98,7 +98,7 @@ public class RobotContainer {
 
         // Intake in
         primary.leftTrigger().toggleOnTrue(
-            new IntakeIn(m_intake, -0.9)
+            new IntakeIn(m_intake, -1)
         );
 
         // Outtake
@@ -113,9 +113,7 @@ public class RobotContainer {
         primary.rightBumper().whileTrue(
             new PurgeTurret(m_turret)
         );
-
-        // Manual indexer override
-        primary.start().whileTrue(
+        primary.rightBumper().whileTrue(
             new SpinIndexer(m_spindexer)
         );
 
@@ -131,7 +129,7 @@ public class RobotContainer {
         primary.start().whileTrue(
             new DriveToPose(
                 m_drivetrain,
-                new Pose2d(3.0, 2.0, Rotation2d.fromDegrees(0)),
+                new Pose2d(2.5, 2.5, Rotation2d.fromDegrees(0)),
                 primary
             )
         );

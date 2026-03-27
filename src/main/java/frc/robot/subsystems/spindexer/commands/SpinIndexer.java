@@ -28,7 +28,7 @@ public class SpinIndexer extends Command {
 
   @Override
   public void execute() {
-      indexer.spinIndexer(-0.06);
+      indexer.spinIndexer(0.1);
       // turret.feedSpark.set(0.5);
       // intake.spinIndexer(0.0);
   }

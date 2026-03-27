@@ -108,6 +108,10 @@ public class Intake extends SubsystemBase {
         intakePID.close();
     }
 
+    public void zeroPivot() {
+        intakePivot.getEncoder().setPosition(0);
+    }
+
     public void homeIntake() {
         intakePivot.getEncoder().setPosition(0);
     }
