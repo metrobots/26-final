@@ -37,7 +37,7 @@ public class AimAndShootTurret extends Command {
 
     // Shoot-on-the-move
     private static final double FLIGHT_TIME_PER_METER = 0.055; // seconds/meter — TUNE
-    private static final double LEAD_SCALAR           = 1.0;   // 0.8–1.2 — TUNE
+    private static final double LEAD_SCALAR           = 0.5;   // 0.8–1.2 — TUNE
 
     // Turret velocity feedforward scalar (counteracts drivetrain rotation lag)
     private static final double TURRET_VEL_FF_SCALAR = 0.005; // TUNE
@@ -171,7 +171,7 @@ public class AimAndShootTurret extends Command {
                 -12.0, 12.0
             );
             turret.feedSpark.setVoltage(feedVoltage);
-            indexer.spinIndexer(-0.1);
+            indexer.spinIndexer(-0.2);
             SmartDashboard.putNumber("Feed Voltage", feedVoltage);
         } else {
             turret.spinFeed(0.0);

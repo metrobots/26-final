@@ -5,7 +5,7 @@ import frc.robot.subsystems.turret.Turret;
 
 public class PurgeTurret extends Command {
 
-    private static final double FEED_PURGE_VOLTAGE     = -6.0;
+    private static final double FEED_PURGE_VOLTAGE     = 4.0;
     private static final double FLYWHEEL_PURGE_VOLTAGE = -4.0;
 
     private final Turret turret;
