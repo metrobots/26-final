@@ -20,6 +20,9 @@ public class Lights extends SubsystemBase {
     private final AddressableLED led;
     private final AddressableLEDBuffer buffer;
 
+    private final AddressableLED led2ElectricBoogaloo;
+    private final AddressableLEDBuffer buffer2;
+
     /* =====================
      * STATE
      * ===================== */
@@ -28,7 +31,9 @@ public class Lights extends SubsystemBase {
         SOLID,
         RAINBOW,
         CYLON,
-        COLOR_CHASE
+        COLOR_CHASE,
+        CHASE_3324,
+        CHASE_NAME // Not yet implemented, also no robot name yet
     }
 
     private Pattern currentPattern = Pattern.OFF;
@@ -71,6 +76,10 @@ public class Lights extends SubsystemBase {
 
             case COLOR_CHASE:
                 applyColorChase();
+                break;
+
+            case CHASE_3324:
+                apply3324Chase();
                 break;
 
             case OFF:
@@ -149,6 +158,40 @@ public class Lights extends SubsystemBase {
         }
 
         led.setData(buffer);
+    }
+
+    private void apply3324Chase() {
+        clearBuffer();
+
+        for (int i = 0; i < 14; i++) {
+            int index = chaseIndex + i;
+            if (index < buffer.getLength()) {
+                buffer.createView(index, index + 2);
+                buffer.createView(index + 4, index + 6);
+                buffer.createView(index + 8, index + 9);
+                buffer.createView(index + 11, index + 14);
+            }
+        }
+
+        chaseIndex++;
+        if (chaseIndex >= buffer.getLength() - 14) {
+            chaseIndex = 0;
+        }
+
+        led.setData(buffer);
+    }
+
+    // Coordinate Based Light Programs
+
+    private void setCoord (int x, int y, Color color) {
+        int row3length = 100; // tune later
+        if (y == 1) {
+            buffer.setLED(150-x, color);
+        } else if (y == 2) {
+            buffer.setLED(x+row3length, color);
+        } else if (y == 3) {
+            buffer.setLED(row3length-x, color);
+        }
     }
 
     /* =====================
