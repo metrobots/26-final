@@ -10,6 +10,7 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -172,16 +173,14 @@ public class Turret extends SubsystemBase {
     public void setFlywheelVelocity(double targetRPS) {
         double currentVoltage = RobotController.getBatteryVoltage();
 
-        // Scale factor: how much extra duty cycle is needed to produce the same
-        // voltage that kFF would have produced at the tuned voltage.
-        double arbitraryFF = FLYWHEEL_kFF * targetRPS
-            * (1.0 - FLYWHEEL_TUNED_VOLTAGE / currentVoltage);
+        // arbFF is in volts — how much extra voltage to add to compensate for sag
+        double arbFF = FLYWHEEL_kFF * targetRPS * (FLYWHEEL_TUNED_VOLTAGE - currentVoltage);
 
-        flywheelController.setReference(
+        flywheelController.setSetpoint(
             targetRPS,
             ControlType.kVelocity,
-            0,            // PID slot 0
-            arbitraryFF   // additional duty-cycle FF on top of onboard kFF
+            ClosedLoopSlot.kSlot0,
+            arbFF
         );
     }
 
