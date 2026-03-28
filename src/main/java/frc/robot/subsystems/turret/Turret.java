@@ -1,7 +1,6 @@
 package frc.robot.subsystems.turret;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.revrobotics.spark.SparkFlex;
@@ -10,7 +9,6 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -41,22 +39,17 @@ public class Turret extends SubsystemBase {
     public final SparkClosedLoopController flywheelController;
 
     // Flywheel PID gains — tuned on the SPARK Flex at ~1000 Hz.
-    // kFF is expressed in duty-cycle per RPS, tuned at FLYWHEEL_TUNED_VOLTAGE.
-    // The setFlywheelVelocity() method scales kFF by (TUNED_VOLTAGE / currentVoltage)
-    // so the effective output voltage stays consistent regardless of battery state.
-    // You should NOT need to retune kFF after this change.
-    private static final double FLYWHEEL_kP  = 0.05;
+    // Start with these and adjust kP until you get fast recovery without oscillation.
+    // kFF replaces the software SimpleMotorFeedforward: kFF = 1 / (free-speed RPS).
+    // For a NEO Vortex free speed ~94 RPS: kFF ≈ 1/94 ≈ 0.0106. Tune from there.
+    private static final double FLYWHEEL_kP  = 0.05;   // TUNE — same starting point as before
     private static final double FLYWHEEL_kI  = 0.0;
     private static final double FLYWHEEL_kD  = 0.0;
-    private static final double FLYWHEEL_kFF = 0.011;
-
-    // The battery voltage at which FLYWHEEL_kFF was originally tuned.
-    // Set this to the voltage your battery was at during FF tuning (~12.5–12.7V).
-    private static final double FLYWHEEL_TUNED_VOLTAGE = 12.6;
+    private static final double FLYWHEEL_kFF = 0.011; // TUNE — replaces SimpleMotorFeedforward
 
     // ---------------- TURRET CONSTANTS ----------------
-    private static final double GEAR_RATIO               = 0.035;  // Motor:Turret
-    private static final double ABS_ENCODER_ZERO_OFFSET  = 0.0;
+    private static final double GEAR_RATIO          = 0.035;  // Motor:Turret
+    private static final double ABS_ENCODER_ZERO_OFFSET = 0.0;
 
     // ---------------- CONSTRUCTOR ----------------
     @SuppressWarnings("removal")
@@ -74,18 +67,15 @@ public class Turret extends SubsystemBase {
 
         masterConfig
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(80);
-            // NOTE: voltageCompensation(12) intentionally removed.
-            // It was capping duty cycle at 12V and fighting the manual
-            // voltage-scaling we now apply in setFlywheelVelocity().
+            .smartCurrentLimit(80)
+            .voltageCompensation(12);
 
         masterConfig.encoder
             .positionConversionFactor(1.0)
             .velocityConversionFactor(1.0 / 60.0); // RPM → RPS
 
-        // kFF is kept on the controller for its base feedforward contribution.
-        // setFlywheelVelocity() passes an additional arbitraryFF to correct for
-        // voltage sag on top of this, so do not double-count by raising kFF here.
+        // Configure onboard closed-loop on the master controller.
+        // ControlType.kVelocity runs at ~1000 Hz on the SPARK Flex.
         masterConfig.closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .p(FLYWHEEL_kP)
@@ -101,6 +91,7 @@ public class Turret extends SubsystemBase {
         flywheelSpark1.configure(masterConfig,   ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         flywheelSpark2.configure(followerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
+        // Grab the onboard PID controller from the master
         flywheelController = flywheelSpark1.getClosedLoopController();
 
         // ---------------- HOOD CONFIG ----------------
@@ -146,10 +137,9 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("Turret Angle (deg)",          getTurretAngle());
+        SmartDashboard.putNumber("Turret Angle (deg)",         getTurretAngle());
         SmartDashboard.putNumber("Turret Angle Relative (deg)", getTurretAngleRelative());
         SmartDashboard.putNumber("Turret Encoder Raw",          turretAbsoluteEncoder.getPosition());
-        SmartDashboard.putNumber("Battery Voltage",             RobotController.getBatteryVoltage());
     }
 
     // =========================
@@ -157,31 +147,12 @@ public class Turret extends SubsystemBase {
     // =========================
 
     /**
-     * Commands the onboard PID controller to hold a target velocity in RPS,
-     * with the FF term scaled to compensate for battery voltage sag.
-     *
-     * The SPARK Flex's kFF is expressed as duty-cycle per RPS, so its effective
-     * output voltage varies with battery voltage. By computing an arbitraryFF
-     * that makes up the difference between the tuned voltage and the current
-     * voltage, the flywheel sees the same effective voltage regardless of sag.
-     *
-     * arbitraryFF = kFF * targetRPS * (1 - TUNED_VOLTAGE / currentVoltage)
-     *
-     * At TUNED_VOLTAGE, arbitraryFF = 0 (no correction needed).
-     * Below TUNED_VOLTAGE, arbitraryFF > 0 (boosts output to compensate).
+     * Commands the onboard PID controller to hold a target velocity in RPS.
+     * The SPARK Flex runs this loop at ~1000 Hz — no software PID or FF needed
+     * in the command; kFF on the controller handles steady-state.
      */
     public void setFlywheelVelocity(double targetRPS) {
-        double currentVoltage = RobotController.getBatteryVoltage();
-
-        // arbFF is in volts — how much extra voltage to add to compensate for sag
-        double arbFF = FLYWHEEL_kFF * targetRPS * (FLYWHEEL_TUNED_VOLTAGE - currentVoltage);
-
-        flywheelController.setSetpoint(
-            targetRPS,
-            ControlType.kVelocity,
-            ClosedLoopSlot.kSlot0,
-            arbFF
-        );
+        flywheelController.setReference(targetRPS, ControlType.kVelocity);
     }
 
     /**
