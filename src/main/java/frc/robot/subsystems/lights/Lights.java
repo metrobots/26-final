@@ -1,219 +1,219 @@
-package frc.robot.subsystems.lights;
+// package frc.robot.subsystems.lights;
 
-import edu.wpi.first.wpilibj.AddressableLED;
-import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.util.Color;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+// import edu.wpi.first.wpilibj.AddressableLED;
+// import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+// import edu.wpi.first.wpilibj.util.Color;
+// import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class Lights extends SubsystemBase {
+// public class Lights extends SubsystemBase {
 
-    /* =====================
-     * CONFIG
-     * ===================== */
-    private static final int PWM_PORT = 0; // CHANGE THIS
-    private static final int LED_COUNT = 150;
-    private static final int MAX_BRIGHTNESS = 128; // cap current draw
+//     /* =====================
+//      * CONFIG
+//      * ===================== */
+//     private static final int PWM_PORT = 0; // CHANGE THIS
+//     private static final int LED_COUNT = 150;
+//     private static final int MAX_BRIGHTNESS = 128; // cap current draw
 
-    /* =====================
-     * HARDWARE
-     * ===================== */
-    private final AddressableLED led;
-    private final AddressableLEDBuffer buffer;
+//     /* =====================
+//      * HARDWARE
+//      * ===================== */
+//     private final AddressableLED led;
+//     private final AddressableLEDBuffer buffer;
 
-    private final AddressableLED led2ElectricBoogaloo;
-    private final AddressableLEDBuffer buffer2;
+//     private final AddressableLED led2ElectricBoogaloo;
+//     private final AddressableLEDBuffer buffer2;
 
-    /* =====================
-     * STATE
-     * ===================== */
-    public enum Pattern {
-        OFF,
-        SOLID,
-        RAINBOW,
-        CYLON,
-        COLOR_CHASE,
-        CHASE_3324,
-        CHASE_NAME // Not yet implemented, also no robot name yet
-    }
+//     /* =====================
+//      * STATE
+//      * ===================== */
+//     public enum Pattern {
+//         OFF,
+//         SOLID,
+//         RAINBOW,
+//         CYLON,
+//         COLOR_CHASE,
+//         CHASE_3324,
+//         CHASE_NAME // Not yet implemented, also no robot name yet
+//     }
 
-    private Pattern currentPattern = Pattern.OFF;
-    private Color solidColor = Color.kBlack;
+//     private Pattern currentPattern = Pattern.OFF;
+//     private Color solidColor = Color.kBlack;
 
-    // Animation state
-    private int chaseIndex = 0;
-    private int cylonIndex = 0;
-    private int cylonDirection = 1;
-    private int rainbowHue = 0;
+//     // Animation state
+//     private int chaseIndex = 0;
+//     private int cylonIndex = 0;
+//     private int cylonDirection = 1;
+//     private int rainbowHue = 0;
 
-    public Lights() {
-        led = new AddressableLED(PWM_PORT);
-        buffer = new AddressableLEDBuffer(LED_COUNT);
+//     public Lights() {
+//         led = new AddressableLED(PWM_PORT);
+//         buffer = new AddressableLEDBuffer(LED_COUNT);
 
-        led.setLength(buffer.getLength());
-        led.setData(buffer);
-        led.start();
+//         led.setLength(buffer.getLength());
+//         led.setData(buffer);
+//         led.start();
 
-        clear();
-    }
+//         clear();
+//     }
 
-    /* =====================
-     * PERIODIC
-     * ===================== */
-    @Override
-    public void periodic() {
-        switch (currentPattern) {
-            case SOLID:
-                applySolid();
-                break;
+//     /* =====================
+//      * PERIODIC
+//      * ===================== */
+//     @Override
+//     public void periodic() {
+//         switch (currentPattern) {
+//             case SOLID:
+//                 applySolid();
+//                 break;
 
-            case RAINBOW:
-                applyRainbow();
-                break;
+//             case RAINBOW:
+//                 applyRainbow();
+//                 break;
 
-            case CYLON:
-                applyCylon();
-                break;
+//             case CYLON:
+//                 applyCylon();
+//                 break;
 
-            case COLOR_CHASE:
-                applyColorChase();
-                break;
+//             case COLOR_CHASE:
+//                 applyColorChase();
+//                 break;
 
-            case CHASE_3324:
-                apply3324Chase();
-                break;
+//             case CHASE_3324:
+//                 apply3324Chase();
+//                 break;
 
-            case OFF:
-            default:
-                // do nothing
-                break;
-        }
-    }
+//             case OFF:
+//             default:
+//                 // do nothing
+//                 break;
+//         }
+//     }
 
-    /* =====================
-     * PUBLIC API (COMMANDS USE THESE)
-     * ===================== */
+//     /* =====================
+//      * PUBLIC API (COMMANDS USE THESE)
+//      * ===================== */
 
-    public void setSolid(Color color) {
-        solidColor = color;
-        currentPattern = Pattern.SOLID;
-    }
+//     public void setSolid(Color color) {
+//         solidColor = color;
+//         currentPattern = Pattern.SOLID;
+//     }
 
-    public void setPattern(Pattern pattern) {
-        currentPattern = pattern;
-    }
+//     public void setPattern(Pattern pattern) {
+//         currentPattern = pattern;
+//     }
 
-    public void off() {
-        currentPattern = Pattern.OFF;
-        clear();
-    }
+//     public void off() {
+//         currentPattern = Pattern.OFF;
+//         clear();
+//     }
 
-    /* =====================
-     * PATTERN IMPLEMENTATIONS
-     * ===================== */
+//     /* =====================
+//      * PATTERN IMPLEMENTATIONS
+//      * ===================== */
 
-    private void applySolid() {
-        for (int i = 0; i < buffer.getLength(); i++) {
-            buffer.setLED(i, scaleBrightness(solidColor));
-        }
-        led.setData(buffer);
-    }
+//     private void applySolid() {
+//         for (int i = 0; i < buffer.getLength(); i++) {
+//             buffer.setLED(i, scaleBrightness(solidColor));
+//         }
+//         led.setData(buffer);
+//     }
 
-    // FastLED-style rainbow
-    private void applyRainbow() {
-        for (int i = 0; i < buffer.getLength(); i++) {
-            int hue = (rainbowHue + (i * 180 / buffer.getLength())) % 180;
-            buffer.setHSV(i, hue, 255, MAX_BRIGHTNESS);
-        }
-        rainbowHue = (rainbowHue + 3) % 180;
-        led.setData(buffer);
-    }
+//     // FastLED-style rainbow
+//     private void applyRainbow() {
+//         for (int i = 0; i < buffer.getLength(); i++) {
+//             int hue = (rainbowHue + (i * 180 / buffer.getLength())) % 180;
+//             buffer.setHSV(i, hue, 255, MAX_BRIGHTNESS);
+//         }
+//         rainbowHue = (rainbowHue + 3) % 180;
+//         led.setData(buffer);
+//     }
 
-    // Cylon / Knight Rider sweep
-    private void applyCylon() {
-        buffer.setLED(cylonIndex, Color.kBlack);
+//     // Cylon / Knight Rider sweep
+//     private void applyCylon() {
+//         buffer.setLED(cylonIndex, Color.kBlack);
 
-        cylonIndex += cylonDirection;
-        if (cylonIndex <= 0 || cylonIndex >= buffer.getLength() - 1) {
-            cylonDirection *= -1;
-        }
+//         cylonIndex += cylonDirection;
+//         if (cylonIndex <= 0 || cylonIndex >= buffer.getLength() - 1) {
+//             cylonDirection *= -1;
+//         }
 
-        buffer.setLED(cylonIndex, solidColor);
-        led.setData(buffer);
-    }
+//         buffer.setLED(cylonIndex, solidColor);
+//         led.setData(buffer);
+//     }
 
-    // Color chase with multi-LED block (FastLED inspired)
-    private void applyColorChase() {
-        clearBuffer();
+//     // Color chase with multi-LED block (FastLED inspired)
+//     private void applyColorChase() {
+//         clearBuffer();
 
-        for (int i = 0; i < 6; i++) {
-            int index = chaseIndex + i;
-            if (index < buffer.getLength()) {
-                buffer.setLED(index, solidColor);
-            }
-        }
+//         for (int i = 0; i < 6; i++) {
+//             int index = chaseIndex + i;
+//             if (index < buffer.getLength()) {
+//                 buffer.setLED(index, solidColor);
+//             }
+//         }
 
-        chaseIndex++;
-        if (chaseIndex >= buffer.getLength() - 6) {
-            chaseIndex = 0;
-        }
+//         chaseIndex++;
+//         if (chaseIndex >= buffer.getLength() - 6) {
+//             chaseIndex = 0;
+//         }
 
-        led.setData(buffer);
-    }
+//         led.setData(buffer);
+//     }
 
-    private void apply3324Chase() {
-        clearBuffer();
+//     private void apply3324Chase() {
+//         clearBuffer();
 
-        for (int i = 0; i < 14; i++) {
-            int index = chaseIndex + i;
-            if (index < buffer.getLength()) {
-                buffer.createView(index, index + 2);
-                buffer.createView(index + 4, index + 6);
-                buffer.createView(index + 8, index + 9);
-                buffer.createView(index + 11, index + 14);
-            }
-        }
+//         for (int i = 0; i < 14; i++) {
+//             int index = chaseIndex + i;
+//             if (index < buffer.getLength()) {
+//                 buffer.createView(index, index + 2);
+//                 buffer.createView(index + 4, index + 6);
+//                 buffer.createView(index + 8, index + 9);
+//                 buffer.createView(index + 11, index + 14);
+//             }
+//         }
 
-        chaseIndex++;
-        if (chaseIndex >= buffer.getLength() - 14) {
-            chaseIndex = 0;
-        }
+//         chaseIndex++;
+//         if (chaseIndex >= buffer.getLength() - 14) {
+//             chaseIndex = 0;
+//         }
 
-        led.setData(buffer);
-    }
+//         led.setData(buffer);
+//     }
 
-    // Coordinate Based Light Programs
+//     // Coordinate Based Light Programs
 
-    private void setCoord (int x, int y, Color color) {
-        int row3length = 100; // tune later
-        if (y == 1) {
-            buffer.setLED(150-x, color);
-        } else if (y == 2) {
-            buffer.setLED(x+row3length, color);
-        } else if (y == 3) {
-            buffer.setLED(row3length-x, color);
-        }
-    }
+//     private void setCoord (int x, int y, Color color) {
+//         int row3length = 100; // tune later
+//         if (y == 1) {
+//             buffer.setLED(150-x, color);
+//         } else if (y == 2) {
+//             buffer.setLED(x+row3length, color);
+//         } else if (y == 3) {
+//             buffer.setLED(row3length-x, color);
+//         }
+//     }
 
-    /* =====================
-     * HELPERS
-     * ===================== */
+//     /* =====================
+//      * HELPERS
+//      * ===================== */
 
-    private void clear() {
-        clearBuffer();
-        led.setData(buffer);
-    }
+//     private void clear() {
+//         clearBuffer();
+//         led.setData(buffer);
+//     }
 
-    private void clearBuffer() {
-        for (int i = 0; i < buffer.getLength(); i++) {
-            buffer.setLED(i, Color.kBlack);
-        }
-    }
+//     private void clearBuffer() {
+//         for (int i = 0; i < buffer.getLength(); i++) {
+//             buffer.setLED(i, Color.kBlack);
+//         }
+//     }
 
-    private Color scaleBrightness(Color color) {
-        return new Color(
-            color.red * MAX_BRIGHTNESS / 255.0,
-            color.green * MAX_BRIGHTNESS / 255.0,
-            color.blue * MAX_BRIGHTNESS / 255.0
-        );
-    }
-}
+//     private Color scaleBrightness(Color color) {
+//         return new Color(
+//             color.red * MAX_BRIGHTNESS / 255.0,
+//             color.green * MAX_BRIGHTNESS / 255.0,
+//             color.blue * MAX_BRIGHTNESS / 255.0
+//         );
+//     }
+// }

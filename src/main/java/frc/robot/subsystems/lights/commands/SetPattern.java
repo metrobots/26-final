@@ -1,32 +1,32 @@
-package frc.robot.subsystems.lights.commands;
+// package frc.robot.subsystems.lights.commands;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.lights.Lights;
+// import edu.wpi.first.wpilibj2.command.Command;
+// import frc.robot.subsystems.lights.Lights;
 
-public class SetPattern extends Command {
+// public class SetPattern extends Command {
 
-    private final Lights lights;
-    private final Lights.Pattern pattern;
+//     private final Lights lights;
+//     private final Lights.Pattern pattern;
 
-    public SetPattern(Lights lights, Lights.Pattern pattern) {
-        this.lights = lights;
-        this.pattern = pattern;
+//     public SetPattern(Lights lights, Lights.Pattern pattern) {
+//         this.lights = lights;
+//         this.pattern = pattern;
 
-        addRequirements(lights);
-    }
+//         addRequirements(lights);
+//     }
 
-    @Override
-    public void initialize() {
-        lights.setPattern(pattern);
-    }
+//     @Override
+//     public void initialize() {
+//         lights.setPattern(pattern);
+//     }
 
-    @Override
-    public boolean isFinished() {
-        return false; // animation runs continuously
-    }
+//     @Override
+//     public boolean isFinished() {
+//         return false; // animation runs continuously
+//     }
 
-    @Override
-    public void end(boolean interrupted) {
-        // optional: lights.off();
-    }
-}
+//     @Override
+//     public void end(boolean interrupted) {
+//         // optional: lights.off();
+//     }
+// }
