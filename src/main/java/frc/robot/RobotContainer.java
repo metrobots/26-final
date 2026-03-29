@@ -4,8 +4,6 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -13,10 +11,10 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
-import frc.robot.subsystems.drivetrain.commands.DriveToPose;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeDown;
 import frc.robot.subsystems.intake.commands.IntakeIn;
+import frc.robot.subsystems.intake.commands.ShakeIntake;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.spindexer.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
@@ -125,14 +123,18 @@ public class RobotContainer {
         primary.rightTrigger().whileTrue(
             new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer)
         );
-
-        primary.start().whileTrue(
-            new DriveToPose(
-                m_drivetrain,
-                new Pose2d(2.5, 2.5, Rotation2d.fromDegrees(0)),
-                primary
-            )
+        primary.rightTrigger().whileTrue(
+            new ShakeIntake(m_intake)
         );
+
+
+        // primary.start().whileTrue(
+        //     new DriveToPose(
+        //         m_drivetrain,
+        //         new Pose2d(2.5, 2.5, Rotation2d.fromDegrees(0)),
+        //         primary
+        //     )
+        // );
     }
 
     public Command getAutonomousCommand() {

@@ -10,6 +10,7 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -44,7 +45,7 @@ public class Turret extends SubsystemBase {
     // The setFlywheelVelocity() method scales kFF by (TUNED_VOLTAGE / currentVoltage)
     // so the effective output voltage stays consistent regardless of battery state.
     // You should NOT need to retune kFF after this change.
-    private static final double FLYWHEEL_kP  = 0.05;
+    private static final double FLYWHEEL_kP  = 0.12;
     private static final double FLYWHEEL_kI  = 0.0;
     private static final double FLYWHEEL_kD  = 0.0;
     private static final double FLYWHEEL_kFF = 0.011;
@@ -170,18 +171,15 @@ public class Turret extends SubsystemBase {
      * Below TUNED_VOLTAGE, arbitraryFF > 0 (boosts output to compensate).
      */
     public void setFlywheelVelocity(double targetRPS) {
-        double currentVoltage = RobotController.getBatteryVoltage();
+        // double currentVoltage = RobotController.getBatteryVoltage();
 
-        // Scale factor: how much extra duty cycle is needed to produce the same
-        // voltage that kFF would have produced at the tuned voltage.
-        double arbitraryFF = FLYWHEEL_kFF * targetRPS
-            * (1.0 - FLYWHEEL_TUNED_VOLTAGE / currentVoltage);
+        // // arbFF is in volts — how much extra voltage to add to compensate for sag
+        // double arbFF = FLYWHEEL_kFF * targetRPS * (FLYWHEEL_TUNED_VOLTAGE - currentVoltage);
 
-        flywheelController.setReference(
+        flywheelController.setSetpoint(
             targetRPS,
             ControlType.kVelocity,
-            0,            // PID slot 0
-            arbitraryFF   // additional duty-cycle FF on top of onboard kFF
+            ClosedLoopSlot.kSlot0
         );
     }
 
