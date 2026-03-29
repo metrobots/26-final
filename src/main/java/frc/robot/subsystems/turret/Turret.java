@@ -45,7 +45,7 @@ public class Turret extends SubsystemBase {
     // The setFlywheelVelocity() method scales kFF by (TUNED_VOLTAGE / currentVoltage)
     // so the effective output voltage stays consistent regardless of battery state.
     // You should NOT need to retune kFF after this change.
-    private static final double FLYWHEEL_kP  = 0.05;
+    private static final double FLYWHEEL_kP  = 0.12;
     private static final double FLYWHEEL_kI  = 0.0;
     private static final double FLYWHEEL_kD  = 0.0;
     private static final double FLYWHEEL_kFF = 0.011;
@@ -171,16 +171,15 @@ public class Turret extends SubsystemBase {
      * Below TUNED_VOLTAGE, arbitraryFF > 0 (boosts output to compensate).
      */
     public void setFlywheelVelocity(double targetRPS) {
-        double currentVoltage = RobotController.getBatteryVoltage();
+        // double currentVoltage = RobotController.getBatteryVoltage();
 
-        // arbFF is in volts — how much extra voltage to add to compensate for sag
-        double arbFF = FLYWHEEL_kFF * targetRPS * (FLYWHEEL_TUNED_VOLTAGE - currentVoltage);
+        // // arbFF is in volts — how much extra voltage to add to compensate for sag
+        // double arbFF = FLYWHEEL_kFF * targetRPS * (FLYWHEEL_TUNED_VOLTAGE - currentVoltage);
 
         flywheelController.setSetpoint(
             targetRPS,
             ControlType.kVelocity,
-            ClosedLoopSlot.kSlot0,
-            arbFF
+            ClosedLoopSlot.kSlot0
         );
     }
 

@@ -4,8 +4,6 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -13,7 +11,6 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
-import frc.robot.subsystems.drivetrain.commands.DriveToPose;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeDown;
 import frc.robot.subsystems.intake.commands.IntakeIn;
