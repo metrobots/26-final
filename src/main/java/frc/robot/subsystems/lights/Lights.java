@@ -119,7 +119,7 @@ public class Lights extends SubsystemBase {
                 break;
             
             case TEST:
-                setCoord(5, 1, solidColor);
+                setCoord(5, 2, solidColor);
 
             case OFF:
                 // do nothing
@@ -268,7 +268,7 @@ public class Lights extends SubsystemBase {
     // Coordinate Based Light Programs
 
     private void setCoord (int x, int y, Color color) {
-        int rowLength = 33; 
+        int rowLength = 32; 
         if (y == 0 && x <= rowLength) {
             buffer.setLED((rowLength)-x, color);
         } else if (y == 1 && x <= rowLength -2) {
@@ -449,6 +449,71 @@ public class Lights extends SubsystemBase {
                 tl = false; tr = false;
                 cl = true; cr = false;
                 bl = true; br = true;
+                break;
+            case '!':
+                tl = false; tr = false;
+                cl = true; cr = true;
+                bl = true; br = false;
+                break;
+            case '-':
+                tl = false; tr = false;
+                cl = false; cr = false;
+                bl = true; br = true;
+                break;
+            case '#':
+                tl = false; tr = true;
+                cl = false; cr = true;
+                bl = true; br = true;
+                break;
+            case '1':
+                tl = true; tr = false;
+                cl = false; cr = false;
+                bl = false; br = false;
+                break;
+            case '2':
+                tl = true; tr = false;
+                cl = true; cr = false;
+                bl = false; br = false;
+                break;
+            case '3':
+                tl = true; tr = true;
+                cl = false; cr = false;
+                bl = false; br = false;
+                break;
+            case '4':
+                tl = true; tr = true;
+                cl = false; cr = true;
+                bl = false; br = false;
+                break;
+            case '5':
+                tl = true; tr = false;
+                cl = false; cr = true;
+                bl = false; br = false;
+                break;
+            case '6':
+                tl = true; tr = true;
+                cl = true; cr = false;
+                bl = false; br = false;
+                break;
+            case '7':
+                tl = true; tr = true;
+                cl = true; cr = true;
+                bl = false; br = false;
+                break;
+            case '8':
+                tl = true; tr = false;
+                cl = true; cr = true;
+                bl = false; br = false;
+                break;
+            case '9':
+                tl = false; tr = true;
+                cl = true; cr = false;
+                bl = false; br = false;
+                break;
+            case '0':
+                tl = false; tr = true;
+                cl = true; cr = true;
+                bl = false; br = false;
                 break;
         }
 
