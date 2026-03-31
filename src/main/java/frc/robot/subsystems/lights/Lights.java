@@ -2,6 +2,9 @@ package frc.robot.subsystems.lights;
 
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.AddressableLEDBufferView;
+import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
@@ -11,8 +14,10 @@ public class Lights extends SubsystemBase {
     /* =====================
      * CONFIG
      * ===================== */
-    private static final int PWM_PORT = 0; // CHANGE THIS
-    private static final int LED_COUNT = 150;
+    private static final int PWM_PORT = 8; // CHANGE THIS
+    private static final int LED_COUNT = 95;
+
+
     private static final int MAX_BRIGHTNESS = 128; // cap current draw
 
     /* =====================
@@ -30,14 +35,17 @@ public class Lights extends SubsystemBase {
         CYLON,
         COLOR_CHASE,
         CHASE_3324,
-        CHASE_NAME // Not yet implemented, also no robot name yet
+        METROBOTS_SCOLL,
+        INPUT_SCROLL,
+        TEST
     }
 
-    private Pattern currentPattern = Pattern.OFF;
-    private Color solidColor = Color.kBlack;
+    private Pattern currentPattern = Pattern.TEST;
+    private Color solidColor = Color.kBlue;
+    AddressableLEDBufferView m_left;
 
     // Animation state
-    private int chaseIndex = 0;
+    private int chaseIndex = 33;
     private int cylonIndex = 0;
     private int cylonDirection = 1;
     private int rainbowHue = 0;
@@ -64,6 +72,7 @@ public class Lights extends SubsystemBase {
 
 
     public Lights() {
+
         led = new AddressableLED(PWM_PORT);
         buffer = new AddressableLEDBuffer(LED_COUNT);
 
@@ -71,7 +80,7 @@ public class Lights extends SubsystemBase {
         led.setData(buffer);
         led.start();
 
-        clear();
+        m_left = buffer.createView(0, 45);
     }
 
     /* =====================
@@ -79,6 +88,11 @@ public class Lights extends SubsystemBase {
      * ===================== */
     @Override
     public void periodic() {
+
+// LEDPattern red = LEDPattern.solid(Color.kRed);
+// red.applyTo(buffer);
+
+
         switch (currentPattern) {
             case SOLID:
                 applySolid();
@@ -100,11 +114,19 @@ public class Lights extends SubsystemBase {
                 apply3324Chase();
                 break;
 
+            case METROBOTS_SCOLL:
+                brailleScroll("3324 Metrobots", solidColor);
+                break;
+            
+            case TEST:
+                setCoord(5, 0, solidColor);
+
             case OFF:
                 // do nothing
                 break;
         }
-        applyStatusLights();
+        // applyStatusLights();
+        led.setData(buffer);
     }
 
     /* =====================
@@ -154,6 +176,7 @@ public class Lights extends SubsystemBase {
         if (cylonIndex <= 0 || cylonIndex >= buffer.getLength() - 1) {
             cylonDirection *= -1;
         }
+
 
         buffer.setLED(cylonIndex, solidColor);
         led.setData(buffer);
@@ -245,10 +268,10 @@ public class Lights extends SubsystemBase {
     // Coordinate Based Light Programs
 
     private void setCoord (int x, int y, Color color) {
-        int rowLength = 33; 
+        int rowLength = 32; 
         if (y == 0 && x <= rowLength) {
             buffer.setLED((rowLength)-x, color);
-        } else if (y == 1 && x <= rowLength) {
+        } else if (y == 1 && x <= rowLength -2) {
             buffer.setLED(x+rowLength, color);
         } else if (y == 2 && x <= rowLength) {
             buffer.setLED(rowLength-x, color);
@@ -273,31 +296,191 @@ public class Lights extends SubsystemBase {
         }
     }
 
-    // private void brailleCharacter (int xLeft, char characterInput, Color color) {
-    //     Boolean tl = false;
-    //     Boolean tr = false;
-    //     Boolean cl = false;
-    //     Boolean cr = false;
-    //     Boolean bl = false;
-    //     Boolean br = false;
+    private void brailleCharacter (int leadx, char characterInput, Color color) {
+        Boolean tl = false;
+        Boolean tr = false;
+        Boolean cl = false;
+        Boolean cr = false;
+        Boolean bl = false;
+        Boolean br = false;
 
-    //     switch (characterInput) {
-    //         case 'A':
-    //             tl = true;
-    //             tr = false;
-    //             cl = false;
-    //             cr = false;
-    //             bl = false;
-    //             break;
-    //     }
-    // }
+        switch (characterInput) {
+            case 'a':
+                tl = true; tr = false;
+                cl = false; cr = false;
+                bl = false; br = false;
+                break;
+            case 'b':
+                tl = true; tr = false;
+                cl = true; cr = false;
+                bl = false; br = false;
+                break;
+            case 'c':
+                tl = true; tr = true;
+                cl = false; cr = false;
+                bl = false; br = false;
+                break;
+            case 'd':
+                tl = true; tr = true;
+                cl = false; cr = true;
+                bl = false; br = false;
+                break;
+            case 'e':
+                tl = true; tr = false;
+                cl = false; cr = true;
+                bl = false; br = false;
+                break;
+            case 'f':
+                tl = true; tr = true;
+                cl = true; cr = false;
+                bl = false; br = false;
+                break;
+            case 'g':
+                tl = true; tr = true;
+                cl = true; cr = true;
+                bl = false; br = false;
+                break;
+            case 'h':
+                tl = true; tr = false;
+                cl = true; cr = true;
+                bl = false; br = false;
+                break;
+            case 'i':
+                tl = false; tr = true;
+                cl = true; cr = false;
+                bl = false; br = false;
+                break;
+            case 'j':
+                tl = false; tr = true;
+                cl = true; cr = true;
+                bl = false; br = false;
+                break;
+            case 'k':
+                tl = true; tr = false;
+                cl = false; cr = false;
+                bl = true; br = false;
+                break;
+            case 'l':
+                tl = true; tr = false;
+                cl = true; cr = false;
+                bl = true; br = false;
+                break;
+            case 'm':
+                tl = true; tr = true;
+                cl = false; cr = false;
+                bl = true; br = false;
+                break;
+            case 'n':
+                tl = true; tr = true;
+                cl = false; cr = true;
+                bl = true; br = false;
+                break;
+            case 'o':
+                tl = true; tr = false;
+                cl = false; cr = true;
+                bl = true; br = false;
+                break;
+            case 'p':
+                tl = true; tr = true;
+                cl = true; cr = false;
+                bl = true; br = false;
+                break;
+            case 'q':
+                tl = true; tr = true;
+                cl = true; cr = true;
+                bl = true; br = false;
+                break;
+            case 'r':
+                tl = true; tr = false;
+                cl = true; cr = true;
+                bl = true; br = false;
+                break;
+            case 's':
+                tl = false; tr = true;
+                cl = true; cr = false;
+                bl = true; br = false;
+                break;
+            case 't':
+                tl = true; tr = true;
+                cl = false; cr = true;
+                bl = false; br = false;
+                break;
+            case 'u':
+                tl = true; tr = false;
+                cl = false; cr = false;
+                bl = true; br = true;
+                break;
+            case 'v':
+                tl = true; tr = false;
+                cl = true; cr = false;
+                bl = true; br = true;
+                break;
+            case 'w':
+                tl = false; tr = true;
+                cl = true; cr = true;
+                bl = false; br = true;
+                break;
+            case 'x':
+                tl = true; tr = true;
+                cl = false; cr = false;
+                bl = true; br = true;
+                break;
+            case 'y':
+                tl = true; tr = true;
+                cl = false; cr = true;
+                bl = true; br = true;
+                break;
+            case 'z':
+                tl = true; tr = false;
+                cl = false; cr = true;
+                bl = true; br = true;
+                break;
+            case '.':
+                tl = false; tr = false;
+                cl = true; cr = true;
+                bl = false; br = true;
+                break;
+            case ',':
+                tl = false; tr = false;
+                cl = true; cr = false;
+                bl = false; br = false;
+                break;
+            case '?':
+                tl = false; tr = false;
+                cl = true; cr = false;
+                bl = true; br = true;
+                break;
+        }
+
+        if (tl) {
+            setCoord(leadx, 2, color);
+        } if (tr) {
+            setCoord(leadx+1, 2, color);
+        } if (cl) {
+            setCoord(leadx, 1, color);
+        } if (cr) {
+            setCoord(leadx+1, 1, color);
+        } if (bl) {
+            setCoord(leadx, 0, color);
+        } if (br) {
+            setCoord(leadx+1, 0, color);
+        }
+    }
     
-    // private void brailleScroll (String textInput, Color color) {
-    //     char[] scrollList = textInput.toCharArray();
-    //     for (int i = 1; i <= textInput.length(); i++) {
-            
-    //     }
-    // }
+    private void brailleScroll (String textInput, Color color) {
+        clearBuffer();
+        char[] charList = textInput.toLowerCase().toCharArray();
+        int spaceCount = 0;
+        for (int i = 0; i < textInput.length(); i++) {
+            if (charList[i] != ' ') {
+                brailleCharacter(chaseIndex + (i*4) + spaceCount, charList[i], color);
+            } else {spaceCount++;}
+            if (chaseIndex + (i*4) + spaceCount > 33) {
+                i = textInput.length() + 1;
+            }
+        }
+        chaseIndex--;
+    }
 
     /* =====================
      * HELPERS
