@@ -5,6 +5,7 @@
 package frc.robot.subsystems.intake.commands;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.intake.Intake;
 
@@ -12,7 +13,7 @@ import frc.robot.subsystems.intake.Intake;
 public class ShakeIntake extends Command {
   private final Intake intake;
   
-  PIDController intakePID = new PIDController(0.07, 0, 0);
+  PIDController intakePID = new PIDController(0.18, 0, 0);
   /** Creates a new IntakeDown. */
   public ShakeIntake(Intake intake) {
     this.intake = intake;
@@ -26,14 +27,20 @@ public class ShakeIntake extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double output = intakePID.calculate(intake.getEncoder(), 5);
+    double output = intakePID.calculate(intake.getEncoder(), 2);
     intake.intakePivot.set(output);
+    // intake.driveIntake(-0.4);
+
+    SmartDashboard.putNumber("intake angle", intake.getEncoder());
 
   }
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+    intake.intakePivot.set(-0.1);
+    intake.driveIntake(0);
+  }
 
   // Returns true when the command should end.
   @Override

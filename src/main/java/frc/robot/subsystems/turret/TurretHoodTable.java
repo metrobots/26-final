@@ -29,19 +29,18 @@ public class TurretHoodTable {
         SmartDashboard.putNumber(SPEED_SCALE_KEY, 1.0);
         SmartDashboard.putNumber(ANGLE_OFFSET_KEY, 0.0);
 
-        table.put(1.5,  new HoodData(0, 22)); //irrelevant
-        table.put(1.75, new HoodData(0, 22)); //irrelevant
-        table.put(2.0,  new HoodData(0, 23)); //good
-        table.put(2.25, new HoodData(0, 24)); //good
-        table.put(2.5,  new HoodData(0, 25)); //good
-        table.put(2.75, new HoodData(0, 25.5)); //good
-        table.put(3.0,  new HoodData(4, 25)); //good
-        table.put(3.25, new HoodData(4, 26)); //good
-
-        table.put(3.5,  new HoodData(4, 27.5));
-        table.put(3.75, new HoodData(0, 23));
-        table.put(4.0,  new HoodData(0, 23));
-        table.put(4.25, new HoodData(0, 23));
+        table.put(1.5,  new HoodData(1, 26)); //irrelevant
+        table.put(1.75, new HoodData(1, 26)); //irrelevant
+        table.put(2.0,  new HoodData(1, 26)); //good
+        table.put(2.25, new HoodData(1, 26)); //
+        table.put(2.5,  new HoodData(1, 26)); //
+        table.put(2.75, new HoodData(1, 26)); //
+        table.put(3.0,  new HoodData(1, 26)); //
+        table.put(3.25, new HoodData(1, 26)); //
+        table.put(3.5,  new HoodData(1, 26));
+        table.put(3.75, new HoodData(1, 26));
+        table.put(4.0,  new HoodData(1, 26));
+        table.put(4.25, new HoodData(1, 26));
     }
 
     public HoodData get(double distance) {

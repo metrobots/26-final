@@ -25,14 +25,14 @@ public class AimAndShootTurret extends Command {
     // CONSTANTS
     // -----------------------------------------------------------------------
 
-    private static final double TARGET_FEED_RPS = 110.0;
+    private static final double TARGET_FEED_RPS = 140.0;
 
     private static final double MAX_TURRET = 40.0;
     private static final double MIN_TURRET = -40.0;
 
     // Feed feedforward (software — feed motor stays on RoboRIO PID)
     private static final double FEED_kS = 0.15;
-    private static final double FEED_kV = 0.12;
+    private static final double FEED_kV = 0.0857;
     private static final double FEED_kA = 1.2;
 
     // Shoot-on-the-move
@@ -43,7 +43,7 @@ public class AimAndShootTurret extends Command {
     private static final double TURRET_VEL_FF_SCALAR = 0.005; // TUNE
 
     // Turret angle offset to compensate for systematic aiming error
-    private static final double TURRET_ANGLE_OFFSET = 3.0; // degrees — TUNE
+    private static final double TURRET_ANGLE_OFFSET = 1.0; // degrees
 
     // Flywheel at-speed threshold (RPS). Onboard PID holds tighter so
     // you can tighten this from 2.5 → 1.5 once gains are dialled in.
@@ -162,7 +162,7 @@ public class AimAndShootTurret extends Command {
         boolean hoodReady    = Math.abs(turret.hoodEncoder.getPosition() - hoodAngle) <= 0.3;
         boolean readyToShoot = atSpeed && hoodReady;
 
-        prim.getHID().setRumble(RumbleType.kBothRumble, readyToShoot ? 0.5 : 0.0);
+        prim.getHID().setRumble(RumbleType.kBothRumble, readyToShoot ? 0.7 : 0.0);
 
         if (readyToShoot) {
             double feedVoltage = MathUtil.clamp(
@@ -171,7 +171,7 @@ public class AimAndShootTurret extends Command {
                 -12.0, 12.0
             );
             turret.feedSpark.setVoltage(feedVoltage);
-            indexer.spinIndexer(-0.2);
+            indexer.spinIndexer(-0.08);
             SmartDashboard.putNumber("Feed Voltage", feedVoltage);
         } else {
             turret.spinFeed(0.0);
