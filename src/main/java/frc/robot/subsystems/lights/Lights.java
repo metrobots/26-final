@@ -119,7 +119,7 @@ public class Lights extends SubsystemBase {
                 break;
             
             case TEST:
-                setCoord(5, 0, solidColor);
+                setCoord(5, 1, solidColor);
 
             case OFF:
                 // do nothing
@@ -268,11 +268,11 @@ public class Lights extends SubsystemBase {
     // Coordinate Based Light Programs
 
     private void setCoord (int x, int y, Color color) {
-        int rowLength = 32; 
+        int rowLength = 33; 
         if (y == 0 && x <= rowLength) {
             buffer.setLED((rowLength)-x, color);
         } else if (y == 1 && x <= rowLength -2) {
-            buffer.setLED(x+rowLength, color);
+            buffer.setLED(x+rowLength-1, color);
         } else if (y == 2 && x <= rowLength) {
             buffer.setLED(rowLength-x, color);
         }
