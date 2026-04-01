@@ -45,7 +45,7 @@ public class Turret extends SubsystemBase {
     // The setFlywheelVelocity() method scales kFF by (TUNED_VOLTAGE / currentVoltage)
     // so the effective output voltage stays consistent regardless of battery state.
     // You should NOT need to retune kFF after this change.
-    private static final double FLYWHEEL_kP  = 0.15;
+    private static final double FLYWHEEL_kP  = 0.12;
     private static final double FLYWHEEL_kI  = 0.0;
     private static final double FLYWHEEL_kD  = 0.0;
     private static final double FLYWHEEL_kFF = 0.011;
@@ -110,7 +110,7 @@ public class Turret extends SubsystemBase {
 
         // ---------------- FEED CONFIG ----------------
         SparkMaxConfig feedConfig = new SparkMaxConfig();
-        feedConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(80);
+        feedConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(80);
         feedConfig.voltageCompensation(12.0);
         feedConfig.encoder
             .positionConversionFactor(1.0)

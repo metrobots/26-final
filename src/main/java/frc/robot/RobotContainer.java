@@ -19,6 +19,7 @@ import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.spindexer.commands.SpinIndexer;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.commands.AimAndShootTurret;
+import frc.robot.subsystems.turret.commands.HoldZero;
 import frc.robot.subsystems.turret.commands.HoodTarget;
 import frc.robot.subsystems.turret.commands.PurgeTurret;
 import frc.robot.utils.Constants;
@@ -74,25 +75,7 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
 
-        m_turret.setDefaultCommand(
-            m_turret.run(() -> {
-                if (primary.povLeft().getAsBoolean()) {
-                    m_turret.manualTurret(0.2);
-                } else if (primary.povRight().getAsBoolean()) {
-                    m_turret.manualTurret(-0.2);
-                } else {
-                    m_turret.manualTurret(0);
-                }
-
-                if (primary.povUp().getAsBoolean()) {
-                    m_turret.manualHood(-0.06);
-                } else if (primary.povDown().getAsBoolean()) {
-                    m_turret.manualHood(0.06);
-                } else {
-                    m_turret.manualHood(0);
-                }
-            })
-        );
+    m_turret.setDefaultCommand(new HoldZero(m_turret));
 
         // Intake in
         primary.leftTrigger().toggleOnTrue(
@@ -111,9 +94,9 @@ public class RobotContainer {
         primary.rightBumper().whileTrue(
             new PurgeTurret(m_turret)
         );
-        primary.rightBumper().whileTrue(
-            new SpinIndexer(m_spindexer)
-        );
+        // primary.rightBumper().whileTrue(
+        //     new SpinIndexer(m_spindexer)
+        // );
 
         primary.x().whileTrue(
             new HoodTarget(m_turret, 0)

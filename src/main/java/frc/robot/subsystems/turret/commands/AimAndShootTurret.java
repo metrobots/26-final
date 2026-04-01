@@ -33,7 +33,7 @@ public class AimAndShootTurret extends Command {
     private static final double MAX_TURRET_DEG      = 40.0;
     private static final double MIN_TURRET_DEG      = -40.0;
     private static final double TURRET_AIM_TOL_DEG  = 0.5;   // degrees — aimed check
-    private static final double TURRET_ANGLE_OFFSET  = 1.0;   // degrees — systematic bias correction
+    private static final double TURRET_ANGLE_OFFSET  = 3.0;   // degrees — systematic bias correction
     private static final double TURRET_VEL_FF_SCALAR = 0.005; // counteracts drivetrain rotation lag — TUNE
 
     // -----------------------------------------------------------------------
@@ -46,7 +46,7 @@ public class AimAndShootTurret extends Command {
     // HOOD CONSTANTS
     // -----------------------------------------------------------------------
 
-    private static final double HOOD_TOL = 0.3; // encoder units
+    private static final double HOOD_TOL = 0.5; // encoder units
 
     // -----------------------------------------------------------------------
     // FEEDER CONSTANTS
@@ -69,7 +69,7 @@ public class AimAndShootTurret extends Command {
     // -----------------------------------------------------------------------
 
     /** How long the feed/indexer run per ball. Shorten if double-feeding. */
-    private static final double PULSE_ON_DURATION  = 0.4;  // seconds — TUNE
+    private static final double PULSE_ON_DURATION  = 0.25;  // seconds — TUNE
 
     /** Gap between pulses — lets ball clear and flywheel recover speed. */
     private static final double PULSE_OFF_DURATION = 0.25; // seconds — TUNE
@@ -203,7 +203,7 @@ public class AimAndShootTurret extends Command {
         boolean atSpeed      = Math.abs(currentRPS - targetRPS) <= FLYWHEEL_TOLERANCE_RPS;
         boolean aimed        = Math.abs(currentAngle - targetAngle) <= TURRET_AIM_TOL_DEG;
         boolean hoodReady    = Math.abs(turret.hoodEncoder.getPosition() - hoodAngle) <= HOOD_TOL;
-        boolean readyToShoot = atSpeed && hoodReady;
+        boolean readyToShoot = atSpeed;
 
         prim.getHID().setRumble(RumbleType.kBothRumble, readyToShoot ? 0.7 : 0.0);
 
@@ -226,6 +226,8 @@ public class AimAndShootTurret extends Command {
                 pulseTimer.restart();
             }
 
+            indexer.spinIndexer(-0.08);
+
             if (pulseOn) {
                 double feedVoltage = MathUtil.clamp(
                     feedFF.calculate(TARGET_FEED_RPS)
@@ -233,11 +235,9 @@ public class AimAndShootTurret extends Command {
                     -12.0, 12.0
                 );
                 turret.feedSpark.setVoltage(feedVoltage);
-                indexer.spinIndexer(-0.08);
                 SmartDashboard.putNumber("Feed Voltage", feedVoltage);
             } else {
                 turret.spinFeed(0.0);
-                indexer.spinIndexer(0.0);
             }
 
         } else {
