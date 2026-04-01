@@ -1,5 +1,8 @@
 package frc.robot.subsystems.lights;
 
+import java.util.ArrayList;
+import java.util.Random;
+
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.AddressableLEDBufferView;
@@ -14,7 +17,7 @@ public class Lights extends SubsystemBase {
     /* =====================
      * CONFIG
      * ===================== */
-    private static final int PWM_PORT = 8; // CHANGE THIS
+    private static final int PWM_PORT = 0; // CHANGE THIS
     private static final int LED_COUNT = 95;
 
 
@@ -40,9 +43,18 @@ public class Lights extends SubsystemBase {
         TEST
     }
 
-    private Pattern currentPattern = Pattern.TEST;
+    private Pattern currentPattern = Pattern.COLOR_CHASE;
     private Color solidColor = Color.kBlue;
     AddressableLEDBufferView m_left;
+
+    // Snake Variables
+    private int snakeScore = 0;
+    ArrayList<Integer> snakex = new ArrayList<Integer>();
+    ArrayList<Integer> snakey = new ArrayList<Integer>();
+    private int applex = 1;
+    private int appley = 20;
+    private int snakeDirection = 1; // 1 = Right, 2 = Left, 3 = Up, 4 = Down
+
 
     // Animation state
     private int chaseIndex = 33;
@@ -81,6 +93,9 @@ public class Lights extends SubsystemBase {
         led.start();
 
         m_left = buffer.createView(0, 45);
+
+        snakex.add(5);
+        snakey.add(1);
     }
 
     /* =====================
@@ -88,9 +103,6 @@ public class Lights extends SubsystemBase {
      * ===================== */
     @Override
     public void periodic() {
-
-// LEDPattern red = LEDPattern.solid(Color.kRed);
-// red.applyTo(buffer);
 
 
         switch (currentPattern) {
@@ -119,13 +131,13 @@ public class Lights extends SubsystemBase {
                 break;
             
             case TEST:
-                setCoord(5, 2, solidColor);
+                setCoord(5, 0, solidColor);
 
             case OFF:
                 // do nothing
                 break;
         }
-        // applyStatusLights();
+        applyStatusLights();
         led.setData(buffer);
     }
 
@@ -222,6 +234,21 @@ public class Lights extends SubsystemBase {
         led.setData(buffer);
     }
 
+    private void brailleScroll (String textInput, Color color) {
+        clearBuffer();
+        char[] charList = textInput.toLowerCase().toCharArray();
+        int spaceCount = 0;
+        for (int i = 0; i < textInput.length(); i++) {
+            if (charList[i] != ' ') {
+                brailleCharacter(chaseIndex + (i*4) + spaceCount, charList[i], color);
+            } else {spaceCount++;}
+            if (chaseIndex + (i*4) + spaceCount > 33) {
+                i = textInput.length() + 1;
+            }
+        }
+        chaseIndex--;
+    }
+
     private void setStatusLight (RobotStatus desiredState, int lightSlot) {
         if (status1 == RobotStatus.EMPTY && lightSlot > 1) {
             lightSlot = 1;
@@ -248,51 +275,81 @@ public class Lights extends SubsystemBase {
 
     private void applyStatusLights () {
         if (status1.getColor() != Color.kBlack) {
-            createRectangle(0, 2, 3, 0, status1.getColor());
-            createRectangle(30, 2, 33, 0, status1.getColor());
+            createRectangle(0, 2, status1.getColor());
+            createRectangle(30, 32, status1.getColor());
         }
         if (status2.getColor() != Color.kBlack) {
-            createRectangle(4, 2, 7, 0, status2.getColor());
-            createRectangle(26, 2, 29, 0, status2.getColor());
+            createRectangle(3, 5, status2.getColor());
+            createRectangle(27, 29, status2.getColor());
         }
         if (status3.getColor() != Color.kBlack) {
-            createRectangle(8, 2, 11, 0, status3.getColor());
-            createRectangle(22, 2, 25, 0, status3.getColor());
+            createRectangle(6, 8, status3.getColor());
+            createRectangle(24, 26, status3.getColor());
         }
         if (status4.getColor() != Color.kBlack) {
-            createRectangle(12, 2, 15, 0, status4.getColor());
-            createRectangle(18, 2, 21, 0, status4.getColor());
+            createRectangle(9, 11, status4.getColor());
+            createRectangle(21, 23, status4.getColor());
         }
     }
+
+    // private void snake () {
+    //     Random rand = new Random(); 
+    //     switch (snakeDirection) {
+    //         case 1:
+    //                 snakex.add(snakex.get(snakex.size() - 1) + 1);
+    //                 snakey.add(snakey.get(snakey.size() - 1));
+    //             break;
+    //         case 2:
+    //             snakex.add(snakex.get(snakex.size() - 1) - 1);
+    //             snakey.add(snakey.get(snakey.size() - 1));
+    //             break;
+    //         case 3:
+    //             snakex.add(snakex.get(snakex.size() - 1));
+    //             snakey.add(snakey.get(snakey.size() - 1) + 1);
+    //             break;
+    //         case 4:
+    //             snakex.add(snakex.get(snakex.size() - 1));
+    //             snakey.add(snakey.get(snakey.size() - 1) - 1);
+    //             break;
+    //     }
+    //     if (snakex.get(snakex.size() - 1) == applex && snakey.get(snakey.size() - 1) == appley) {
+    //         snakeScore++;
+    //         applex = rand.nextInt(32);
+    //         appley = rand.nextInt(3);
+    //         for (int i = 0; i < snakex.size(); i++) {
+    //             if (applex == snakex.get(i) && appley == snakey.get(i)) {
+    //                 applex = rand.nextInt(32);
+    //                 appley = rand.nextInt(3);
+    //                 i = -1;
+    //             }
+    //         } 
+    //     for (int i = 0; i < snakex.size() - 1; i++) {
+    //         if (snakex.get(snakex.size() - 1) == snakex.get(i) && snakey.get(snakey.size() - 1) == snakey.get(i)) {
+    //             snakeDirection = 0;
+    //         }
+    //     }
+    //     }
+    // }
 
     // Coordinate Based Light Programs
 
     private void setCoord (int x, int y, Color color) {
         int rowLength = 32; 
         if (y == 0 && x <= rowLength) {
-            buffer.setLED((rowLength)-x, color);
+            buffer.setLED(LED_COUNT-x, color);
         } else if (y == 1 && x <= rowLength -2) {
-            buffer.setLED(x+rowLength-1, color);
+            buffer.setLED(x+rowLength + 1, color);
         } else if (y == 2 && x <= rowLength) {
             buffer.setLED(rowLength-x, color);
         }
     }
 
-    private void createRectangle (int corner1x, int corner1y, int corner2x, int corner2y, Color color) {
-        int currentx = -1;
-        int currenty = -1;
-        for (int i = 0; i < Math.abs((corner2x-corner1x)*(corner2y-corner1y)); i++) {
-            if (i < corner2x - corner1x) {
-                currentx = corner1x + i;
-                currenty = corner1y;
-            } else if (i < 2*(corner2x-corner1x)) {
-                currentx = corner1x + i - corner2x + corner1x;
-                currenty = corner1y+1;
-            } else if (i < 3*(corner2x-corner1x)) {
-                currentx = corner1y + i - (2* (corner2x - corner1x));
-                currenty = corner2y;
-            }
-            setCoord(currentx, currenty, color);
+    private void createRectangle (int x1, int x2, Color color) {
+        int length = x2 - x1;
+        for (int i = 0; i < length; i++) {
+            setCoord(x1+i, 0, color);
+            setCoord(x1+i, 1, color);
+            setCoord(x1+i, 2, color);
         }
     }
 
@@ -532,20 +589,6 @@ public class Lights extends SubsystemBase {
         }
     }
     
-    private void brailleScroll (String textInput, Color color) {
-        clearBuffer();
-        char[] charList = textInput.toLowerCase().toCharArray();
-        int spaceCount = 0;
-        for (int i = 0; i < textInput.length(); i++) {
-            if (charList[i] != ' ') {
-                brailleCharacter(chaseIndex + (i*4) + spaceCount, charList[i], color);
-            } else {spaceCount++;}
-            if (chaseIndex + (i*4) + spaceCount > 33) {
-                i = textInput.length() + 1;
-            }
-        }
-        chaseIndex--;
-    }
 
     /* =====================
      * HELPERS
