@@ -40,10 +40,10 @@ public class Lights extends SubsystemBase {
         CHASE_3324,
         METROBOTS_SCOLL,
         INPUT_SCROLL,
-        TEST
+        SNAKE
     }
 
-    private Pattern currentPattern = Pattern.COLOR_CHASE;
+    private Pattern currentPattern = Pattern.SNAKE;
     private Color solidColor = Color.kBlue;
     AddressableLEDBufferView m_left;
 
@@ -127,8 +127,8 @@ public class Lights extends SubsystemBase {
                 brailleScroll("3324 Metrobots", solidColor);
                 break;
             
-            case TEST:
-                setCoord(5, 0, solidColor);
+            case SNAKE:
+                snake();
 
             case OFF:
                 // do nothing
@@ -289,6 +289,35 @@ public class Lights extends SubsystemBase {
         }
     }
 
+    public void steerSnake (int direction) {
+        switch (direction) {
+            case 0:
+                snakeScore = 0;
+                snakeDirection = direction;
+                break;
+            case 1:
+                if (snakeDirection != 2) {
+                    snakeDirection = 1;
+                }
+                break;
+            case 2:
+                if (snakeDirection != 1) {
+                    snakeDirection = 2;
+                }
+                break;
+            case 3:
+                if (snakeDirection != 4) {
+                    snakeDirection = 3;
+                }
+                break;
+            case 4:
+                if (snakeDirection != 3) {
+                    snakeDirection = 4;
+                }
+                break;
+        }
+    }
+    
     private void snake () {
         Random rand = new Random(); 
         if (snakeScore == 96) {
@@ -339,7 +368,7 @@ public class Lights extends SubsystemBase {
         }
         if (snakeScore+1 > snakex.size()) {
             snakex.remove(0);
-            snakey.remove(0)
+            snakey.remove(0);
         }
         for (int i = 0; i < snakex.size(); i++) {
             setCoord(snakex.get(i), snakey.get(i), Color.kGreen);

@@ -1,46 +1,46 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+// // Copyright (c) FIRST and other WPILib contributors.
+// // Open Source Software; you can modify and/or share it under the terms of
+// // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.spindexer.commands;
+// package frc.robot.subsystems.spindexer.commands;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.spindexer.Spindexer;
+// import edu.wpi.first.wpilibj2.command.Command;
+// import frc.robot.subsystems.spindexer.Spindexer;
 
-public class SpinIndexer extends Command {
+// public class SpinIndexer extends Command {
 
-  private final Spindexer indexer;
+//   private final Spindexer indexer;
 
-  /**
-   * Creates a new SpinIndexer.
-   * Spins the indexer only when AimAndShootTurret reports sustained readiness,
-   * so balls are not fed into the flywheel during recovery between shots.
-   */
-  public SpinIndexer(Spindexer indexer) {
-    this.indexer = indexer;
-    addRequirements(indexer);
-  }
+//   /**
+//    * Creates a new SpinIndexer.
+//    * Spins the indexer only when AimAndShootTurret reports sustained readiness,
+//    * so balls are not fed into the flywheel during recovery between shots.
+//    */
+//   public SpinIndexer(Spindexer indexer) {
+//     this.indexer = indexer;
+//     addRequirements(indexer);
+//   }
 
-  @Override
-  public void initialize() {
-    // this.pastState = indexer.currentState;
-  }
+//   @Override
+//   public void initialize() {
+//     // this.pastState = indexer.currentState;
+//   }
 
-  @Override
-  public void execute() {
-      indexer.spinIndexer(0.1);
-      // turret.feedSpark.set(0.5);
-      // intake.spinIndexer(0.0);
-  }
+//   @Override
+//   public void execute() {
+//       indexer.spinIndexer(0.1);
+//       // turret.feedSpark.set(0.5);
+//       // intake.spinIndexer(0.0);
+//   }
 
-  @Override
-  public void end(boolean interrupted) {
-    indexer.spinIndexer(0.0);
-    // turret.feedSpark.set(0);
-  }
+//   @Override
+//   public void end(boolean interrupted) {
+//     indexer.spinIndexer(0.0);
+//     // turret.feedSpark.set(0);
+//   }
 
-  @Override
-  public boolean isFinished() {
-    return false;
-  }
-}
+//   @Override
+//   public boolean isFinished() {
+//     return false;
+//   }
+// }
