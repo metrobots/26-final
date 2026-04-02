@@ -289,63 +289,63 @@ public class Lights extends SubsystemBase {
         }
     }
 
-    private void snake () {
-        Random rand = new Random(); 
-        if (snakeScore == 96) {
-            snakeDirection = 0;
-        }
-        switch (snakeDirection) {
-            case 0:
-                snakex.clear();
-                snakey.clear();
-                snakex.add(5);
-                snakey.add(1);
-                applex = 20;
-                appley = 1;
-                break;
-            case 1:
-                    snakex.add(snakex.get(snakex.size() - 1) + 1);
-                    snakey.add(snakey.get(snakey.size() - 1));
-                break;
-            case 2:
-                snakex.add(snakex.get(snakex.size() - 1) - 1);
-                snakey.add(snakey.get(snakey.size() - 1));
-                break;
-            case 3:
-                snakex.add(snakex.get(snakex.size() - 1));
-                snakey.add(snakey.get(snakey.size() - 1) + 1);
-                break;
-            case 4:
-                snakex.add(snakex.get(snakex.size() - 1));
-                snakey.add(snakey.get(snakey.size() - 1) - 1);
-                break;
-        }
-        if (snakex.get(snakex.size() - 1) == applex && snakey.get(snakey.size() - 1) == appley) {
-            snakeScore++;
-            applex = rand.nextInt(32);
-            appley = rand.nextInt(3);
-            for (int i = 0; i < snakex.size(); i++) {
-                if (applex == snakex.get(i) && appley == snakey.get(i)) {
-                    applex = rand.nextInt(32);
-                    appley = rand.nextInt(3);
-                    i = -1;
-                }
-            } 
-        }
-        for (int i = 0; i < snakex.size(); i++) {
-            if (snakex.get(snakex.size() - 1) == snakex.get(i) && snakey.get(snakey.size() - 1) == snakey.get(i)) {
-                snakeDirection = 0;
-            }
-        }
-        if (snakeScore+1 > snakex.size()) {
-            snakex.remove(0);
-            snakey.remove(0)
-        }
-        for (int i = 0; i < snakex.size(); i++) {
-            setCoord(snakex.get(i), snakey.get(i), Color.kGreen);
-        }
-        setCoord(applex, appley, Color.kRed);
-    }
+    // private void snake () {
+    //     Random rand = new Random(); 
+    //     if (snakeScore == 96) {
+    //         snakeDirection = 0;
+    //     }
+    //     switch (snakeDirection) {
+    //         case 0:
+    //             snakex.clear();
+    //             snakey.clear();
+    //             snakex.add(5);
+    //             snakey.add(1);
+    //             applex = 20;
+    //             appley = 1;
+    //             break;
+    //         case 1:
+    //                 snakex.add(snakex.get(snakex.size() - 1) + 1);
+    //                 snakey.add(snakey.get(snakey.size() - 1));
+    //             break;
+    //         case 2:
+    //             snakex.add(snakex.get(snakex.size() - 1) - 1);
+    //             snakey.add(snakey.get(snakey.size() - 1));
+    //             break;
+    //         case 3:
+    //             snakex.add(snakex.get(snakex.size() - 1));
+    //             snakey.add(snakey.get(snakey.size() - 1) + 1);
+    //             break;
+    //         case 4:
+    //             snakex.add(snakex.get(snakex.size() - 1));
+    //             snakey.add(snakey.get(snakey.size() - 1) - 1);
+    //             break;
+    //     }
+    //     if (snakex.get(snakex.size() - 1) == applex && snakey.get(snakey.size() - 1) == appley) {
+    //         snakeScore++;
+    //         applex = rand.nextInt(32);
+    //         appley = rand.nextInt(3);
+    //         for (int i = 0; i < snakex.size(); i++) {
+    //             if (applex == snakex.get(i) && appley == snakey.get(i)) {
+    //                 applex = rand.nextInt(32);
+    //                 appley = rand.nextInt(3);
+    //                 i = -1;
+    //             }
+    //         } 
+    //     }
+    //     for (int i = 0; i < snakex.size(); i++) {
+    //         if (snakex.get(snakex.size() - 1) == snakex.get(i) && snakey.get(snakey.size() - 1) == snakey.get(i)) {
+    //             snakeDirection = 0;
+    //         }
+    //     }
+    //     if (snakeScore+1 > snakex.size()) {
+    //         snakex.remove(0);
+    //         snakey.remove(0)
+    //     }
+    //     for (int i = 0; i < snakex.size(); i++) {
+    //         setCoord(snakex.get(i), snakey.get(i), Color.kGreen);
+    //     }
+    //     setCoord(applex, appley, Color.kRed);
+    // }
 
     // Coordinate Based Light Programs
 
