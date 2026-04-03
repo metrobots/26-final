@@ -20,6 +20,7 @@ import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.commands.AimAndShootTurret;
 import frc.robot.subsystems.turret.commands.HoldZero;
 import frc.robot.subsystems.turret.commands.HoodTarget;
+import frc.robot.subsystems.turret.commands.Pass;
 import frc.robot.subsystems.turret.commands.PurgeTurret;
 import frc.robot.utils.Constants;
 import frc.robot.utils.Constants.OIConstants;
@@ -114,7 +115,7 @@ public class RobotContainer {
         // );
 
         primary.x().whileTrue(
-            new HoodTarget(m_turret, 0)
+            new Pass(m_turret, m_spindexer)
         );
 
         // Aim and shoot
@@ -125,14 +126,6 @@ public class RobotContainer {
             new ShakeIntake(m_intake)
         );
 
-
-        // primary.start().whileTrue(
-        //     new DriveToPose(
-        //         m_drivetrain,
-        //         new Pose2d(2.5, 2.5, Rotation2d.fromDegrees(0)),
-        //         primary
-        //     )
-        // );
     }
 
     public Command getAutonomousCommand() {
