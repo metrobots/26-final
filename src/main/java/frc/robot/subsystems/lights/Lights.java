@@ -44,7 +44,7 @@ public class Lights extends SubsystemBase {
     }
 
     private Pattern currentPattern = Pattern.COLOR_CHASE;
-    private Color solidColor = Color.kBlue;
+    private Color solidColor = new Color(255, 30, 0);
     AddressableLEDBufferView m_left;
 
     // Snake Variables

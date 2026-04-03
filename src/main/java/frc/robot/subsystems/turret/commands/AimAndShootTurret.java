@@ -64,7 +64,8 @@ public class AimAndShootTurret extends Command {
     private static final double FLIGHT_TIME_PER_METER = 0.055; // seconds/meter — TUNE
     private static final double LEAD_SCALAR           = 0.5;   // 0.8–1.2 — TUNE
 
-    // -----------------------------------------------------------------------
+    // ---------------------------------------
+    // --------------------------------
     // PULSE CONSTANTS
     // -----------------------------------------------------------------------
 
@@ -72,7 +73,7 @@ public class AimAndShootTurret extends Command {
     private static final double PULSE_ON_DURATION  = 0.25;  // seconds — TUNE
 
     /** Gap between pulses — lets ball clear and flywheel recover speed. */
-    private static final double PULSE_OFF_DURATION = 0.25; // seconds — TUNE
+    private static final double PULSE_OFF_DURATION = 0.15; // seconds — TUNE
 
     // -----------------------------------------------------------------------
     // CONTROLLERS
@@ -80,7 +81,7 @@ public class AimAndShootTurret extends Command {
 
     private final PIDController feedPID   = new PIDController(0.12, 0.0, 0.0);
     private final PIDController hoodPID   = new PIDController(0.18, 0.0, 0.0);
-    private final PIDController turretPID = new PIDController(0.03, 0.0, 0.0);
+    private final PIDController turretPID = new PIDController(0.01, 0.0, 0.0);
 
     private final SimpleMotorFeedforward feedFF =
         new SimpleMotorFeedforward(FEED_kS, FEED_kV, FEED_kA);

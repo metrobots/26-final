@@ -37,77 +37,57 @@ public class Drivetrain extends SubsystemBase {
     private boolean endgame = false;
 
     /* ================= HUB STATUS ================= */
-
     private boolean hubActive          = true;
     private String  hubStatus          = "Unknown";
     private int     currentShift       = 0;
     private double  shiftTimeRemaining = 0;
 
     /* ================= FIELD CONSTANTS ================= */
+    // All coordinates are in the WPILib blue-origin field frame (x=0 is blue wall).
+    // Red coordinates are derived by mirroring: redX = FIELD_LENGTH - blueX.
+    private static final double FIELD_LENGTH = 16.54;   // metres
+    private static final double FIELD_WIDTH  =  8.21;   // metres
 
-    private static final double FIELD_LENGTH = 16.54;
-    private static final double FIELD_WIDTH  = 8.21;
-
-    /** Base X for the red-side field center target. Mirrored for blue alliance. */
-    private static final double FIELD_CENTER_X = (FIELD_LENGTH / 3.0) - 1;
+    // Target point (e.g. hub / scoring zone centre) in BLUE coordinates.
+    // Mirror automatically for red — do NOT hard-code a separate red value.
+    private static final double TARGET_BLUE_X = (FIELD_LENGTH / 3.0) - 1.0;
+    private static final double TARGET_Y       = FIELD_WIDTH / 2.0;   // same for both alliances
 
     /* ================= TURRET / CAMERA GEOMETRY ================= */
-
-    /**
-     * Vector from robot center to turret pivot, expressed in robot frame.
-     * +X = forward, +Y = left.
-     */
-    private static final double TURRET_PIVOT_FORWARD    =  0.228;  // meters
-    private static final double TURRET_PIVOT_SIDE       =  0.061;  // meters (negative = right)
-
-    /**
-     * Distance from turret pivot to camera lens along the turret's forward axis.
-     * Negative because camera is behind the pivot.
-     */
-    private static final double CAMERA_FROM_PIVOT_AXIAL = -0.147;  // meters
-
-    /** Camera height from ground: 21 inches converted to meters. */
-    private static final double CAMERA_HEIGHT            = 21.0 * 0.0254; // 0.5334 m
-
-    /**
-     * Camera pitch: upward from horizontal.
-     * Negative sign because Limelight uses negative pitch for upward tilt.
-     */
-    private static final double CAMERA_PITCH             = 30.632901; // degrees
+    // All values are in the robot frame: +x = forward, +y = left.
+    private static final double TURRET_PIVOT_FORWARD    =  0.228;   // m forward of robot centre
+    private static final double TURRET_PIVOT_SIDE       =  0.061;   // m left   of robot centre
+    private static final double CAMERA_FROM_PIVOT_AXIAL = -0.147;   // m axial along turret barrel
+    private static final double CAMERA_HEIGHT            = 21.0 * 0.0254;  // m above ground
+    private static final double CAMERA_PITCH             = 30.632901;      // degrees
 
     /* ================= FIELD DISPLAY ================= */
-
     private final Field2d field = new Field2d();
 
     /* ================= STATE ================= */
-
+    // angleToCenter  : angle from robot forward to target, in robot frame, –180..180 deg.
+    //                  Positive = target is to the robot's left (CCW).
+    // distanceToCenter: straight-line distance from turret pivot to target, metres.
     private double angleToCenter    = 0;
     private double distanceToCenter = 0;
-
-    // Cached field-relative chassis speeds, updated every loop.
-    // Used by getLateralVelocityToTarget() for shoot-on-the-move lead compensation.
     private ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds();
 
     /* ================= MODULES ================= */
-
     private final Module frontLeft = new Module(
             DriveConstants.kFrontLeftDrivingCanId,
             DriveConstants.kFrontLeftTurningCanId,
             DriveConstants.kFrontLeftEncoder,
             DriveConstants.kFrontLeftEncoderOffset);
-
     private final Module frontRight = new Module(
             DriveConstants.kFrontRightDrivingCanId,
             DriveConstants.kFrontRightTurningCanId,
             DriveConstants.kFrontRightEncoder,
             DriveConstants.kFrontRightEncoderOffset);
-
     private final Module rearLeft = new Module(
             DriveConstants.kRearLeftDrivingCanId,
             DriveConstants.kRearLeftTurningCanId,
             DriveConstants.kRearLeftEncoder,
             DriveConstants.kRearLeftEncoderOffset);
-
     private final Module rearRight = new Module(
             DriveConstants.kRearRightDrivingCanId,
             DriveConstants.kRearRightTurningCanId,
@@ -115,34 +95,28 @@ public class Drivetrain extends SubsystemBase {
             DriveConstants.kRearRightEncoderOffset);
 
     /* ================= SENSORS ================= */
-
     private final AHRS gyro = new AHRS(NavXComType.kUSB1);
 
     /* ================= CONTROL ================= */
-
     private final PIDController headingCorrector = new PIDController(0, 0, 0);
 
     private final SlewRateLimiter xLimiter =
             new SlewRateLimiter(AutoConstants.kMaxAccelerationMetersPerSecondSquared);
-
     private final SlewRateLimiter yLimiter =
             new SlewRateLimiter(AutoConstants.kMaxAccelerationMetersPerSecondSquared);
-
     private final SlewRateLimiter rotLimiter =
             new SlewRateLimiter(AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared);
 
     /* ================= POSE ESTIMATOR ================= */
-
     private final SwerveDrivePoseEstimator poseEstimator =
-            new SwerveDrivePoseEstimator(
-                    DriveConstants.kDriveKinematics,
-                    getGyroRotation(),
-                    getModulePositions(),
-                    new Pose2d()
-            );
+        new SwerveDrivePoseEstimator(
+            DriveConstants.kDriveKinematics,
+            getGyroRotation(),
+            getModulePositions(),
+            new Pose2d(0, 0, getGyroRotation())
+        );
 
     /* ================= CONSTRUCTOR ================= */
-
     public Drivetrain(Turret turret) {
         this.turret = turret;
         SmartDashboard.putData("Field", field);
@@ -167,7 +141,6 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* ================= AUTO BUILDER ================= */
-
     private void configureAutoBuilder() {
         try {
             RobotConfig config = RobotConfig.fromGUISettings();
@@ -191,7 +164,6 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* ================= PERIODIC ================= */
-
     @Override
     public void periodic() {
         updateOdometry();
@@ -208,47 +180,60 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* ================= ODOMETRY ================= */
-
     private void updateOdometry() {
         poseEstimator.update(getGyroRotation(), getModulePositions());
     }
 
     /* ================= FIELD-RELATIVE SPEEDS ================= */
-
-    /**
-     * Converts robot-relative module states into field-relative chassis speeds
-     * and caches them for use by getLateralVelocityToTarget().
-     */
     private void updateFieldRelativeSpeeds() {
-        ChassisSpeeds robotRelative = getRobotRelativeSpeeds();
         fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(
-                robotRelative, getGyroRotation());
+                getRobotRelativeSpeeds(), getGyroRotation());
     }
 
     /* ================= SHOOT-ON-THE-MOVE ================= */
-
     /**
-     * Returns the robot's lateral velocity (m/s) relative to the target direction.
+     * Returns the component of the robot's field-relative velocity that is
+     * perpendicular to the line between the turret pivot and the target.
+     * Sign convention: positive = robot moving to the left of that line.
      *
-     * "Lateral" means perpendicular to the straight line from the turret pivot
-     * to the field center. Positive = moving right relative to that line
-     * (i.e., the note needs to lead left, so the turret swings CCW).
+     * Uses angleToCenter (robot-frame angle to target) plus the robot heading
+     * to build the field-frame unit vector along the turret-to-target line,
+     * then dots the perpendicular of that vector against field-relative velocity.
      */
     public double getLateralVelocityToTarget() {
-        double angleRad = Math.toRadians(angleToCenter);
-        return -fieldRelativeSpeeds.vxMetersPerSecond * Math.sin(angleRad)
-                + fieldRelativeSpeeds.vyMetersPerSecond * Math.cos(angleRad);
+        // Direction from robot to target in the field frame (radians).
+        double toTargetFieldRad = getGyroRotation().getRadians()
+                - Math.toRadians(angleToCenter);
+
+        // Perpendicular direction (90° CCW from the target direction).
+        double perpX = -Math.sin(toTargetFieldRad);
+        double perpY =  Math.cos(toTargetFieldRad);
+
+        return fieldRelativeSpeeds.vxMetersPerSecond * perpX
+             + fieldRelativeSpeeds.vyMetersPerSecond * perpY;
     }
 
     /* ================= VISION ================= */
-
+    /**
+     * Updates the camera pose in Limelight's robot-space whenever the turret
+     * rotates, then feeds MegaTag2 pose estimates into the pose estimator.
+     *
+     * Key alliance-correctness notes:
+     *  - setCameraPose_RobotSpace uses robot-frame geometry only; no alliance flip needed.
+     *  - SetRobotOrientation must receive the raw gyro heading in the WPILib blue-origin
+     *    field frame.  getGyroRotation() already returns that (NavX negated), so we pass
+     *    it directly — no 180° flip for red.  The 180° flip was wrong: it fed Limelight
+     *    a heading in a different frame than MegaTag2 expects, corrupting MT2 on red.
+     *  - We override the vision pose's rotation with the gyro rotation before fusing, so
+     *    the estimator only absorbs translational (x/y) corrections from the camera.
+     */
     private void updateVision() {
-
         double turretAngleDeg = turret.getTurretAngleRelative();
         double turretAngleRad = Math.toRadians(turretAngleDeg);
 
-        double camForward = TURRET_PIVOT_FORWARD + (CAMERA_FROM_PIVOT_AXIAL * Math.cos(turretAngleRad));
-        double camSide    = TURRET_PIVOT_SIDE    - (CAMERA_FROM_PIVOT_AXIAL * Math.sin(turretAngleRad));
+        // Camera position in robot space — purely geometric, alliance-independent.
+        double camForward = TURRET_PIVOT_FORWARD + CAMERA_FROM_PIVOT_AXIAL * Math.cos(turretAngleRad);
+        double camSide    = TURRET_PIVOT_SIDE    - CAMERA_FROM_PIVOT_AXIAL * Math.sin(turretAngleRad);
 
         LimelightLib.setCameraPose_RobotSpace(
                 LIMELIGHT,
@@ -260,6 +245,8 @@ public class Drivetrain extends SubsystemBase {
                 turretAngleDeg
         );
 
+        // Pass the raw WPILib-frame gyro heading.  MegaTag2 works in the same blue-origin
+        // field frame as the pose estimator, so no alliance offset is applied here.
         LimelightLib.SetRobotOrientation(
                 LIMELIGHT,
                 getGyroRotation().getDegrees(),
@@ -268,14 +255,11 @@ public class Drivetrain extends SubsystemBase {
         );
 
         PoseEstimate vision = LimelightLib.getBotPoseEstimate_wpiBlue_MegaTag2(LIMELIGHT);
-
         if (!LimelightLib.validPoseEstimate(vision)) return;
-
         if (Math.abs(getTurnRate()) > 720) return;
 
-        // MegaTag2 outputs poses in WPILib blue-origin coordinates natively,
-        // so vision.pose.getTranslation() is always correct for both alliances.
-        // We override rotation with the raw gyro — never trust MegaTag2 for heading.
+        // Fuse only the translational component of the vision estimate; keep the gyro
+        // rotation so heading drift can't be introduced by the camera.
         poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 9999999));
         poseEstimator.addVisionMeasurement(
                 new Pose2d(vision.pose.getTranslation(), getGyroRotation()),
@@ -288,39 +272,41 @@ public class Drivetrain extends SubsystemBase {
     /* ================= FIELD CALCULATIONS ================= */
 
     /**
-     * Returns the alliance-aware field center target.
-     * Red alliance uses the mirrored X; blue alliance uses the base X.
+     * Returns the target position in the WPILib blue-origin field frame.
+     * For red alliance the target is mirrored across the field's centre line (x-axis).
+     * Y is the same for both alliances because the target sits at field midwidth.
      */
-    private Translation2d getFieldCenter() {
-        double x = FIELD_CENTER_X;
+    private Translation2d getTargetPosition() {
         boolean isRed = DriverStation.getAlliance().isPresent()
                 && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
-        if (isRed) {
-            x = FIELD_LENGTH - x;
-        }
-        return new Translation2d(x, FIELD_WIDTH / 2.0);
+        double targetX = isRed ? FIELD_LENGTH - TARGET_BLUE_X : TARGET_BLUE_X;
+        return new Translation2d(targetX, TARGET_Y);
     }
 
+    /**
+     * Recomputes angleToCenter and distanceToCenter from the current estimated pose.
+     *
+     * angleToCenter is the angle from the robot's forward direction to the target,
+     * measured in the robot frame (degrees, –180..180, positive = left/CCW).
+     * This is calculated as:
+     *
+     *   angleToCenter = wrapTo180( fieldAngleToTarget − robotHeading )
+     *
+     * where fieldAngleToTarget = atan2(dy, dx) in the blue-origin field frame.
+     *
+     * No alliance offset is needed because:
+     *   - getTargetPosition() already returns the correct mirrored position for red.
+     *   - getGyroRotation() already returns heading in the blue-origin field frame.
+     * Both sides of the subtraction are in the same frame, so the result is
+     * alliance-agnostic automatically.
+     */
     private void updateFieldCalculations() {
-
         Pose2d pose = poseEstimator.getEstimatedPosition();
+        field.setRobotPose(pose);
 
-        // For Field2d display, flip the pose for red alliance so the robot
-        // appears on the correct side of the field in Shuffleboard/Elastic.
-        // This is purely cosmetic — the underlying pose estimator stays in
-        // blue-origin coordinates for PathPlanner compatibility.
-        boolean isRed = DriverStation.getAlliance().isPresent()
-                && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
-        Pose2d displayPose = isRed
-                ? new Pose2d(
-                    new Translation2d(FIELD_LENGTH - pose.getX(), pose.getY()),
-                    pose.getRotation().plus(Rotation2d.fromDegrees(180)))
-                : pose;
-        field.setRobotPose(displayPose);
-
-        // All game-logic calculations (angleToCenter, distanceToCenter) use the
-        // raw blue-origin pose so they remain consistent with the pose estimator.
         double robotHeading = getGyroRotation().getRadians();
+
+        // Compute turret pivot world position.
         double turretWorldX = pose.getX()
                 + TURRET_PIVOT_FORWARD * Math.cos(robotHeading)
                 - TURRET_PIVOT_SIDE   * Math.sin(robotHeading);
@@ -329,36 +315,33 @@ public class Drivetrain extends SubsystemBase {
                 + TURRET_PIVOT_SIDE   * Math.cos(robotHeading);
 
         Translation2d turretPivot = new Translation2d(turretWorldX, turretWorldY);
-        Translation2d fieldCenter = getFieldCenter();
+        Translation2d target      = getTargetPosition();
 
-        distanceToCenter = turretPivot.getDistance(fieldCenter);
+        distanceToCenter = turretPivot.getDistance(target);
 
-        double dx = fieldCenter.getX() - turretPivot.getX();
-        double dy = fieldCenter.getY() - turretPivot.getY();
+        double dx = target.getX() - turretPivot.getX();
+        double dy = target.getY() - turretPivot.getY();
 
-        double fieldAngle = Math.toDegrees(Math.atan2(dy, dx));
-        angleToCenter = MathUtil.inputModulus(getGyroRotation().getDegrees() - fieldAngle, -180, 180);
+        // Field-frame angle from turret pivot to target.
+        double fieldAngleToTargetDeg = Math.toDegrees(Math.atan2(dy, dx));
 
-        // Draw markers using display pose for Field2d consistency
-        Translation2d displayTurretPivot = isRed
-                ? new Translation2d(FIELD_LENGTH - turretWorldX, turretWorldY)
-                : turretPivot;
-        Translation2d displayFieldCenter = isRed
-                ? new Translation2d(FIELD_LENGTH - fieldCenter.getX(), fieldCenter.getY())
-                : fieldCenter;
+        // Robot-frame angle to target = field angle to target − robot heading.
+        // Wrapped to –180..180 so the turret always takes the short path.
+        // No alliance offset — both getGyroRotation() and fieldAngleToTargetDeg are
+        // already in the blue-origin field frame.
+        angleToCenter = MathUtil.inputModulus(
+                fieldAngleToTargetDeg - getGyroRotation().getDegrees(), -180, 180);
 
-        field.getObject("FieldCenter").setPose(new Pose2d(displayFieldCenter, new Rotation2d()));
-        field.getObject("TurretPivot").setPose(new Pose2d(displayTurretPivot, displayPose.getRotation()));
-        field.getObject("ToCenter").setPoses(List.of(
-                new Pose2d(displayTurretPivot, new Rotation2d()),
-                new Pose2d(displayFieldCenter, new Rotation2d())));
+        field.getObject("Target").setPose(new Pose2d(target, new Rotation2d()));
+        field.getObject("TurretPivot").setPose(new Pose2d(turretPivot, pose.getRotation()));
+        field.getObject("ToTarget").setPoses(List.of(
+                new Pose2d(turretPivot, new Rotation2d()),
+                new Pose2d(target, new Rotation2d())));
     }
 
     /* ================= HUB STATUS ================= */
-
     private void updateHubStatus() {
         var alliance = DriverStation.getAlliance();
-
         if (alliance.isEmpty()) {
             hubActive = false;
             hubStatus = "Unknown";
@@ -392,7 +375,6 @@ public class Drivetrain extends SubsystemBase {
 
         boolean redInactiveFirst = gameData.charAt(0) == 'R';
         boolean isRed = alliance.get() == DriverStation.Alliance.Red;
-
         boolean shift1Active = isRed ? !redInactiveFirst : redInactiveFirst;
 
         if (t > 130) {
@@ -425,7 +407,6 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* ================= DASHBOARD ================= */
-
     private void updateDashboard() {
         SmartDashboard.putNumber("Robot Heading",        getHeading());
         SmartDashboard.putNumber("Angle To Center",      angleToCenter);
@@ -442,10 +423,7 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* ================= POSE METHODS ================= */
-
-    public Pose2d getPose() {
-        return poseEstimator.getEstimatedPosition();
-    }
+    public Pose2d getPose() { return poseEstimator.getEstimatedPosition(); }
 
     public void resetOdometry(Pose2d pose) {
         poseEstimator.resetPosition(getGyroRotation(), getModulePositions(), pose);
@@ -455,9 +433,20 @@ public class Drivetrain extends SubsystemBase {
     public double getDistanceToCenter() { return distanceToCenter; }
 
     /* ================= DRIVE ================= */
-
+    /**
+     * Drive the robot.
+     *
+     * xSpeed / ySpeed are in –1..1 (driver joystick scale).
+     * rot is in –1..1.
+     * fieldRelative=true → driver-centric; the robot drives in the field frame
+     * regardless of which wall it started from.
+     *
+     * getGyroRotation() returns a heading in the WPILib blue-origin field frame,
+     * which is what ChassisSpeeds.fromFieldRelativeSpeeds() expects.  No alliance
+     * inversion is required here: on red the robot starts at 180°, so field-relative
+     * driving already points the correct way without any extra offset.
+     */
     public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-
         double x = xLimiter.calculate(xSpeed) * DriveConstants.kMaxSpeedMetersPerSecond;
         double y = yLimiter.calculate(ySpeed)  * DriveConstants.kMaxSpeedMetersPerSecond;
         double r = rotLimiter.calculate(rot)   * DriveConstants.kMaxAngularSpeed;
@@ -473,13 +462,16 @@ public class Drivetrain extends SubsystemBase {
         setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds));
     }
 
+    /**
+     * Field-relative drive with closed-loop heading hold.
+     * targetHeading is in degrees in the WPILib field frame (–180..180).
+     */
     public void driveLocked(double xSpeed, double ySpeed, double targetHeading, boolean fieldRelative) {
         double correction = headingCorrector.calculate(getHeading(), targetHeading);
         drive(xSpeed, ySpeed, correction, fieldRelative);
     }
 
     /* ================= MODULE CONTROL ================= */
-
     public void setModuleStates(SwerveModuleState[] states) {
         SwerveDriveKinematics.desaturateWheelSpeeds(states, DriveConstants.kMaxSpeedMetersPerSecond);
         frontLeft.setDesiredState(states[0]);
@@ -498,26 +490,19 @@ public class Drivetrain extends SubsystemBase {
     }
 
     /* ================= GYRO ================= */
-
-    public void zeroHeading() { gyro.reset(); }
-
-    public double getHeading() {
-        return MathUtil.inputModulus(getGyroRotation().getDegrees(), -180, 180);
-    }
-
-    public double getTurnRate() { return -gyro.getRate(); }
+    public void zeroHeading()        { gyro.reset(); }
+    public double getHeading()       { return MathUtil.inputModulus(getGyroRotation().getDegrees(), -180, 180); }
+    public double getTurnRate()      { return -gyro.getRate(); }
 
     /**
-     * Single gyro method — no alliance offset.
-     * Used everywhere: pose estimator, vision, field calculations, and driving.
-     * PathPlanner's alliance-flip lambda handles red-alliance path mirroring.
+     * Returns the robot heading in the WPILib blue-origin field frame.
+     * NavX reports CW-positive; WPILib expects CCW-positive, so we negate.
+     * This is consistent for both alliances — on red the robot simply starts
+     * near 180° rather than near 0°.  No extra flip is applied.
      */
-    public Rotation2d getGyroRotation() {
-        return Rotation2d.fromDegrees(-gyro.getAngle());
-    }
+    public Rotation2d getGyroRotation() { return Rotation2d.fromDegrees(-gyro.getAngle()); }
 
     /* ================= UTIL ================= */
-
     public SwerveModulePosition[] getModulePositions() {
         return new SwerveModulePosition[]{
                 frontLeft.getPosition(),

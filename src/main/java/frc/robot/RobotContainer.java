@@ -5,6 +5,7 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -50,7 +51,7 @@ public class RobotContainer {
     m_turret = new Turret();
     m_drivetrain = new Drivetrain(m_turret);
     m_dashboard = new Dashboard();
-    m_intake = new Intake(m_dashboard);
+    m_intake = new Intake();
     m_lights = new Lights();
     m_spindexer = new Spindexer();
     
@@ -82,7 +83,9 @@ public class RobotContainer {
 
   private void registerNamedCommands() {
     // Register commands for auto
-    NamedCommands.registerCommand("shoot", new AimAndShootTurret(m_turret));
+        NamedCommands.registerCommand("shoot",  new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer).withTimeout(8.0));
+        NamedCommands.registerCommand("intake", new IntakeIn(m_intake, -0.7));
+        NamedCommands.registerCommand("down",   new IntakeDown(m_intake).withTimeout(3));
   }
 
     private void configureButtonBindings() {
