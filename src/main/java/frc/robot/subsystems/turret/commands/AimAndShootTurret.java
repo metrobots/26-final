@@ -3,7 +3,6 @@ package frc.robot.subsystems.turret.commands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -32,21 +31,21 @@ public class AimAndShootTurret extends Command {
 
     private static final double MAX_TURRET_DEG      = 40.0;
     private static final double MIN_TURRET_DEG      = -40.0;
-    private static final double TURRET_AIM_TOL_DEG  = 0.5;   // degrees — aimed check
-    private static final double TURRET_ANGLE_OFFSET  = 3.0;   // degrees — systematic bias correction
-    private static final double TURRET_VEL_FF_SCALAR = 0.005; // counteracts drivetrain rotation lag — TUNE
+    private static final double TURRET_AIM_TOL_DEG  = 0.5;
+    private static final double TURRET_ANGLE_OFFSET  = 3.0;
+    private static final double TURRET_VEL_FF_SCALAR = 0.005;
 
     // -----------------------------------------------------------------------
     // FLYWHEEL CONSTANTS
     // -----------------------------------------------------------------------
 
-    private static final double FLYWHEEL_TOLERANCE_RPS = 1.0; // tighten to 0.75 once gains are dialled — TUNE
+    private static final double FLYWHEEL_TOLERANCE_RPS = 1.0;
 
     // -----------------------------------------------------------------------
     // HOOD CONSTANTS
     // -----------------------------------------------------------------------
 
-    private static final double HOOD_TOL = 0.5; // encoder units
+    private static final double HOOD_TOL = 0.5;
 
     // -----------------------------------------------------------------------
     // FEEDER CONSTANTS
@@ -61,19 +60,8 @@ public class AimAndShootTurret extends Command {
     // SHOOT-ON-THE-MOVE CONSTANTS
     // -----------------------------------------------------------------------
 
-    private static final double FLIGHT_TIME_PER_METER = 0.055; // seconds/meter — TUNE
-    private static final double LEAD_SCALAR           = 0.5;   // 0.8–1.2 — TUNE
-
-    // ---------------------------------------
-    // --------------------------------
-    // PULSE CONSTANTS
-    // -----------------------------------------------------------------------
-
-    /** How long the feed/indexer run per ball. Shorten if double-feeding. */
-    private static final double PULSE_ON_DURATION  = 0.25;  // seconds — TUNE
-
-    /** Gap between pulses — lets ball clear and flywheel recover speed. */
-    private static final double PULSE_OFF_DURATION = 0.15; // seconds — TUNE
+    private static final double FLIGHT_TIME_PER_METER = 0.055;
+    private static final double LEAD_SCALAR           = 0.5;
 
     // -----------------------------------------------------------------------
     // CONTROLLERS
@@ -85,13 +73,6 @@ public class AimAndShootTurret extends Command {
 
     private final SimpleMotorFeedforward feedFF =
         new SimpleMotorFeedforward(FEED_kS, FEED_kV, FEED_kA);
-
-    // -----------------------------------------------------------------------
-    // PULSE STATE
-    // -----------------------------------------------------------------------
-
-    private final Timer pulseTimer = new Timer();
-    private boolean pulseOn = false;
 
     // -----------------------------------------------------------------------
     // CONSTRUCTOR
@@ -122,11 +103,6 @@ public class AimAndShootTurret extends Command {
         feedPID.reset();
         hoodPID.reset();
         turretPID.reset();
-
-        // Start timer in the OFF phase so the first pulse fires immediately
-        // once the robot becomes ready to shoot.
-        pulseOn = false;
-        pulseTimer.restart();
     }
 
     // -----------------------------------------------------------------------
@@ -188,10 +164,7 @@ public class AimAndShootTurret extends Command {
         turret.manualHood(hoodOutput);
 
         // -------------------------------------------------------------------
-        // 4. FLYWHEEL CONTROL (onboard PID on the SPARK Flex)
-        //
-        //    setFlywheelVelocity() writes the setpoint to the SPARK Flex,
-        //    which runs its own closed-loop at ~1000 Hz internally.
+        // 4. FLYWHEEL CONTROL
         // -------------------------------------------------------------------
 
         double currentRPS = turret.getFlywheelVelocity();
@@ -209,43 +182,21 @@ public class AimAndShootTurret extends Command {
         prim.getHID().setRumble(RumbleType.kBothRumble, readyToShoot ? 0.7 : 0.0);
 
         // -------------------------------------------------------------------
-        // 6. PULSED FEEDER + INDEXER
-        //
-        //    Cycles between PULSE_ON_DURATION (feed fires) and
-        //    PULSE_OFF_DURATION (feed pauses) to prevent double-feeding.
-        //    Any loss of readiness immediately cuts the feed and resets the
-        //    pulse state so the next ball starts from a clean ON pulse.
+        // 6. FEEDER + INDEXER
         // -------------------------------------------------------------------
 
         if (readyToShoot) {
-            // Advance pulse state machine
-            if (!pulseOn && pulseTimer.hasElapsed(PULSE_OFF_DURATION)) {
-                pulseOn = true;
-                pulseTimer.restart();
-            } else if (pulseOn && pulseTimer.hasElapsed(PULSE_ON_DURATION)) {
-                pulseOn = false;
-                pulseTimer.restart();
-            }
-
             indexer.spinIndexer(-0.08);
 
-            if (pulseOn) {
-                double feedVoltage = MathUtil.clamp(
-                    feedFF.calculate(TARGET_FEED_RPS)
-                        + feedPID.calculate(turret.getFeedVelocity(), TARGET_FEED_RPS),
-                    -12.0, 12.0
-                );
-                turret.feedSpark.setVoltage(feedVoltage);
-                SmartDashboard.putNumber("Feed Voltage", feedVoltage);
-            } else {
-                turret.spinFeed(0.0);
-            }
+            double feedVoltage = MathUtil.clamp(
+                feedFF.calculate(TARGET_FEED_RPS)
+                    + feedPID.calculate(turret.getFeedVelocity(), TARGET_FEED_RPS),
+                -12.0, 12.0
+            );
+            turret.feedSpark.setVoltage(feedVoltage);
+            SmartDashboard.putNumber("Feed Voltage", feedVoltage);
 
         } else {
-            // Not ready — cut feed immediately and reset so the next ball
-            // starts with a full ON pulse rather than mid-cycle.
-            pulseOn = false;
-            pulseTimer.restart();
             turret.spinFeed(0.0);
             indexer.spinIndexer(0.0);
         }
@@ -268,7 +219,6 @@ public class AimAndShootTurret extends Command {
         SmartDashboard.putBoolean("Flywheel Ready",     atSpeed);
         SmartDashboard.putBoolean("Hood Ready",         hoodReady);
         SmartDashboard.putBoolean("Ready To Shoot",     readyToShoot);
-        SmartDashboard.putBoolean("Pulse On",           pulseOn);
     }
 
     // -----------------------------------------------------------------------
