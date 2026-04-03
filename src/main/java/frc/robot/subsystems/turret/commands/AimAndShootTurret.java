@@ -67,7 +67,7 @@ public class AimAndShootTurret extends Command {
     // CONTROLLERS
     // -----------------------------------------------------------------------
 
-    private final PIDController feedPID   = new PIDController(0.12, 0.0, 0.0);
+    private final PIDController feedPID   = new PIDController(0.12, 0.008, 0.0);
     private final PIDController hoodPID   = new PIDController(0.18, 0.0, 0.0);
     private final PIDController turretPID = new PIDController(0.01, 0.0, 0.0);
 
