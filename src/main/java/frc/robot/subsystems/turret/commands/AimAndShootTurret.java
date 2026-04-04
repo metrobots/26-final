@@ -39,7 +39,7 @@ public class AimAndShootTurret extends Command {
     // FLYWHEEL CONSTANTS
     // -----------------------------------------------------------------------
 
-    private static final double FLYWHEEL_TOLERANCE_RPS = 1.0;
+    private static final double FLYWHEEL_TOLERANCE_RPS = 3.0;
 
     // -----------------------------------------------------------------------
     // HOOD CONSTANTS
@@ -51,7 +51,7 @@ public class AimAndShootTurret extends Command {
     // FEEDER CONSTANTS
     // -----------------------------------------------------------------------
 
-    private static final double TARGET_FEED_RPS = 110.0;
+    private static final double TARGET_FEED_RPS = 190.0;
     private static final double FEED_kS         = 0.15;
     private static final double FEED_kV         = 0.0857;
     private static final double FEED_kA         = 1.2;
@@ -186,7 +186,7 @@ public class AimAndShootTurret extends Command {
         // -------------------------------------------------------------------
 
         if (readyToShoot) {
-            indexer.spinIndexer(-0.08);
+            indexer.spinIndexer(-0.25);
 
             double feedVoltage = MathUtil.clamp(
                 feedFF.calculate(TARGET_FEED_RPS)

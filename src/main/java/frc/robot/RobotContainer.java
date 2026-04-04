@@ -108,23 +108,27 @@ public class RobotContainer {
         );
 
         primary.rightBumper().whileTrue(
-            new PurgeTurret(m_turret)
+            new PurgeTurret(m_turret, m_spindexer)
         );
         // primary.rightBumper().whileTrue(
         //     new SpinIndexer(m_spindexer)
         // );
 
         primary.x().whileTrue(
-            new Pass(m_turret, m_spindexer)
+            new Pass(m_turret, m_spindexer, primary)
+        );
+        primary.x().whileTrue(
+            
+            new ShakeIntake(m_intake)
         );
 
         // Aim and shoot
         primary.rightTrigger().whileTrue(
             new AimAndShootTurret(m_turret, m_drivetrain, primary, m_spindexer)
         );
-        primary.rightTrigger().whileTrue(
-            new ShakeIntake(m_intake)
-        );
+        // primary.rightTrigger().whileTrue(
+        //     new ShakeIntake(m_intake)
+        // );
 
     }
 

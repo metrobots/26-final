@@ -5,6 +5,12 @@
     "data": {
       "commands": [
         {
+          "type": "named",
+          "data": {
+            "name": "down"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "Right-Shot"
@@ -20,12 +26,6 @@
           "type": "path",
           "data": {
             "pathName": "Right-Depot"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "down"
           }
         },
         {

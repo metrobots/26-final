@@ -48,7 +48,7 @@ public class TurretHoodTable {
         distances = new double[DEFAULTS.length];
 
         // Publish global scalars
-        SmartDashboard.putNumber(SPEED_SCALE_KEY,  1.0);
+        SmartDashboard.putNumber(SPEED_SCALE_KEY,  0.95);
         SmartDashboard.putNumber(ANGLE_OFFSET_KEY, 0.0);
 
         // Publish every row so they show up as editable fields

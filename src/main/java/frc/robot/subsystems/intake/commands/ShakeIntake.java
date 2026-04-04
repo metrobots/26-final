@@ -29,7 +29,7 @@ public class ShakeIntake extends Command {
   public void execute() {
     double output = intakePID.calculate(intake.getEncoder(), 2);
     intake.intakePivot.set(output);
-    // intake.driveIntake(-0.4);
+    intake.driveIntake(-0.4);
 
     SmartDashboard.putNumber("intake angle", intake.getEncoder());
 
