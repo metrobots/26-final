@@ -31,47 +31,6 @@ import frc.robot.utils.LimelightLib.PoseEstimate;
 import java.util.List;
 
 public class Drivetrain extends SubsystemBase {
-
-    private final Turret turret;
-    private static final String LIMELIGHT = "limelight-front";
-    private boolean endgame = false;
-
-    /* ================= HUB STATUS ================= */
-    private boolean hubActive          = true;
-    private String  hubStatus          = "Unknown";
-    private int     currentShift       = 0;
-    private double  shiftTimeRemaining = 0;
-
-    /* ================= FIELD CONSTANTS ================= */
-    // All coordinates are in the WPILib blue-origin field frame (x=0 is blue wall).
-    // Red coordinates are derived by mirroring: redX = FIELD_LENGTH - blueX.
-    private static final double FIELD_LENGTH = 16.54;   // metres
-    private static final double FIELD_WIDTH  =  8.21;   // metres
-
-    // Target point (e.g. hub / scoring zone centre) in BLUE coordinates.
-    // Mirror automatically for red — do NOT hard-code a separate red value.
-    private static final double TARGET_BLUE_X = (FIELD_LENGTH / 3.0) - 1.0;
-    private static final double TARGET_Y       = FIELD_WIDTH / 2.0;   // same for both alliances
-
-    /* ================= TURRET / CAMERA GEOMETRY ================= */
-    // All values are in the robot frame: +x = forward, +y = left.
-    private static final double TURRET_PIVOT_FORWARD    =  0.228;   // m forward of robot centre
-    private static final double TURRET_PIVOT_SIDE       =  0.061;   // m left   of robot centre
-    private static final double CAMERA_FROM_PIVOT_AXIAL = -0.147;   // m axial along turret barrel
-    private static final double CAMERA_HEIGHT            = 21.0 * 0.0254;  // m above ground
-    private static final double CAMERA_PITCH             = 30.632901;      // degrees
-
-    /* ================= FIELD DISPLAY ================= */
-    private final Field2d field = new Field2d();
-
-    /* ================= STATE ================= */
-    // angleToCenter  : angle from robot forward to target, in robot frame, –180..180 deg.
-    //                  Positive = target is to the robot's left (CCW).
-    // distanceToCenter: straight-line distance from turret pivot to target, metres.
-    private double angleToCenter    = 0;
-    private double distanceToCenter = 0;
-    private ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds();
-
     /* ================= MODULES ================= */
     private final Module frontLeft = new Module(
             DriveConstants.kFrontLeftDrivingCanId,
@@ -94,48 +53,45 @@ public class Drivetrain extends SubsystemBase {
             DriveConstants.kRearRightEncoder,
             DriveConstants.kRearRightEncoderOffset);
 
-    /* ================= SENSORS ================= */
-    private final AHRS gyro = new AHRS(NavXComType.kUSB1);
+    /* Used for limiting the acceleration of the robot. Takes in velocity (m/s) and outputs velocity (m/s). */
+    private final SlewRateLimiter xLimiter = new SlewRateLimiter(AutoConstants.kMaxAccelerationMetersPerSecondSquared);
+    private final SlewRateLimiter yLimiter = new SlewRateLimiter(AutoConstants.kMaxAccelerationMetersPerSecondSquared);
+    private final SlewRateLimiter rotLimiter = new SlewRateLimiter(
+            AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared);
 
-    /* ================= CONTROL ================= */
-    private final PIDController headingCorrector = new PIDController(0, 0, 0);
-
-    private final SlewRateLimiter xLimiter =
-            new SlewRateLimiter(AutoConstants.kMaxAccelerationMetersPerSecondSquared);
-    private final SlewRateLimiter yLimiter =
-            new SlewRateLimiter(AutoConstants.kMaxAccelerationMetersPerSecondSquared);
-    private final SlewRateLimiter rotLimiter =
-            new SlewRateLimiter(AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared);
-
-    /* ================= POSE ESTIMATOR ================= */
-    private final SwerveDrivePoseEstimator poseEstimator =
-        new SwerveDrivePoseEstimator(
+    /* ================= FIELD DISPLAY ================= */
+    private final Field2d field = new Field2d();
+    private final SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
             DriveConstants.kDriveKinematics,
             getGyroRotation(),
             getModulePositions(),
-            new Pose2d(0, 0, getGyroRotation())
-        );
+            new Pose2d(0, 0, getGyroRotation()));
 
-    /* ================= CONSTRUCTOR ================= */
+    /* ================= SENSORS ================= */
+    private final AHRS gyro = new AHRS(NavXComType.kUSB1);
+
     public Drivetrain(Turret turret) {
         this.turret = turret;
-        SmartDashboard.putData("Field", field);
-        endgame = false;
         configureAutoBuilder();
+        sendDataToDashboard();
+    }
 
+    private void sendDataToDashboard() {
+        SmartDashboard.putData("Field", field);
         SmartDashboard.putData("Swerve Drive", new Sendable() {
             @Override
             public void initSendable(SendableBuilder builder) {
                 builder.setSmartDashboardType("SwerveDrive");
-                builder.addDoubleProperty("Front Left Angle",     () -> frontLeft.getState().angle.getRadians(),    null);
-                builder.addDoubleProperty("Front Left Velocity",  () -> frontLeft.getState().speedMetersPerSecond,   null);
-                builder.addDoubleProperty("Front Right Angle",    () -> frontRight.getState().angle.getRadians(),   null);
-                builder.addDoubleProperty("Front Right Velocity", () -> frontRight.getState().speedMetersPerSecond,  null);
-                builder.addDoubleProperty("Back Left Angle",      () -> rearLeft.getState().angle.getRadians(),     null);
-                builder.addDoubleProperty("Back Left Velocity",   () -> rearLeft.getState().speedMetersPerSecond,    null);
-                builder.addDoubleProperty("Back Right Angle",     () -> rearRight.getState().angle.getRadians(),    null);
-                builder.addDoubleProperty("Back Right Velocity",  () -> rearRight.getState().speedMetersPerSecond,  null);
-                builder.addDoubleProperty("Robot Angle",          () -> getGyroRotation().getRadians(),              null);
+                builder.addDoubleProperty("Front Left Angle", () -> frontLeft.getState().angle.getRadians(), null);
+                builder.addDoubleProperty("Front Left Velocity", () -> frontLeft.getState().speedMetersPerSecond, null);
+                builder.addDoubleProperty("Front Right Angle", () -> frontRight.getState().angle.getRadians(), null);
+                builder.addDoubleProperty("Front Right Velocity", () -> frontRight.getState().speedMetersPerSecond,
+                        null);
+                builder.addDoubleProperty("Back Left Angle", () -> rearLeft.getState().angle.getRadians(), null);
+                builder.addDoubleProperty("Back Left Velocity", () -> rearLeft.getState().speedMetersPerSecond, null);
+                builder.addDoubleProperty("Back Right Angle", () -> rearRight.getState().angle.getRadians(), null);
+                builder.addDoubleProperty("Back Right Velocity", () -> rearRight.getState().speedMetersPerSecond, null);
+                builder.addDoubleProperty("Robot Angle", () -> getGyroRotation().getRadians(), null);
             }
         });
     }
@@ -151,13 +107,11 @@ public class Drivetrain extends SubsystemBase {
                     this::driveRobotRelative,
                     new PPHolonomicDriveController(
                             new PIDConstants(5, 0, 0),
-                            new PIDConstants(5, 0, 0)
-                    ),
+                            new PIDConstants(5, 0, 0)),
                     config,
                     () -> DriverStation.getAlliance().isPresent()
                             && DriverStation.getAlliance().get() == DriverStation.Alliance.Red,
-                    this
-            );
+                    this);
         } catch (Exception e) {
             DriverStation.reportError("Failed to configure AutoBuilder", e.getStackTrace());
         }
@@ -166,17 +120,9 @@ public class Drivetrain extends SubsystemBase {
     /* ================= PERIODIC ================= */
     @Override
     public void periodic() {
+        SmartDashboard.putNumber("Robot Heading", getHeading());
         updateOdometry();
         updateFieldRelativeSpeeds();
-        updateVision();
-        updateFieldCalculations();
-        updateHubStatus();
-        updateDashboard();
-
-        if (DriverStation.getMatchTime() < 20 && !endgame) {
-            Elastic.selectTab(2);
-            endgame = true;
-        }
     }
 
     /* ================= ODOMETRY ================= */
@@ -190,28 +136,138 @@ public class Drivetrain extends SubsystemBase {
                 getRobotRelativeSpeeds(), getGyroRotation());
     }
 
-    /* ================= SHOOT-ON-THE-MOVE ================= */
-    /**
-     * Returns the component of the robot's field-relative velocity that is
-     * perpendicular to the line between the turret pivot and the target.
-     * Sign convention: positive = robot moving to the left of that line.
-     *
-     * Uses angleToCenter (robot-frame angle to target) plus the robot heading
-     * to build the field-frame unit vector along the turret-to-target line,
-     * then dots the perpendicular of that vector against field-relative velocity.
-     */
-    public double getLateralVelocityToTarget() {
-        // Direction from robot to target in the field frame (radians).
-        double toTargetFieldRad = getGyroRotation().getRadians()
-                - Math.toRadians(angleToCenter);
-
-        // Perpendicular direction (90° CCW from the target direction).
-        double perpX = -Math.sin(toTargetFieldRad);
-        double perpY =  Math.cos(toTargetFieldRad);
-
-        return fieldRelativeSpeeds.vxMetersPerSecond * perpX
-             + fieldRelativeSpeeds.vyMetersPerSecond * perpY;
+    /* ================= POSE METHODS ================= */
+    public Pose2d getPose() {
+        return poseEstimator.getEstimatedPosition();
     }
+
+    public void resetOdometry(Pose2d pose) {
+        poseEstimator.resetPosition(getGyroRotation(), getModulePositions(), pose);
+    }
+
+    /* ================= DRIVE ================= */
+    /**
+     * Drive the robot using inputs from a gamepad. All of these these directions
+     * are relative to a person standing at driver station.
+     * TODO: Check signs and axes.
+     * 
+     * @param xInput          Speed of the robot in the x-direction (back-,
+     *                        forward+). Range: [-1.0, 1.0].
+     * @param yInput          Speed of the robot in the y-direction (right-, left+).
+     *                        Range: [-1.0, 1.0].
+     * @param rotInput        Rotational speed of the robot (CW-, CCW+). Range
+     *                        [-1.0, 1.0]
+     * @param isFieldRelative Controls whether or not to drive relative to the field
+     *                        (and driver station) or the robot.
+     */
+    public void drive(double xInput, double yInput, double rotInput, boolean isFieldRelative) {
+        double xVel = xLimiter.calculate(xInput * DriveConstants.kMaxSpeedMetersPerSecond);
+        double yVel = yLimiter.calculate(yInput * DriveConstants.kMaxSpeedMetersPerSecond);
+        double rVel = rotLimiter.calculate(rotInput * DriveConstants.kMaxAngularSpeed);
+
+        ChassisSpeeds speeds = isFieldRelative
+                ? ChassisSpeeds.fromFieldRelativeSpeeds(xVel, yVel, rVel, getGyroRotation())
+                : new ChassisSpeeds(xVel, yVel, rVel);
+
+        setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds));
+    }
+
+    public void driveRobotRelative(ChassisSpeeds speeds) {
+        setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds));
+    }
+
+    public void setModuleStates(SwerveModuleState[] states) {
+        SwerveDriveKinematics.desaturateWheelSpeeds(states, DriveConstants.kMaxSpeedMetersPerSecond);
+        frontLeft.setDesiredState(states[0]);
+        frontRight.setDesiredState(states[1]);
+        rearLeft.setDesiredState(states[2]);
+        rearRight.setDesiredState(states[3]);
+    }
+
+    public ChassisSpeeds getRobotRelativeSpeeds() {
+        return DriveConstants.kDriveKinematics.toChassisSpeeds(
+                frontLeft.getState(),
+                frontRight.getState(),
+                rearLeft.getState(),
+                rearRight.getState());
+    }
+
+    /* ================= GYRO ================= */
+    
+    /**
+     * Sets gyro heading to 0.
+     */
+    public void zeroHeading() {
+        gyro.reset();
+    }
+
+    /**
+     * @return The current heading of the robot in degrees.
+     */
+    public double getHeading() {
+        return MathUtil.inputModulus(getGyroRotation().getDegrees(), -180, 180);
+    }
+
+    /**
+     * @return The current turn rate of the robot in degrees per second.
+     */
+    public double getTurnRate() {
+        return -gyro.getRate();
+    }
+
+    /**
+    */
+    public Rotation2d getGyroRotation() {
+    // The NavX gyro uses a CCW- sign convention, but WPILIB expects CCW+ convention.
+        return Rotation2d.fromDegrees(-gyro.getAngle());
+    }
+
+    /* ================= UTIL ================= */
+    public SwerveModulePosition[] getModulePositions() {
+        return new SwerveModulePosition[] {
+                frontLeft.getPosition(),
+                frontRight.getPosition(),
+                rearLeft.getPosition(),
+                rearRight.getPosition()
+        };
+    }
+
+    public void resetEncoders() {
+        frontLeft.resetEncoders();
+        frontRight.resetEncoders();
+        rearLeft.resetEncoders();
+        rearRight.resetEncoders();
+    }
+
+    /* ================= EXTERNAL ================= */
+    /* All of the code below is used by other subsystems. In the future,
+    it should be decoupled from drivetrain into those subsystems. */
+
+    private final Turret turret;
+    private static final String LIMELIGHT = "limelight-front";
+
+  /* ================= FIELD CONSTANTS ================= */
+    // All coordinates are in the WPILib blue-origin field frame (x=0 is blue wall).
+    // Red coordinates are derived by mirroring: redX = FIELD_LENGTH - blueX.
+    private static final double FIELD_LENGTH = 16.54;   // metres
+    private static final double FIELD_WIDTH  =  8.21;   // metres
+
+    // Target point (e.g. hub / scoring zone centre) in BLUE coordinates.
+    // Mirror automatically for red — do NOT hard-code a separate red value.
+    private static final double TARGET_BLUE_X = (FIELD_LENGTH / 3.0) - 1.0;
+    private static final double TARGET_Y       = FIELD_WIDTH / 2.0;   // same for both alliances
+
+    /* ================= TURRET / CAMERA GEOMETRY ================= */
+    // All values are in the robot frame: +x = forward, +y = left.
+    private static final double TURRET_PIVOT_FORWARD    =  0.228;   // m forward of robot centre
+    private static final double TURRET_PIVOT_SIDE       =  0.061;   // m left   of robot centre
+    private static final double CAMERA_FROM_PIVOT_AXIAL = -0.147;   // m axial along turret barrel
+    private static final double CAMERA_HEIGHT            = 21.0 * 0.0254;  // m above ground
+    private static final double CAMERA_PITCH             = 30.632901;      // degrees
+
+    private double angleToCenter    = 0;
+    private double distanceToCenter = 0;
+    private ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds();
 
     /* ================= VISION ================= */
     /**
@@ -268,9 +324,7 @@ public class Drivetrain extends SubsystemBase {
 
         field.getObject("VisionPose").setPose(vision.pose);
     }
-
-    /* ================= FIELD CALCULATIONS ================= */
-
+    
     /**
      * Returns the target position in the WPILib blue-origin field frame.
      * For red alliance the target is mirrored across the field's centre line (x-axis).
@@ -282,7 +336,7 @@ public class Drivetrain extends SubsystemBase {
         double targetX = isRed ? FIELD_LENGTH - TARGET_BLUE_X : TARGET_BLUE_X;
         return new Translation2d(targetX, TARGET_Y);
     }
-
+    
     /**
      * Recomputes angleToCenter and distanceToCenter from the current estimated pose.
      *
@@ -339,183 +393,30 @@ public class Drivetrain extends SubsystemBase {
                 new Pose2d(target, new Rotation2d())));
     }
 
-    /* ================= HUB STATUS ================= */
-    private void updateHubStatus() {
-        var alliance = DriverStation.getAlliance();
-        if (alliance.isEmpty()) {
-            hubActive = false;
-            hubStatus = "Unknown";
-            return;
-        }
-
-        if (DriverStation.isAutonomousEnabled()) {
-            hubActive = true;
-            hubStatus = "Active (Auto)";
-            currentShift = 0;
-            shiftTimeRemaining = DriverStation.getMatchTime();
-            return;
-        }
-
-        if (!DriverStation.isTeleopEnabled()) {
-            hubActive = false;
-            hubStatus = "Inactive";
-            currentShift = 0;
-            shiftTimeRemaining = 0;
-            return;
-        }
-
-        double t = DriverStation.getMatchTime();
-        String gameData = DriverStation.getGameSpecificMessage();
-
-        if (gameData.isEmpty()) {
-            hubActive = true;
-            hubStatus = "Active";
-            return;
-        }
-
-        boolean redInactiveFirst = gameData.charAt(0) == 'R';
-        boolean isRed = alliance.get() == DriverStation.Alliance.Red;
-        boolean shift1Active = isRed ? !redInactiveFirst : redInactiveFirst;
-
-        if (t > 130) {
-            hubActive = true;
-            currentShift = 0;
-            shiftTimeRemaining = t - 130;
-        } else if (t > 105) {
-            hubActive = shift1Active;
-            currentShift = 1;
-            shiftTimeRemaining = t - 105;
-        } else if (t > 80) {
-            hubActive = !shift1Active;
-            currentShift = 2;
-            shiftTimeRemaining = t - 80;
-        } else if (t > 55) {
-            hubActive = shift1Active;
-            currentShift = 3;
-            shiftTimeRemaining = t - 55;
-        } else if (t > 30) {
-            hubActive = !shift1Active;
-            currentShift = 4;
-            shiftTimeRemaining = t - 30;
-        } else {
-            hubActive = true;
-            currentShift = 5;
-            shiftTimeRemaining = t;
-        }
-
-        hubStatus = hubActive ? "Active" : "Inactive";
-    }
-
-    /* ================= DASHBOARD ================= */
-    private void updateDashboard() {
-        SmartDashboard.putNumber("Robot Heading",        getHeading());
-        SmartDashboard.putNumber("Angle To Center",      angleToCenter);
-        SmartDashboard.putNumber("Distance To Center",   distanceToCenter);
-        SmartDashboard.putNumber("Lateral Velocity",     getLateralVelocityToTarget());
-        SmartDashboard.putNumber("RR",                   rearRight.getAngle());
-        SmartDashboard.putNumber("RL",                   rearLeft.getAngle());
-        SmartDashboard.putNumber("RRoffset",             rearRight.getAngleFull());
-        SmartDashboard.putNumber("RLoffset",             rearLeft.getAngleFull());
-        SmartDashboard.putBoolean("Hub Active",          hubActive);
-        SmartDashboard.putString("Hub Status",           hubStatus);
-        SmartDashboard.putNumber("Hub Shift",            currentShift);
-        SmartDashboard.putNumber("Shift Time Remaining", shiftTimeRemaining);
-    }
-
-    /* ================= POSE METHODS ================= */
-    public Pose2d getPose() { return poseEstimator.getEstimatedPosition(); }
-
-    public void resetOdometry(Pose2d pose) {
-        poseEstimator.resetPosition(getGyroRotation(), getModulePositions(), pose);
-    }
-
     public double getAngleToCenter()    { return angleToCenter; }
     public double getDistanceToCenter() { return distanceToCenter; }
 
-    /* ================= DRIVE ================= */
+    
+    /* ================= SHOOT-ON-THE-MOVE ================= */
     /**
-     * Drive the robot.
+     * Returns the component of the robot's field-relative velocity that is
+     * perpendicular to the line between the turret pivot and the target.
+     * Sign convention: positive = robot moving to the left of that line.
      *
-     * xSpeed / ySpeed are in –1..1 (driver joystick scale).
-     * rot is in –1..1.
-     * fieldRelative=true → driver-centric; the robot drives in the field frame
-     * regardless of which wall it started from.
-     *
-     * getGyroRotation() returns a heading in the WPILib blue-origin field frame,
-     * which is what ChassisSpeeds.fromFieldRelativeSpeeds() expects.  No alliance
-     * inversion is required here: on red the robot starts at 180°, so field-relative
-     * driving already points the correct way without any extra offset.
+     * Uses angleToCenter (robot-frame angle to target) plus the robot heading
+     * to build the field-frame unit vector along the turret-to-target line,
+     * then dots the perpendicular of that vector against field-relative velocity.
      */
-    public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-        double x = xLimiter.calculate(xSpeed) * DriveConstants.kMaxSpeedMetersPerSecond;
-        double y = yLimiter.calculate(ySpeed)  * DriveConstants.kMaxSpeedMetersPerSecond;
-        double r = rotLimiter.calculate(rot)   * DriveConstants.kMaxAngularSpeed;
+    public double getLateralVelocityToTarget() {
+        // Direction from robot to target in the field frame (radians).
+        double toTargetFieldRad = getGyroRotation().getRadians()
+                - Math.toRadians(angleToCenter);
 
-        ChassisSpeeds speeds = fieldRelative
-                ? ChassisSpeeds.fromFieldRelativeSpeeds(x, y, r, getGyroRotation())
-                : new ChassisSpeeds(x, y, r);
+        // Perpendicular direction (90° CCW from the target direction).
+        double perpX = -Math.sin(toTargetFieldRad);
+        double perpY =  Math.cos(toTargetFieldRad);
 
-        setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds));
-    }
-
-    public void driveRobotRelative(ChassisSpeeds speeds) {
-        setModuleStates(DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds));
-    }
-
-    /**
-     * Field-relative drive with closed-loop heading hold.
-     * targetHeading is in degrees in the WPILib field frame (–180..180).
-     */
-    public void driveLocked(double xSpeed, double ySpeed, double targetHeading, boolean fieldRelative) {
-        double correction = headingCorrector.calculate(getHeading(), targetHeading);
-        drive(xSpeed, ySpeed, correction, fieldRelative);
-    }
-
-    /* ================= MODULE CONTROL ================= */
-    public void setModuleStates(SwerveModuleState[] states) {
-        SwerveDriveKinematics.desaturateWheelSpeeds(states, DriveConstants.kMaxSpeedMetersPerSecond);
-        frontLeft.setDesiredState(states[0]);
-        frontRight.setDesiredState(states[1]);
-        rearLeft.setDesiredState(states[2]);
-        rearRight.setDesiredState(states[3]);
-    }
-
-    public ChassisSpeeds getRobotRelativeSpeeds() {
-        return DriveConstants.kDriveKinematics.toChassisSpeeds(
-                frontLeft.getState(),
-                frontRight.getState(),
-                rearLeft.getState(),
-                rearRight.getState()
-        );
-    }
-
-    /* ================= GYRO ================= */
-    public void zeroHeading()        { gyro.reset(); }
-    public double getHeading()       { return MathUtil.inputModulus(getGyroRotation().getDegrees(), -180, 180); }
-    public double getTurnRate()      { return -gyro.getRate(); }
-
-    /**
-     * Returns the robot heading in the WPILib blue-origin field frame.
-     * NavX reports CW-positive; WPILib expects CCW-positive, so we negate.
-     * This is consistent for both alliances — on red the robot simply starts
-     * near 180° rather than near 0°.  No extra flip is applied.
-     */
-    public Rotation2d getGyroRotation() { return Rotation2d.fromDegrees(-gyro.getAngle()); }
-
-    /* ================= UTIL ================= */
-    public SwerveModulePosition[] getModulePositions() {
-        return new SwerveModulePosition[]{
-                frontLeft.getPosition(),
-                frontRight.getPosition(),
-                rearLeft.getPosition(),
-                rearRight.getPosition()
-        };
-    }
-
-    public void resetEncoders() {
-        frontLeft.resetEncoders();
-        frontRight.resetEncoders();
-        rearLeft.resetEncoders();
-        rearRight.resetEncoders();
+        return fieldRelativeSpeeds.vxMetersPerSecond * perpX
+             + fieldRelativeSpeeds.vyMetersPerSecond * perpY;
     }
 }
