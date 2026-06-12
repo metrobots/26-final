@@ -55,7 +55,6 @@ public final class Constants {
 
     // Drivetrain CAN IDs
 
-    // by module 
     public static final int kFrontLeftDrivingCanId = 42;  
     public static final int kFrontLeftTurningCanId = 49;
 
@@ -68,20 +67,16 @@ public final class Constants {
     public static final int kRearRightDrivingCanId = 22; 
     public static final int kRearRightTurningCanId = 47;
 
-    // Encoders
+    // Analog Encoder Ports
     public static final int kFrontLeftEncoder = 2; 
     public static final int kFrontRightEncoder = 3;
     public static final int kRearLeftEncoder = 1; 
     public static final int kRearRightEncoder = 0;
-    // Encoder offsets
+    // Encoder offsets (in radians) (where did these offsets come from)?
     public static final double kFrontLeftEncoderOffset = 6.0883963923748174;
     public static final double kFrontRightEncoderOffset = 0.9453248064299455;
     public static final double kRearLeftEncoderOffset = 4.282046414524278;
     public static final double kRearRightEncoderOffset = 4.55277141597666;
-
-
-
-
   }
 
   public static final class ModuleConstants {

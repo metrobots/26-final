@@ -9,7 +9,6 @@ import com.studica.frc.AHRS.NavXComType;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.*;
@@ -24,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.utils.Constants.AutoConstants;
 import frc.robot.utils.Constants.DriveConstants;
-import frc.robot.utils.Elastic;
 import frc.robot.utils.LimelightLib;
 import frc.robot.utils.LimelightLib.PoseEstimate;
 
@@ -73,10 +71,14 @@ public class Drivetrain extends SubsystemBase {
     public Drivetrain(Turret turret) {
         this.turret = turret;
         configureAutoBuilder();
-        sendDataToDashboard();
+        sendSendablesToDashboard();
+        zeroHeading();
     }
 
-    private void sendDataToDashboard() {
+    /**
+     * Sends `Sendable` objects to dashboard. This method should only be called once during initialization.
+     */
+    private void sendSendablesToDashboard() {
         SmartDashboard.putData("Field", field);
         SmartDashboard.putData("Swerve Drive", new Sendable() {
             @Override
@@ -94,6 +96,14 @@ public class Drivetrain extends SubsystemBase {
                 builder.addDoubleProperty("Robot Angle", () -> getGyroRotation().getRadians(), null);
             }
         });
+    }
+
+    private void updateDashboard() {
+        SmartDashboard.putNumber("Robot Heading", getHeading());
+        SmartDashboard.putNumber("Front Left Raw Angle", frontLeft.getRawAngle());
+        SmartDashboard.putNumber("Front Right Raw Angle", frontRight.getRawAngle());
+        SmartDashboard.putNumber("Back Left Raw Angle", rearLeft.getRawAngle());
+        SmartDashboard.putNumber("Back Right Raw Angle", rearRight.getRawAngle());
     }
 
     /* ================= AUTO BUILDER ================= */
@@ -120,9 +130,9 @@ public class Drivetrain extends SubsystemBase {
     /* ================= PERIODIC ================= */
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("Robot Heading", getHeading());
         updateOdometry();
         updateFieldRelativeSpeeds();
+        updateDashboard();
     }
 
     /* ================= ODOMETRY ================= */
@@ -155,7 +165,7 @@ public class Drivetrain extends SubsystemBase {
      *                        forward+). Range: [-1.0, 1.0].
      * @param yInput          Speed of the robot in the y-direction (right-, left+).
      *                        Range: [-1.0, 1.0].
-     * @param rotInput        Rotational speed of the robot (CW-, CCW+). Range
+     * @param rotInput        Rotational speed of the robot (CW-, CCW+). Range:
      *                        [-1.0, 1.0]
      * @param isFieldRelative Controls whether or not to drive relative to the field
      *                        (and driver station) or the robot.
