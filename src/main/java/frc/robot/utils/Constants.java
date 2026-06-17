@@ -73,10 +73,16 @@ public final class Constants {
     public static final int kRearLeftEncoder = 1; 
     public static final int kRearRightEncoder = 0;
     // Encoder offsets (in radians) (where did these offsets come from)?
-    public static final double kFrontLeftEncoderOffset = 6.0883963923748174;
-    public static final double kFrontRightEncoderOffset = 0.9453248064299455;
-    public static final double kRearLeftEncoderOffset = 4.282046414524278;
-    public static final double kRearRightEncoderOffset = 4.55277141597666;
+    /* Old offsets */
+    // public static final double kFrontLeftEncoderOffset = 6.0883963923748174;
+    // public static final double kFrontRightEncoderOffset = 0.9453248064299455;
+    // public static final double kRearLeftEncoderOffset = 4.282046414524278;
+    // public static final double kRearRightEncoderOffset = 4.55277141597666;
+    /* New offsets (found by manually pointing wheels forward). */
+    public static final double kFrontLeftEncoderOffset = 6.109243309;
+    public static final double kFrontRightEncoderOffset = 0.849228741;
+    public static final double kRearLeftEncoderOffset = 4.407581981;
+    public static final double kRearRightEncoderOffset = 4.663095247;
   }
 
   public static final class ModuleConstants {

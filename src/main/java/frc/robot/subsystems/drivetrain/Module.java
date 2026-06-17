@@ -60,7 +60,7 @@ public class Module {
         );
     }
 
-    public double getAbsoluteAngle() {
+    public double getAbsoluteAngleRad() {
         double pos = m_turningAnalogEncoder.get();
         double posRad = pos * (2 * Math.PI);
         posRad -= m_angularOffset;
@@ -77,9 +77,13 @@ public class Module {
         return m_turningAnalogEncoder.get();
     }
 
+    public double getRawAngleRad() {
+        return m_turningAnalogEncoder.get() * (2 * Math.PI);
+    }
+    
     private void syncAndZeroEncoders() {
       // Get the current absolute angle from the analog encoder
-      double currentAngle = getAbsoluteAngle();
+      double currentAngle = getAbsoluteAngleRad();
      
       // Set the turning encoder position to match the absolute encoder
       m_turningEncoder.setPosition(currentAngle);
@@ -93,13 +97,13 @@ public class Module {
 
     public SwerveModuleState getState() {
         return new SwerveModuleState(m_drivingEncoder.getVelocity(),
-                new Rotation2d(getAbsoluteAngle()));
+                new Rotation2d(getAbsoluteAngleRad()));
     }
 
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(
                 m_drivingEncoder.getPosition(),
-                new Rotation2d(getAbsoluteAngle()));
+                new Rotation2d(getAbsoluteAngleRad()));
     }
 
     public void setDesiredState(SwerveModuleState desiredState) {

@@ -33,7 +33,6 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
     DataLogManager.start();
     DriverStation.startDataLog(DataLogManager.getLog());
-
   }
 
   /**
@@ -82,7 +81,7 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.schedule();
     }
 
-    Elastic.selectTab(0);
+    // Elastic.selectTab(0);
   }
 
   /** This function is called periodically during autonomous. */
@@ -100,7 +99,7 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
     
-    Elastic.selectTab(1);
+    // Elastic.selectTab(1);
   }
 
   /** This function is called periodically during operator control. */

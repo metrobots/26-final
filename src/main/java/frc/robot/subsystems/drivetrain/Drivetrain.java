@@ -57,6 +57,9 @@ public class Drivetrain extends SubsystemBase {
     private final SlewRateLimiter rotLimiter = new SlewRateLimiter(
             AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared);
 
+    /* ================= SENSORS ================= */
+    private final AHRS gyro = new AHRS(NavXComType.kUSB1);
+            
     /* ================= FIELD DISPLAY ================= */
     private final Field2d field = new Field2d();
     private final SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
@@ -64,9 +67,6 @@ public class Drivetrain extends SubsystemBase {
             getGyroRotation(),
             getModulePositions(),
             new Pose2d(0, 0, getGyroRotation()));
-
-    /* ================= SENSORS ================= */
-    private final AHRS gyro = new AHRS(NavXComType.kUSB1);
 
     public Drivetrain(Turret turret) {
         this.turret = turret;
@@ -100,10 +100,10 @@ public class Drivetrain extends SubsystemBase {
 
     private void updateDashboard() {
         SmartDashboard.putNumber("Robot Heading", getHeading());
-        SmartDashboard.putNumber("Front Left Raw Angle", frontLeft.getRawAngle());
-        SmartDashboard.putNumber("Front Right Raw Angle", frontRight.getRawAngle());
-        SmartDashboard.putNumber("Back Left Raw Angle", rearLeft.getRawAngle());
-        SmartDashboard.putNumber("Back Right Raw Angle", rearRight.getRawAngle());
+        SmartDashboard.putNumber("Front Left Raw Angle", frontLeft.getRawAngleRad());
+        SmartDashboard.putNumber("Front Right Raw Angle", frontRight.getRawAngleRad());
+        SmartDashboard.putNumber("Back Left Raw Angle", rearLeft.getRawAngleRad());
+        SmartDashboard.putNumber("Back Right Raw Angle", rearRight.getRawAngleRad());
     }
 
     /* ================= AUTO BUILDER ================= */
@@ -228,7 +228,7 @@ public class Drivetrain extends SubsystemBase {
     /**
     */
     public Rotation2d getGyroRotation() {
-    // The NavX gyro uses a CCW- sign convention, but WPILIB expects CCW+ convention.
+        // The NavX gyro uses a CCW- sign convention, but WPILIB expects CCW+ convention.
         return Rotation2d.fromDegrees(-gyro.getAngle());
     }
 

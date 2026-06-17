@@ -10,6 +10,8 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.dashboard.Dashboard;
 import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.commands.DriveInDirection;
+import frc.robot.subsystems.drivetrain.commands.DriveInDirection.DriveDirection;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.commands.IntakeDown;
 import frc.robot.subsystems.intake.commands.IntakeIn;
@@ -51,8 +53,7 @@ public class RobotContainer {
     m_dashboard = new Dashboard();
     m_intake = new Intake();
     m_lights = new Lights();
-    m_spindexer = new Spindexer();
-    
+    m_spindexer = new Spindexer();    
     
     registerNamedCommands();
 
@@ -60,16 +61,6 @@ public class RobotContainer {
 
     // Configure the button bindings
     configureButtonBindings();
-
-    m_drivetrain.setDefaultCommand( // IF THE DRIVETRAIN ISN'T DOING ANYTHING ELSE, DO THIS. 
-        new RunCommand(() -> {
-            m_drivetrain.drive(
-                (-MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband)),
-                (-MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband)),
-                (MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband)),
-                true);
-        }, m_drivetrain)
-    );
 
     // m_intake.setDefaultCommand(
       // new SpinIndexer(m_intake)  
@@ -87,8 +78,24 @@ public class RobotContainer {
   }
 
     private void configureButtonBindings() {
+        m_drivetrain.setDefaultCommand( // IF THE DRIVETRAIN ISN'T DOING ANYTHING ELSE, DO THIS. 
+            new RunCommand(() -> {
+                m_drivetrain.drive(
+                    (-MathUtil.applyDeadband(primary.getLeftY(), OIConstants.kDriveDeadband)),
+                    (-MathUtil.applyDeadband(primary.getLeftX(), OIConstants.kDriveDeadband)),
+                    (MathUtil.applyDeadband(primary.getRightX(), OIConstants.kDriveDeadband)),
+                    false /* Turned off drive field relative for debugging. */);
+            }, m_drivetrain)
+        );
+        
+        // Temporary: for debugging
+        primary.povUp().whileTrue(new DriveInDirection(m_drivetrain, DriveDirection.Forward));
+        primary.povDown().whileTrue(new DriveInDirection(m_drivetrain, DriveDirection.Backward));
+        primary.povLeft().whileTrue(new DriveInDirection(m_drivetrain, DriveDirection.Left));
+        primary.povRight().whileTrue(new DriveInDirection(m_drivetrain, DriveDirection.Right));
 
-    m_turret.setDefaultCommand(new HoldZero(m_turret));
+
+        m_turret.setDefaultCommand(new HoldZero(m_turret));
 
         // Intake in
         primary.leftTrigger().toggleOnTrue(
