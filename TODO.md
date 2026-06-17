@@ -19,7 +19,7 @@
 
 > If in doubt, Google it. And don't call me while I'm off the clock. You know who you are. - The Big M
 
-# June 17th Debugging Notes
+## June 17th Debugging Notes
 
 - I couldn't figure out a way to zero the encoders using Rev Hardware Client. The zero position is probably set in factory. This means the offsets have to be set in software.
 - I forgot to actually disable field relative driving while testing, but since the robot wasn't rotating about the z-axis, the results should be the same regardless.
@@ -28,14 +28,14 @@
 - For the back right wheel, some of the bolts which hold the tread in place were loose. This didn't affect anything since I wasn't actually moving the robot around, but it is something which needs to be fixed.
 - I added some utilities for debugging. The most notable one is that the D-pad can be used to make the robot try to drive in that direction at 20% max speed.
 
-## To-Do
+### To-Do
 
 Given that the issue is most likely that the encoder offsets are wrong, there are two things that need to be tested.
 
 - [ ] Verify that the encoders keep the same value between power cycles.
 - [ ] Find a consistent method for aligning the modules. Set the offsets in `Constants.java` by making note of the raw encoder values
-    - This could be achieved using something like the module alignment tool which is availalbe for the MAXSwerve modules, but I don't know if something similar is available for MK4i modules.
-    - Note that the calulation for the adjusted encoder value is `rawAngleRad() - offsetRad`.
+    - This could be achieved using something like the module calibration tool which is availalbe for the MAXSwerve modules, but I don't know if something similar is available for MK4i modules.
+    - Note that the calulation for the adjusted encoder value is `rawAngleRad - offsetRad`.
 
 These can be checked using Elastic. I found success using the setup shown below:
 
